@@ -53,7 +53,7 @@ export const auth = {
     }),
 
   consumeLink: (token: string) =>
-    fetchApi<{ user: { id: string; email: string; createdAt: string } }>(
+    fetchApi<{ user: { id: string; email: string; isAdmin: boolean; createdAt: string } }>(
       '/auth/consume-link',
       {
         method: 'POST',
@@ -67,7 +67,80 @@ export const auth = {
     }),
 
   me: () =>
-    fetchApi<{ id: string; email: string; createdAt: string }>('/auth/me'),
+    fetchApi<{ id: string; email: string; isAdmin: boolean; createdAt: string }>('/auth/me'),
+};
+
+// Admin API
+export interface AccessRequest {
+  id: string;
+  email: string;
+  status: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  isAdmin: boolean;
+  createdAt: string;
+  _count: {
+    projects: number;
+  };
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalRequests: number;
+  pendingRequests: number;
+  totalProjects: number;
+  totalScripts: number;
+}
+
+export const admin = {
+  getStats: () => fetchApi<AdminStats>('/admin/stats'),
+
+  getRequests: (status?: string) =>
+    fetchApi<AccessRequest[]>(`/admin/requests${status ? `?status=${status}` : ''}`),
+
+  approveRequest: (id: string) =>
+    fetchApi<{ user: AdminUser; created: boolean }>(`/admin/requests/${id}/approve`, {
+      method: 'POST',
+    }),
+
+  rejectRequest: (id: string) =>
+    fetchApi<AccessRequest>(`/admin/requests/${id}/reject`, {
+      method: 'POST',
+    }),
+
+  deleteRequest: (id: string) =>
+    fetchApi<AccessRequest>(`/admin/requests/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getUsers: () => fetchApi<AdminUser[]>('/admin/users'),
+
+  createUser: (email: string, isAdmin = false) =>
+    fetchApi<AdminUser>('/admin/users', {
+      method: 'POST',
+      json: { email, isAdmin },
+    }),
+
+  deleteUser: (id: string) =>
+    fetchApi<AdminUser>(`/admin/users/${id}`, {
+      method: 'DELETE',
+    }),
+
+  toggleAdmin: (id: string) =>
+    fetchApi<AdminUser>(`/admin/users/${id}/toggle-admin`, {
+      method: 'POST',
+    }),
+
+  generateMagicLink: (id: string) =>
+    fetchApi<{ magicLink: string }>(`/admin/users/${id}/magic-link`, {
+      method: 'POST',
+    }),
 };
 
 // Projects API

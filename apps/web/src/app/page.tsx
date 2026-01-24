@@ -40,13 +40,13 @@ export default function LoginPage() {
       await auth.requestLink(email);
       setLinkSent(true);
       toast({
-        title: 'Magic link sent',
-        description: 'Check your email for the login link.',
+        title: 'Request submitted',
+        description: 'We\'ll be in touch soon.',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to send magic link. Please try again.',
+        description: 'Failed to submit request. Please try again.',
         variant: 'destructive',
       });
     } finally {
@@ -139,14 +139,14 @@ export default function LoginPage() {
               <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-success/15 border border-success/20 mb-6">
                 <CheckCircle2 className="h-8 w-8 text-success" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Check your email</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Request received</h2>
               <p className="text-muted-foreground mb-6">
-                We sent a magic link to{' '}
+                We&apos;ve received your access request for{' '}
                 <span className="text-foreground font-medium">{email}</span>
               </p>
               <div className="p-4 rounded-xl bg-secondary/50 border border-border mb-6">
                 <p className="text-sm text-muted-foreground">
-                  Click the link in your email to sign in. The link expires in 15 minutes.
+                  We&apos;ll review your request and send you a magic link once approved. This usually takes less than 24 hours.
                 </p>
               </div>
               <Button
@@ -158,11 +158,11 @@ export default function LoginPage() {
               </Button>
             </div>
           ) : (
-            /* Login form */
+            /* Request access form */
             <div className="animate-fade-up">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Welcome back</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">Request Access</h2>
               <p className="text-muted-foreground mb-8">
-                Sign in to your account to continue
+                Enter your email to join the waitlist
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -187,11 +187,11 @@ export default function LoginPage() {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Sending...
+                      Submitting...
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Send magic link
+                      Request Access
                       <ArrowRight className="h-4 w-4" />
                     </span>
                   )}
@@ -200,7 +200,7 @@ export default function LoginPage() {
 
               <div className="mt-8 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground text-center">
-                  No password needed. We&apos;ll send you a secure link to sign in.
+                  Already have access? You&apos;ll receive a magic link to sign in.
                 </p>
               </div>
 

@@ -22,18 +22,28 @@ export class AuthService {
   async requestMagicLink(email: string): Promise<{ message: string }> {
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Find or create user
-    let user = await this.prisma.user.findUnique({
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
 
     if (!user) {
-      user = await this.prisma.user.create({
-        data: { email: normalizedEmail },
+      // User doesn't exist - create access request instead
+      const existingRequest = await this.prisma.accessRequest.findUnique({
+        where: { email: normalizedEmail },
       });
+
+      if (!existingRequest) {
+        await this.prisma.accessRequest.create({
+          data: { email: normalizedEmail },
+        });
+      }
+
+      // Return same message to prevent email enumeration
+      return { message: 'Access request submitted. You will be notified when approved.' };
     }
 
-    // Generate token
+    // User exists - send magic link
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = await bcrypt.hash(token, 10);
 
@@ -56,12 +66,11 @@ export class AuthService {
 
     await this.emailService.sendMagicLink(normalizedEmail, magicLink);
 
-    // Always return success to prevent email enumeration
     return { message: 'If your email is registered, you will receive a magic link shortly.' };
   }
 
   async consumeMagicLink(token: string): Promise<{
-    user: { id: string; email: string; createdAt: Date };
+    user: { id: string; email: string; isAdmin: boolean; createdAt: Date };
     accessToken: string;
   }> {
     // Find all unexpired, unused tokens for verification
@@ -101,6 +110,7 @@ export class AuthService {
       user: {
         id: matchedToken.user.id,
         email: matchedToken.user.email,
+        isAdmin: matchedToken.user.isAdmin,
         createdAt: matchedToken.user.createdAt,
       },
       accessToken,
@@ -119,6 +129,7 @@ export class AuthService {
     return {
       id: user.id,
       email: user.email,
+      isAdmin: user.isAdmin,
       createdAt: user.createdAt,
     };
   }

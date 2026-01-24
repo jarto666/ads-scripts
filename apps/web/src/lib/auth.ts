@@ -7,6 +7,7 @@ import { auth as authApi } from '@/lib/api';
 interface User {
   id: string;
   email: string;
+  isAdmin: boolean;
   createdAt: string;
 }
 

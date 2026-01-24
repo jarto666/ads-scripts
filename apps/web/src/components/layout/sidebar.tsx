@@ -19,6 +19,7 @@ import {
   Video,
   FileText,
   Crown,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ interface SidebarProps {
   user: {
     email: string;
     name?: string;
+    isAdmin?: boolean;
   };
   onLogout: () => void;
 }
@@ -153,6 +155,11 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
           {mainNavItems.map((item) => (
             <NavLink key={item.href} item={item} />
           ))}
+          {user.isAdmin && (
+            <NavLink
+              item={{ label: 'Admin', href: '/admin', icon: Shield }}
+            />
+          )}
         </div>
 
         <Separator className="my-4" />

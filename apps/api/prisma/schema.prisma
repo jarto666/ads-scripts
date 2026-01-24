@@ -10,11 +10,23 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   magicLinkTokens MagicLinkToken[]
   projects        Project[]
+}
+
+model AccessRequest {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  status    String    @default("pending") // pending, approved, rejected
+  note      String?   // Optional note from requester
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status])
 }
 
 model MagicLinkToken {
