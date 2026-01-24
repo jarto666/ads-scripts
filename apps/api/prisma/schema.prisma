@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  magicLinkTokens MagicLinkToken[]
+  projects        Project[]
+}
+
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+model Project {
+  id                 String   @id @default(cuid())
+  name               String
+  productDescription String   @db.Text
+  offer              String?  @db.Text
+  brandVoice         String?  @db.Text
+  forbiddenClaims    String[] @default([])
+  platforms          String[] @default(["tiktok"])
+  language           String   @default("en")
+  region             String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  personas Persona[]
+  batches  Batch[]
+
+  @@index([userId])
+}
+
+model Persona {
+  id           String   @id @default(cuid())
+  name         String
+  description  String   @db.Text
+  demographics String?  @db.Text
+  painPoints   String[] @default([])
+  desires      String[] @default([])
+  objections   String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Batch {
+  id             String   @id @default(cuid())
+  status         String   @default("pending") // pending, processing, completed, failed
+  requestedCount Int
+  platform       String   // tiktok, reels, shorts
+  angles         String[]
+  durations      Int[]    // 15, 30, 45
+  pdfUrl         String?
+  csvUrl         String?
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scripts   Script[]
+
+  @@index([projectId])
+  @@index([status])
+}
+
+model Script {
+  id               String   @id @default(cuid())
+  status           String   @default("pending") // pending, completed, failed
+  angle            String
+  duration         Int
+  hook             String?  @db.Text
+  storyboard       Json?    // Array of storyboard steps
+  ctaVariants      String[] @default([])
+  filmingChecklist String[] @default([])
+  warnings         String[] @default([])
+  score            Int?     // 0-100
+  errorMessage     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  @@index([batchId])
+  @@index([status])
+}
