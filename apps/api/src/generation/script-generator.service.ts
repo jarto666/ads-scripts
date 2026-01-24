@@ -6,6 +6,7 @@ import {
   buildPass2Prompt,
   buildRepairPrompt,
 } from './prompt-builder';
+import { validateBeatCount } from './platform-profiles';
 import { ScoringService } from './scoring.service';
 import { Project, Persona, Batch, Script } from '@prisma/client';
 
@@ -91,25 +92,45 @@ export class ScriptGeneratorService {
         `Batch ${batchId}: ${existingScriptCount} existing scripts, generating ${remainingCount} more`,
       );
 
-      // Pass 1: Generate plans (for remaining scripts only)
-      this.logger.log(`Starting Pass 1 for batch ${batchId}`);
-      const plans = await this.generatePlans({
+      // Filter personas if specific ones were selected
+      const filteredPersonas =
+        batch.personaIds.length > 0
+          ? batch.project.personas.filter((p) => batch.personaIds.includes(p.id))
+          : batch.project.personas;
+
+      const projectWithFilteredPersonas = {
+        ...batch.project,
+        personas: filteredPersonas,
+      };
+
+      const batchWithFilteredProject = {
         ...batch,
+        project: projectWithFilteredPersonas,
         requestedCount: remainingCount,
-      });
+      };
+
+      // Pass 1: Generate plans (for remaining scripts only)
+      this.logger.log(`Starting Pass 1 for batch ${batchId} with ${filteredPersonas.length} personas`);
+      const plans = await this.generatePlans(batchWithFilteredProject);
 
       // Pass 2: Generate full scripts for each plan
       this.logger.log(`Starting Pass 2 for batch ${batchId}: ${plans.length} scripts`);
 
       for (const plan of plans) {
         try {
-          const script = await this.generateScript(batch, plan);
+          const script = await this.generateScript(batchWithFilteredProject, plan);
 
           // Score the script
           const { score, warnings } = this.scoringService.scoreScript(
             script,
             batch.project.forbiddenClaims,
           );
+
+          // Validate beat count
+          const beatWarning = validateBeatCount(script.storyboard, script.duration);
+          if (beatWarning) {
+            warnings.push(beatWarning);
+          }
 
           // Save to database
           await this.prisma.script.create({

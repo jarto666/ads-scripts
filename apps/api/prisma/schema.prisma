@@ -50,7 +50,6 @@ model Project {
   offer              String?  @db.Text
   brandVoice         String?  @db.Text
   forbiddenClaims    String[] @default([])
-  platforms          String[] @default(["tiktok"])
   language           String   @default("en")
   region             String?
   createdAt          DateTime @default(now())
@@ -88,6 +87,7 @@ model Batch {
   platform       String   // tiktok, reels, shorts
   angles         String[]
   durations      Int[]    // 15, 30, 45
+  personaIds     String[] @default([]) // Empty = all personas
   pdfUrl         String?
   csvUrl         String?
   errorMessage   String?

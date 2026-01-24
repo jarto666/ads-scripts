@@ -4,8 +4,6 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
-  ArrayMinSize,
-  IsIn,
 } from 'class-validator';
 
 export class CreateProjectDto {
@@ -33,11 +31,6 @@ export class CreateProjectDto {
   @IsString({ each: true })
   @IsOptional()
   forbiddenClaims?: string[];
-
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsIn(['tiktok', 'reels', 'shorts'], { each: true })
-  platforms: string[];
 
   @IsString()
   @IsOptional()
@@ -75,11 +68,6 @@ export class UpdateProjectDto {
   @IsString({ each: true })
   @IsOptional()
   forbiddenClaims?: string[];
-
-  @IsArray()
-  @IsIn(['tiktok', 'reels', 'shorts'], { each: true })
-  @IsOptional()
-  platforms?: string[];
 
   @IsString()
   @IsOptional()

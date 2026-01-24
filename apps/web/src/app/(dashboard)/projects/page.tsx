@@ -6,7 +6,7 @@ import {
   Plus,
   Search,
   FolderKanban,
-  MoreHorizontal,
+  Trash2,
   Calendar,
   FileText,
   ArrowRight,
@@ -39,7 +39,6 @@ interface Project {
   id: string;
   name: string;
   productDescription: string;
-  platforms?: string[];
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -97,7 +96,6 @@ export default function ProjectsPage() {
       const result = await projects.create({
         name: newProject.name,
         productDescription: newProject.productDescription,
-        platforms: ['tiktok'],
       });
       toast({
         title: 'Project created',
@@ -130,6 +128,27 @@ export default function ProjectsPage() {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    if (!confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await projects.delete(projectId);
+      toast({
+        title: 'Project deleted',
+        description: 'The project has been permanently deleted.',
+      });
+      fetchProjects();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete project',
+        variant: 'destructive',
+      });
+    }
   };
 
   if (isLoading) {
@@ -266,8 +285,7 @@ export default function ProjectsPage() {
           {filteredProjects.map((project, i) => (
             <Card
               key={project.id}
-              className="group cursor-pointer hover:border-primary/30 animate-fade-up"
-              style={{ animationDelay: `${i * 0.05}s` }}
+              className="group cursor-pointer hover:border-primary/30"
               onClick={() => router.push(`/projects/${project.id}`)}
             >
               <CardHeader className="pb-3">
@@ -285,13 +303,13 @@ export default function ProjectsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.stopPropagation();
-                      // TODO: Add dropdown menu
+                      handleDeleteProject(project.id, project.name);
                     }}
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
@@ -300,19 +318,7 @@ export default function ProjectsPage() {
                   {project.productDescription}
                 </CardDescription>
 
-                <div className="flex items-center gap-2 flex-wrap">
-                  {project.platforms?.map((platform) => (
-                    <Badge
-                      key={platform}
-                      variant={platform as 'tiktok' | 'reels' | 'shorts'}
-                      className="text-[10px]"
-                    >
-                      {platform}
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-border">
+                <div className="flex items-center justify-between pt-3 border-t border-border">
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />

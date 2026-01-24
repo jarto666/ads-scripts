@@ -61,6 +61,7 @@ export class BatchesService {
         platform: dto.platform,
         angles: dto.angles,
         durations: dto.durations,
+        personaIds: dto.personaIds || [],
         status: 'pending',
       },
     });

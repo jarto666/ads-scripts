@@ -23,7 +23,6 @@ export class ProjectsService {
         id: true,
         name: true,
         productDescription: true,
-        platforms: true,
         createdAt: true,
         updatedAt: true,
       },

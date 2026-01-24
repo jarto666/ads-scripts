@@ -25,7 +25,9 @@ import {
   MessageSquare,
   CheckCircle2,
   Loader2,
+  Users,
 } from "lucide-react";
+import { InfoTip } from "@/components/ui/info-block";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,7 +76,6 @@ interface ProjectData {
   offer?: string;
   brandVoice?: string;
   forbiddenClaims: string[];
-  platforms: string[];
   language: string;
   region?: string;
   personas: Persona[];
@@ -157,7 +158,6 @@ export default function ProjectDetailPage({
     offer: "",
     brandVoice: "",
     forbiddenClaims: "",
-    platforms: ["tiktok"] as string[],
     language: "en",
     region: "",
   });
@@ -178,9 +178,10 @@ export default function ProjectDetailPage({
 
   const [genSettings, setGenSettings] = useState({
     scriptsPerAngle: 3,
-    platform: "tiktok",
+    platform: "universal",
     angles: ["pain_agitation", "objection_reversal", "problem_solution"],
     durations: [15, 30],
+    personaIds: [] as string[], // Empty = all personas
   });
 
   // Calculate total scripts
@@ -241,7 +242,6 @@ export default function ProjectDetailPage({
         offer: data.offer || "",
         brandVoice: data.brandVoice || "",
         forbiddenClaims: data.forbiddenClaims.join("\n"),
-        platforms: data.platforms,
         language: data.language,
         region: data.region || "",
       });
@@ -309,7 +309,6 @@ export default function ProjectDetailPage({
           .split("\n")
           .map((s) => s.trim())
           .filter(Boolean),
-        platforms: formData.platforms,
         language: formData.language,
         region: formData.region || undefined,
       });
@@ -391,12 +390,15 @@ export default function ProjectDetailPage({
     }
   };
 
-  const togglePlatform = (platform: string) => {
-    setFormData((prev) => {
-      const platforms = prev.platforms.includes(platform)
-        ? prev.platforms.filter((p) => p !== platform)
-        : [...prev.platforms, platform];
-      return { ...prev, platforms: platforms.length ? platforms : [platform] };
+  const togglePersona = (personaId: string) => {
+    setGenSettings((prev) => {
+      if (personaId === "all") {
+        return { ...prev, personaIds: [] };
+      }
+      const newIds = prev.personaIds.includes(personaId)
+        ? prev.personaIds.filter((id) => id !== personaId)
+        : [...prev.personaIds, personaId];
+      return { ...prev, personaIds: newIds };
     });
   };
 
@@ -426,6 +428,10 @@ export default function ProjectDetailPage({
         platform: genSettings.platform,
         angles: genSettings.angles,
         durations: genSettings.durations,
+        personaIds:
+          genSettings.personaIds.length > 0
+            ? genSettings.personaIds
+            : undefined,
       });
       // Add new batch to the top of the list and select it
       setBatchesList((prev) => [batch, ...prev]);
@@ -661,7 +667,14 @@ export default function ProjectDetailPage({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="offer">Offer (optional)</Label>
+                  <Label htmlFor="offer" className="flex items-center">
+                    Offer (optional)
+                    <InfoTip>
+                      Promotional offers get woven into CTAs and closing hooks.
+                      Examples: &quot;20% off&quot;, &quot;Free shipping&quot;,
+                      &quot;Limited time&quot;.
+                    </InfoTip>
+                  </Label>
                   <Input
                     id="offer"
                     placeholder="e.g., 20% off, Free shipping, Buy 1 Get 1..."
@@ -673,7 +686,17 @@ export default function ProjectDetailPage({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="productDescription">Product Description</Label>
+                <Label
+                  htmlFor="productDescription"
+                  className="flex items-center"
+                >
+                  Product Description
+                  <InfoTip>
+                    The core context for all generated scripts. Describe what
+                    your product does, key benefits, and unique selling points.
+                    This appears in every AI prompt.
+                  </InfoTip>
+                </Label>
                 <Textarea
                   id="productDescription"
                   rows={6}
@@ -686,27 +709,6 @@ export default function ProjectDetailPage({
                     })
                   }
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Target Platforms</Label>
-                <div className="flex gap-2">
-                  {["tiktok", "reels", "shorts"].map((platform) => (
-                    <Button
-                      key={platform}
-                      type="button"
-                      variant={
-                        formData.platforms.includes(platform)
-                          ? "default"
-                          : "outline"
-                      }
-                      size="sm"
-                      onClick={() => togglePlatform(platform)}
-                      className="capitalize"
-                    >
-                      {platform}
-                    </Button>
-                  ))}
-                </div>
               </div>
               <div className="flex justify-end pt-4 border-t">
                 <Button onClick={handleSave} disabled={isSaving}>
@@ -721,9 +723,17 @@ export default function ProjectDetailPage({
         {/* Audience Tab */}
         <TabsContent value="audience" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Target Personas</CardTitle>
+            <CardHeader className="flex flex-row items-start justify-between gap-4">
+              <div className="space-y-1.5">
+                <CardTitle className="flex items-center">
+                  Target Personas
+                  <InfoTip>
+                    Personas inform script content. Pain points become hooks,
+                    desires become benefits, and objections get addressed. When
+                    generating, you can target all personas or select specific
+                    ones.
+                  </InfoTip>
+                </CardTitle>
                 <CardDescription>
                   Define your target audience segments for more personalized
                   scripts.
@@ -961,7 +971,15 @@ export default function ProjectDetailPage({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="brandVoice">Brand Voice Guidelines</Label>
+                <Label htmlFor="brandVoice" className="flex items-center">
+                  Brand Voice Guidelines
+                  <InfoTip>
+                    Defines tone and style for all scripts. Examples:
+                    &quot;Friendly and casual&quot;, &quot;Professional but not
+                    stuffy&quot;, &quot;Uses humor&quot;. The AI matches this
+                    voice.
+                  </InfoTip>
+                </Label>
                 <Textarea
                   id="brandVoice"
                   rows={4}
@@ -973,8 +991,13 @@ export default function ProjectDetailPage({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="forbiddenClaims">
+                <Label htmlFor="forbiddenClaims" className="flex items-center">
                   Forbidden Claims/Phrases (one per line)
+                  <InfoTip>
+                    Words or phrases the AI must never use. Scripts containing
+                    these are automatically flagged. Use for compliance (e.g.,
+                    &quot;cures&quot;, &quot;guaranteed&quot;).
+                  </InfoTip>
                 </Label>
                 <Textarea
                   id="forbiddenClaims"
@@ -988,10 +1011,6 @@ export default function ProjectDetailPage({
                     })
                   }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Scripts will be flagged if they contain these words or
-                  phrases.
-                </p>
               </div>
               <div className="flex justify-end pt-4 border-t">
                 <Button onClick={handleSave} disabled={isSaving}>
@@ -1045,21 +1064,6 @@ export default function ProjectDetailPage({
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-destructive/30 bg-destructive/5">
-            <CardHeader>
-              <CardTitle className="text-destructive">Danger Zone</CardTitle>
-              <CardDescription>
-                Irreversible actions. Please proceed with caution.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="destructive" size="sm">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Project
-              </Button>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Scripts Tab */}
@@ -1079,7 +1083,14 @@ export default function ProjectDetailPage({
             <CardContent className="space-y-6">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Script Angles</Label>
+                  <Label className="flex items-center">
+                    Script Angles
+                    <InfoTip>
+                      Different storytelling approaches. Each angle produces
+                      scripts with distinct hook styles and narrative
+                      structures. Select multiple for variety.
+                    </InfoTip>
+                  </Label>
                   <span className="text-xs text-muted-foreground">
                     {genSettings.angles.length} selected
                   </span>
@@ -1105,6 +1116,66 @@ export default function ProjectDetailPage({
                 </div>
               </div>
 
+              {/* Target Personas */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Target Personas
+                    {project.personas.length > 0 && (
+                      <InfoTip>
+                        Choose which audiences to target. &quot;All&quot; uses
+                        every persona as context. Selecting specific personas
+                        focuses scripts on those pain points and desires.
+                      </InfoTip>
+                    )}
+                  </Label>
+                  {project.personas.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {genSettings.personaIds.length === 0
+                        ? "All personas"
+                        : `${genSettings.personaIds.length} selected`}
+                    </span>
+                  )}
+                </div>
+                {project.personas.length === 0 ? (
+                  <div className="p-4 rounded-lg bg-secondary/30 border border-border text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No personas defined. Add personas in the Audience tab for
+                      targeted scripts.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => togglePersona("all")}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
+                        genSettings.personaIds.length === 0
+                          ? "bg-primary/15 border-primary/30 text-primary"
+                          : "bg-secondary/30 border-border hover:bg-secondary/60"
+                      }`}
+                    >
+                      All Personas
+                    </button>
+                    {project.personas.map((persona) => (
+                      <button
+                        key={persona.id}
+                        type="button"
+                        onClick={() => togglePersona(persona.id)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
+                          genSettings.personaIds.includes(persona.id)
+                            ? "bg-primary/15 border-primary/30 text-primary"
+                            : "bg-secondary/30 border-border hover:bg-secondary/60"
+                        }`}
+                      >
+                        {persona.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Scripts per Angle</Label>
@@ -1119,6 +1190,7 @@ export default function ProjectDetailPage({
                         scriptsPerAngle: parseInt(e.target.value) || 1,
                       })
                     }
+                    className="h-9"
                   />
                   <p className="text-xs text-muted-foreground">
                     Total: {totalScripts} scripts ({genSettings.angles.length}{" "}
@@ -1126,31 +1198,47 @@ export default function ProjectDetailPage({
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <Label>Platform</Label>
-                  <div className="flex gap-2">
-                    {["tiktok", "reels", "shorts"].map((platform) => (
-                      <Button
-                        key={platform}
-                        type="button"
-                        variant={
-                          genSettings.platform === platform
-                            ? "default"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() =>
-                          setGenSettings({ ...genSettings, platform })
-                        }
-                        className="capitalize flex-1"
-                      >
-                        {platform}
-                      </Button>
-                    ))}
+                  <Label className="flex items-center">
+                    Platform
+                    <InfoTip>
+                      Affects script pacing, hook style, and tone. TikTok is
+                      fast/raw, Reels is polished, Shorts is educational.
+                      Universal works across all platforms.
+                    </InfoTip>
+                  </Label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {["universal", "tiktok", "reels", "shorts"].map(
+                      (platform) => (
+                        <Button
+                          key={platform}
+                          type="button"
+                          variant={
+                            genSettings.platform === platform
+                              ? "default"
+                              : "outline"
+                          }
+                          size="sm"
+                          onClick={() =>
+                            setGenSettings({ ...genSettings, platform })
+                          }
+                          className="capitalize h-9"
+                        >
+                          {platform}
+                        </Button>
+                      ),
+                    )}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Durations</Label>
-                  <div className="flex gap-2">
+                  <Label className="flex items-center">
+                    Durations
+                    <InfoTip>
+                      Target video lengths. Shorter = punchier hooks and faster
+                      cuts. Longer = more storytelling. Select multiple for
+                      variety.
+                    </InfoTip>
+                  </Label>
+                  <div className="grid grid-cols-3 gap-1.5">
                     {DURATIONS.map((d) => (
                       <Button
                         key={d.value}
@@ -1162,7 +1250,7 @@ export default function ProjectDetailPage({
                         }
                         size="sm"
                         onClick={() => toggleDuration(d.value)}
-                        className="flex-1"
+                        className="h-9"
                       >
                         {d.label}
                       </Button>
@@ -1369,58 +1457,57 @@ export default function ProjectDetailPage({
               </div>
 
               {/* Filters */}
-              <div className="flex flex-wrap items-end gap-4 p-4 rounded-xl bg-secondary/30 border border-border">
-                <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0">
                   <Filter className="h-4 w-4" />
                   <span className="text-sm font-medium">Filters</span>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Angle</Label>
+                <div className="flex items-center gap-3 flex-wrap">
                   <Select value={filterAngle} onValueChange={setFilterAngle}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-36 h-9">
                       <SelectValue placeholder="All angles" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All angles</SelectItem>
-                      {SCRIPT_ANGLES.map((a) => (
-                        <SelectItem key={a.value} value={a.value}>
-                          {a.label}
-                        </SelectItem>
-                      ))}
+                      {[...new Set(scriptsList.map((s) => s.angle))].map((angle) => {
+                        const angleInfo = SCRIPT_ANGLES.find((a) => a.value === angle);
+                        return (
+                          <SelectItem key={angle} value={angle}>
+                            {angleInfo?.label || angle?.replace("_", " ")}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Duration</Label>
-                  <Select
+                  {/* <Select
                     value={filterDuration}
                     onValueChange={setFilterDuration}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-28 h-9">
                       <SelectValue placeholder="All" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="all">All durations</SelectItem>
                       {DURATIONS.map((d) => (
                         <SelectItem key={d.value} value={d.value.toString()}>
                           {d.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Min Score</Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={filterMinScore}
-                    onChange={(e) =>
-                      setFilterMinScore(parseInt(e.target.value) || 0)
-                    }
-                    className="w-20"
-                  />
+                  </Select> */}
+                  {/* <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Min score</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={filterMinScore}
+                      onChange={(e) =>
+                        setFilterMinScore(parseInt(e.target.value) || 0)
+                      }
+                      className="w-16 h-9"
+                    />
+                  </div> */}
                 </div>
               </div>
 
@@ -1612,13 +1699,12 @@ export default function ProjectDetailPage({
                                   Warnings
                                 </h4>
                               </div>
-                              <ul className="space-y-1">
+                              <ul className="space-y-1 list-disc list-inside marker:text-warning">
                                 {script.warnings.map((warning, i) => (
                                   <li
                                     key={i}
-                                    className="text-sm text-warning/90 flex items-start gap-2"
+                                    className="text-sm text-warning/90"
                                   >
-                                    <span className="text-warning mt-1">•</span>
                                     {warning}
                                   </li>
                                 ))}

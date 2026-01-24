@@ -1,32 +1,36 @@
 /* Import distinctive fonts - must be before tailwindcss import */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 
 @import "tailwindcss";
 
 @font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Regular.woff2")
+    format("woff2");
   font-weight: 400;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Medium.woff2")
+    format("woff2");
   font-weight: 500;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-SemiBold.woff2")
+    format("woff2");
   font-weight: 600;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Bold.woff2') format('woff2');
+  font-family: "Geist";
+  src: url("https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Bold.woff2")
+    format("woff2");
   font-weight: 700;
   font-style: normal;
 }
@@ -49,7 +53,7 @@
   /* Muted surfaces */
   --color-secondary: oklch(0.22 0.01 260);
   --color-secondary-foreground: oklch(0.85 0.01 260);
-  --color-muted: oklch(0.20 0.008 260);
+  --color-muted: oklch(0.2 0.008 260);
   --color-muted-foreground: oklch(0.55 0.01 260);
 
   /* Accent - warm amber for highlights */
@@ -59,14 +63,14 @@
   /* Status colors */
   --color-destructive: oklch(0.65 0.2 25);
   --color-destructive-foreground: oklch(0.98 0.01 25);
-  --color-success: oklch(0.70 0.17 145);
+  --color-success: oklch(0.7 0.17 145);
   --color-success-foreground: oklch(0.13 0.005 145);
   --color-warning: oklch(0.75 0.15 80);
   --color-warning-foreground: oklch(0.13 0.005 80);
 
   /* Borders and inputs */
   --color-border: oklch(0.25 0.01 260);
-  --color-input: oklch(0.20 0.01 260);
+  --color-input: oklch(0.2 0.01 260);
   --color-ring: oklch(0.75 0.18 195);
 
   /* Sidebar colors */
@@ -87,19 +91,28 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  *,
+  *::before,
+  *::after {
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--color-border);
   }
 
   html {
-    font-family: 'Geist', system-ui, sans-serif;
+    font-family: "Geist", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "ss01" 1;
+    min-height: 100%;
   }
 
   /* Scrollbar styling */
@@ -113,12 +126,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: oklch(0.30 0.01 260);
+    background: oklch(0.3 0.01 260);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.40 0.01 260);
+    background: oklch(0.4 0.01 260);
   }
 
   /* Selection */
@@ -132,7 +145,7 @@
   .glass {
     background: oklch(0.16 0.008 260 / 0.8);
     backdrop-filter: blur(12px);
-    border: 1px solid oklch(0.30 0.01 260 / 0.5);
+    border: 1px solid oklch(0.3 0.01 260 / 0.5);
   }
 
   /* Glow effect on hover */
@@ -146,7 +159,11 @@
 
   /* Gradient text */
   .gradient-text {
-    background: linear-gradient(135deg, oklch(0.75 0.18 195), oklch(0.80 0.15 220));
+    background: linear-gradient(
+      135deg,
+      oklch(0.75 0.18 195),
+      oklch(0.8 0.15 220)
+    );
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -158,14 +175,22 @@
   }
 
   .gradient-border::before {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     padding: 1px;
     border-radius: inherit;
-    background: linear-gradient(135deg, oklch(0.75 0.18 195), oklch(0.60 0.15 280));
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    background: linear-gradient(
+      135deg,
+      oklch(0.75 0.18 195),
+      oklch(0.6 0.15 280)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
   }
@@ -176,7 +201,7 @@
   }
 
   .noise::after {
-    content: '';
+    content: "";
     position: absolute;
     inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
@@ -187,15 +212,23 @@
 
   /* Platform badges */
   .badge-tiktok {
-    background: linear-gradient(135deg, oklch(0.55 0.20 350), oklch(0.65 0.22 195));
+    background: linear-gradient(
+      135deg,
+      oklch(0.55 0.2 350),
+      oklch(0.65 0.22 195)
+    );
   }
 
   .badge-reels {
-    background: linear-gradient(135deg, oklch(0.65 0.22 330), oklch(0.70 0.20 30));
+    background: linear-gradient(
+      135deg,
+      oklch(0.65 0.22 330),
+      oklch(0.7 0.2 30)
+    );
   }
 
   .badge-shorts {
-    background: linear-gradient(135deg, oklch(0.60 0.20 25), oklch(0.65 0.18 30));
+    background: linear-gradient(135deg, oklch(0.6 0.2 25), oklch(0.65 0.18 30));
   }
 
   /* Score indicators */
@@ -204,11 +237,11 @@
   }
 
   .score-medium {
-    color: oklch(0.80 0.15 80);
+    color: oklch(0.8 0.15 80);
   }
 
   .score-low {
-    color: oklch(0.70 0.18 25);
+    color: oklch(0.7 0.18 25);
   }
 
   /* Sidebar nav item */
@@ -219,7 +252,7 @@
 
   .nav-item:hover {
     background: oklch(0.18 0.008 260);
-    color: oklch(0.90 0.01 260);
+    color: oklch(0.9 0.01 260);
   }
 
   .nav-item.active {
@@ -228,7 +261,7 @@
   }
 
   .nav-item.active::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 50%;
@@ -242,18 +275,26 @@
   /* Stat card */
   .stat-card {
     @apply relative overflow-hidden rounded-xl p-5;
-    background: linear-gradient(135deg, oklch(0.18 0.01 260), oklch(0.15 0.008 260));
+    background: linear-gradient(
+      135deg,
+      oklch(0.18 0.01 260),
+      oklch(0.15 0.008 260)
+    );
     border: 1px solid oklch(0.25 0.01 260);
   }
 
   .stat-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: 0;
     width: 100px;
     height: 100px;
-    background: radial-gradient(circle, oklch(0.75 0.18 195 / 0.1) 0%, transparent 70%);
+    background: radial-gradient(
+      circle,
+      oklch(0.75 0.18 195 / 0.1) 0%,
+      transparent 70%
+    );
   }
 
   /* Script card */
@@ -270,7 +311,9 @@
   }
 
   /* Input focus glow */
-  input:focus, textarea:focus, select:focus {
+  input:focus,
+  textarea:focus,
+  select:focus {
     box-shadow: 0 0 0 2px oklch(0.75 0.18 195 / 0.2);
   }
 
@@ -285,7 +328,8 @@
 
   /* Pulse animation for processing states */
   @keyframes pulse-glow {
-    0%, 100% {
+    0%,
+    100% {
       box-shadow: 0 0 20px oklch(0.75 0.18 195 / 0.2);
     }
     50% {
@@ -310,21 +354,38 @@
   }
 
   .animate-fade-up {
+    opacity: 0;
     animation: fade-up 0.4s ease-out forwards;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
 
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.1s; }
-  .stagger-3 { animation-delay: 0.15s; }
-  .stagger-4 { animation-delay: 0.2s; }
-  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-1 {
+    animation-delay: 0.05s;
+  }
+  .stagger-2 {
+    animation-delay: 0.1s;
+  }
+  .stagger-3 {
+    animation-delay: 0.15s;
+  }
+  .stagger-4 {
+    animation-delay: 0.2s;
+  }
+  .stagger-5 {
+    animation-delay: 0.25s;
+  }
 }
 
 @layer utilities {
   /* Text utilities */
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, oklch(0.75 0.18 195), oklch(0.80 0.12 220));
+    background-image: linear-gradient(
+      135deg,
+      oklch(0.75 0.18 195),
+      oklch(0.8 0.12 220)
+    );
   }
 
   /* Backdrop blur levels */

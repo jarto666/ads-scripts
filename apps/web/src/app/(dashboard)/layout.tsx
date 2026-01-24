@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useRequireAuth } from '@/lib/auth';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useRequireAuth } from "@/lib/auth";
+import { Sidebar } from "@/components/layout/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardLayout({
   children,
@@ -13,7 +13,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex">
+      <div className="min-h-screen flex">
         {/* Sidebar skeleton */}
         <div className="w-[260px] h-screen bg-sidebar border-r border-border p-4 space-y-4">
           <Skeleton className="h-10 w-full" />
@@ -40,12 +40,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen flex">
       <Sidebar user={user} onLogout={logout} />
-      <main className="flex-1 ml-[260px] min-h-screen">
-        <div className="p-8">
-          {children}
-        </div>
+      <main className="flex-1 ml-[260px] min-h-screen flex flex-col">
+        <div className="p-8 flex-1">{children}</div>
       </main>
     </div>
   );

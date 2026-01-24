@@ -4,7 +4,9 @@
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
       "Bash(npx prisma:*)",
-      "Bash(npm run build:api:*)"
+      "Bash(npm run build:api:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)"
     ]
   }
 }

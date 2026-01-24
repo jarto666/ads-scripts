@@ -164,7 +164,6 @@ export const projects = {
       offer?: string;
       brandVoice?: string;
       forbiddenClaims: string[];
-      platforms: string[];
       language: string;
       region?: string;
       createdAt: string;
@@ -178,7 +177,6 @@ export const projects = {
     offer?: string;
     brandVoice?: string;
     forbiddenClaims?: string[];
-    platforms: string[];
     language?: string;
     region?: string;
   }) =>
@@ -195,7 +193,6 @@ export const projects = {
       offer?: string;
       brandVoice?: string;
       forbiddenClaims?: string[];
-      platforms: string[];
       language?: string;
       region?: string;
     }>,
@@ -203,6 +200,11 @@ export const projects = {
     fetchApi<{ id: string }>(`/projects/${id}`, {
       method: 'PUT',
       json: data,
+    }),
+
+  delete: (id: string) =>
+    fetchApi<{ id: string }>(`/projects/${id}`, {
+      method: 'DELETE',
     }),
 };
 
@@ -272,6 +274,7 @@ export interface Batch {
   platform: string;
   angles: string[];
   durations: number[];
+  personaIds: string[];
   pdfUrl?: string;
   csvUrl?: string;
   errorMessage?: string;
@@ -318,6 +321,7 @@ export const batches = {
       platform: string;
       angles: string[];
       durations: number[];
+      personaIds?: string[];
     },
   ) =>
     fetchApi<Batch>(`/projects/${projectId}/batches`, {

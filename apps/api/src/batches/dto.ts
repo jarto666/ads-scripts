@@ -2,6 +2,7 @@ import {
   IsString,
   IsArray,
   IsNumber,
+  IsOptional,
   Min,
   Max,
   ArrayMinSize,
@@ -15,7 +16,7 @@ export class CreateBatchDto {
   requestedCount: number;
 
   @IsString()
-  @IsIn(['tiktok', 'reels', 'shorts'])
+  @IsIn(['universal', 'tiktok', 'reels', 'shorts'])
   platform: string;
 
   @IsArray()
@@ -27,6 +28,11 @@ export class CreateBatchDto {
   @IsNumber({}, { each: true })
   @ArrayMinSize(1)
   durations: number[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  personaIds?: string[]; // Empty or omitted = all personas
 }
 
 export class RegenerateDto {
