@@ -52,11 +52,18 @@ export class ScriptGeneratorService {
             personas: true,
           },
         },
+        scripts: true, // Include existing scripts for retry resilience
       },
     });
 
     if (!batch) {
       throw new Error('Batch not found');
+    }
+
+    // Skip if already completed
+    if (batch.status === 'completed') {
+      this.logger.log(`Batch ${batchId} already completed, skipping`);
+      return;
     }
 
     try {
@@ -66,9 +73,30 @@ export class ScriptGeneratorService {
         data: { status: 'processing' },
       });
 
-      // Pass 1: Generate plans
+      // Check if we have existing scripts (retry scenario)
+      const existingScriptCount = batch.scripts.length;
+      const remainingCount = batch.requestedCount - existingScriptCount;
+
+      if (remainingCount <= 0) {
+        // All scripts already generated, just mark as complete
+        await this.prisma.batch.update({
+          where: { id: batchId },
+          data: { status: 'completed' },
+        });
+        this.logger.log(`Batch ${batchId} already has all scripts, marking complete`);
+        return;
+      }
+
+      this.logger.log(
+        `Batch ${batchId}: ${existingScriptCount} existing scripts, generating ${remainingCount} more`,
+      );
+
+      // Pass 1: Generate plans (for remaining scripts only)
       this.logger.log(`Starting Pass 1 for batch ${batchId}`);
-      const plans = await this.generatePlans(batch);
+      const plans = await this.generatePlans({
+        ...batch,
+        requestedCount: remainingCount,
+      });
 
       // Pass 2: Generate full scripts for each plan
       this.logger.log(`Starting Pass 2 for batch ${batchId}: ${plans.length} scripts`);
@@ -131,6 +159,9 @@ export class ScriptGeneratorService {
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
         },
       });
+
+      // Re-throw to let BullMQ handle retry
+      throw error;
     }
   }
 

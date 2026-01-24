@@ -1,13 +1,20 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScriptGeneratorService } from '../generation/script-generator.service';
 import { CreateBatchDto, RegenerateDto } from './dto';
+import { SCRIPT_GENERATION_QUEUE } from '../queue/constants';
+import { ScriptGenerationJobData } from '../queue/script-generation.processor';
 
 @Injectable()
 export class BatchesService {
+  private readonly logger = new Logger(BatchesService.name);
+
   constructor(
     private prisma: PrismaService,
     private scriptGenerator: ScriptGeneratorService,
+    @InjectQueue(SCRIPT_GENERATION_QUEUE) private scriptQueue: Queue<ScriptGenerationJobData>,
   ) {}
 
   private async verifyProjectAccess(userId: string, projectId: string) {
@@ -58,10 +65,16 @@ export class BatchesService {
       },
     });
 
-    // Start generation in background (fire and forget)
-    this.scriptGenerator.generateBatch(batch.id).catch((err) => {
-      console.error('Background generation failed:', err);
-    });
+    // Add job to queue for processing
+    const job = await this.scriptQueue.add(
+      'generate-batch',
+      { batchId: batch.id },
+      {
+        jobId: `batch-${batch.id}`,
+      },
+    );
+
+    this.logger.log(`Queued job ${job.id} for batch ${batch.id}`);
 
     return batch;
   }

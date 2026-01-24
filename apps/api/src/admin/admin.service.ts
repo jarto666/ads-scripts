@@ -1,14 +1,19 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { SCRIPT_GENERATION_QUEUE } from '../queue/constants';
+import { ScriptGenerationJobData } from '../queue/script-generation.processor';
 
 @Injectable()
 export class AdminService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    @InjectQueue(SCRIPT_GENERATION_QUEUE) private scriptQueue: Queue<ScriptGenerationJobData>,
   ) {}
 
   // Access Requests
@@ -186,5 +191,48 @@ export class AdminService {
       totalProjects,
       totalScripts,
     };
+  }
+
+  // Queue Stats
+  async getQueueStats() {
+    const [waiting, active, completed, failed, delayed] = await Promise.all([
+      this.scriptQueue.getWaitingCount(),
+      this.scriptQueue.getActiveCount(),
+      this.scriptQueue.getCompletedCount(),
+      this.scriptQueue.getFailedCount(),
+      this.scriptQueue.getDelayedCount(),
+    ]);
+
+    return {
+      waiting,
+      active,
+      completed,
+      failed,
+      delayed,
+    };
+  }
+
+  async getQueueJobs(status: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed' = 'active') {
+    const jobs = await this.scriptQueue.getJobs([status], 0, 20);
+    return jobs.map((job) => ({
+      id: job.id,
+      name: job.name,
+      data: job.data,
+      status,
+      attemptsMade: job.attemptsMade,
+      timestamp: job.timestamp,
+      processedOn: job.processedOn,
+      finishedOn: job.finishedOn,
+      failedReason: job.failedReason,
+    }));
+  }
+
+  async retryJob(jobId: string) {
+    const job = await this.scriptQueue.getJob(jobId);
+    if (!job) {
+      throw new NotFoundException('Job not found');
+    }
+    await job.retry();
+    return { success: true };
   }
 }

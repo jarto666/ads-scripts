@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Zap, ArrowRight, Sparkles, Video, FileText, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,27 @@ const features = [
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [linkSent, setLinkSent] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
+  const [mode, setMode] = useState<'request' | 'login'>('request');
   const { toast } = useToast();
   const router = useRouter();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    setMounted(true);
+    const checkAuth = async () => {
+      try {
+        await auth.me();
+        router.replace('/dashboard');
+      } catch {
+        // Not logged in, show the page
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,21 +56,33 @@ export default function LoginPage() {
 
     try {
       await auth.requestLink(email);
-      setLinkSent(true);
+      setSubmitted(true);
       toast({
-        title: 'Request submitted',
-        description: 'We\'ll be in touch soon.',
+        title: mode === 'login' ? 'Magic link sent' : 'Request submitted',
+        description: mode === 'login' ? 'Check your email to sign in.' : 'We\'ll be in touch soon.',
       });
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to submit request. Please try again.',
+        description: mode === 'login' ? 'Failed to send magic link. Please try again.' : 'Failed to submit request. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while checking auth
+  if (!mounted || isCheckingAuth) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-background flex">
@@ -133,36 +163,53 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {linkSent ? (
+          {submitted ? (
             /* Success state */
             <div className="animate-fade-up">
               <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-success/15 border border-success/20 mb-6">
                 <CheckCircle2 className="h-8 w-8 text-success" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Request received</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {mode === 'login' ? 'Check your email' : 'Request received'}
+              </h2>
               <p className="text-muted-foreground mb-6">
-                We&apos;ve received your access request for{' '}
-                <span className="text-foreground font-medium">{email}</span>
+                {mode === 'login' ? (
+                  <>
+                    We&apos;ve sent a magic link to{' '}
+                    <span className="text-foreground font-medium">{email}</span>
+                  </>
+                ) : (
+                  <>
+                    We&apos;ve received your access request for{' '}
+                    <span className="text-foreground font-medium">{email}</span>
+                  </>
+                )}
               </p>
               <div className="p-4 rounded-xl bg-secondary/50 border border-border mb-6">
                 <p className="text-sm text-muted-foreground">
-                  We&apos;ll review your request and send you a magic link once approved. This usually takes less than 24 hours.
+                  {mode === 'login'
+                    ? 'Click the link in your email to sign in. The link expires in 24 hours.'
+                    : 'We\'ll review your request and send you a magic link once approved. This usually takes less than 24 hours.'}
                 </p>
               </div>
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => setLinkSent(false)}
+                onClick={() => setSubmitted(false)}
               >
                 Use a different email
               </Button>
             </div>
           ) : (
-            /* Request access form */
+            /* Auth form */
             <div className="animate-fade-up">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Request Access</h2>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {mode === 'login' ? 'Welcome back' : 'Request Access'}
+              </h2>
               <p className="text-muted-foreground mb-8">
-                Enter your email to join the waitlist
+                {mode === 'login'
+                  ? 'Enter your email to receive a magic link'
+                  : 'Enter your email to join the waitlist'}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -187,11 +234,11 @@ export default function LoginPage() {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Submitting...
+                      {mode === 'login' ? 'Sending...' : 'Submitting...'}
                     </span>
                   ) : (
                     <span className="flex items-center gap-2">
-                      Request Access
+                      {mode === 'login' ? 'Send Magic Link' : 'Request Access'}
                       <ArrowRight className="h-4 w-4" />
                     </span>
                   )}
@@ -200,7 +247,29 @@ export default function LoginPage() {
 
               <div className="mt-8 pt-6 border-t border-border">
                 <p className="text-sm text-muted-foreground text-center">
-                  Already have access? You&apos;ll receive a magic link to sign in.
+                  {mode === 'login' ? (
+                    <>
+                      Don&apos;t have access?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('request')}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Request it
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have access?{' '}
+                      <button
+                        type="button"
+                        onClick={() => setMode('login')}
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Sign in
+                      </button>
+                    </>
+                  )}
                 </p>
               </div>
 

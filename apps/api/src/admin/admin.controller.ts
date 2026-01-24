@@ -70,4 +70,22 @@ export class AdminController {
     const link = await this.adminService.generateMagicLink(id);
     return { magicLink: link };
   }
+
+  // Queue
+  @Get('queue/stats')
+  async getQueueStats() {
+    return this.adminService.getQueueStats();
+  }
+
+  @Get('queue/jobs')
+  async getQueueJobs(
+    @Query('status') status?: 'waiting' | 'active' | 'completed' | 'failed' | 'delayed',
+  ) {
+    return this.adminService.getQueueJobs(status);
+  }
+
+  @Post('queue/jobs/:id/retry')
+  async retryJob(@Param('id') id: string) {
+    return this.adminService.retryJob(id);
+  }
 }

@@ -47,8 +47,8 @@ export class AuthService {
     const token = crypto.randomBytes(32).toString('hex');
     const tokenHash = await bcrypt.hash(token, 10);
 
-    // Token expires in 15 minutes
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    // Token expires in 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // Store token
     await this.prisma.magicLinkToken.create({
