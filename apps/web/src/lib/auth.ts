@@ -1,44 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { auth as authApi } from '@/lib/api';
-
-interface User {
-  id: string;
-  email: string;
-  isAdmin: boolean;
-  plan: 'free' | 'pro';
-  createdAt: string;
-}
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  useAuthControllerMe,
+  useAuthControllerLogout,
+  getAuthControllerMeQueryKey,
+} from '@/api/generated/api';
+import type { UserDto } from '@/api/generated/models';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const userData = await authApi.me();
-        setUser(userData);
-      } catch (error) {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const { data, isLoading, error } = useAuthControllerMe();
+  const logoutMutation = useAuthControllerLogout();
 
-    checkAuth();
-  }, []);
+  const user: UserDto | null = data?.data ?? null;
 
   const logout = async () => {
     try {
-      await authApi.logout();
-    } catch (error) {
+      await logoutMutation.mutateAsync();
+    } catch {
       // Ignore errors
     }
-    setUser(null);
+    queryClient.setQueryData(getAuthControllerMeQueryKey(), null);
     router.push('/');
   };
 

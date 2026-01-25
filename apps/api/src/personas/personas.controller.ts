@@ -8,17 +8,21 @@ import {
   Param,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { PersonasService } from './personas.service';
-import { CreatePersonaDto, UpdatePersonaDto } from './dto';
+import { CreatePersonaDto, UpdatePersonaDto, PersonaResponseDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator';
 
+@ApiTags('Personas')
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class PersonasController {
   constructor(private personasService: PersonasService) {}
 
   @Post('projects/:projectId/personas')
+  @ApiOperation({ summary: 'Create a new persona for a project' })
+  @ApiResponse({ status: 201, type: PersonaResponseDto })
   async create(
     @CurrentUser() user: CurrentUserPayload,
     @Param('projectId') projectId: string,
@@ -28,6 +32,8 @@ export class PersonasController {
   }
 
   @Get('projects/:projectId/personas')
+  @ApiOperation({ summary: 'List all personas for a project' })
+  @ApiResponse({ status: 200, type: [PersonaResponseDto] })
   async findAllByProject(
     @CurrentUser() user: CurrentUserPayload,
     @Param('projectId') projectId: string,
@@ -36,6 +42,8 @@ export class PersonasController {
   }
 
   @Get('personas/:id')
+  @ApiOperation({ summary: 'Get a persona by ID' })
+  @ApiResponse({ status: 200, type: PersonaResponseDto })
   async findOne(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
@@ -44,6 +52,8 @@ export class PersonasController {
   }
 
   @Put('personas/:id')
+  @ApiOperation({ summary: 'Update a persona' })
+  @ApiResponse({ status: 200, type: PersonaResponseDto })
   async update(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
@@ -53,6 +63,8 @@ export class PersonasController {
   }
 
   @Delete('personas/:id')
+  @ApiOperation({ summary: 'Delete a persona' })
+  @ApiResponse({ status: 200, type: PersonaResponseDto })
   async delete(
     @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,

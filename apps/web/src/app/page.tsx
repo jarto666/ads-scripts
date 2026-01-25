@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { auth } from '@/lib/api';
+import { authControllerMe, authControllerRequestLink } from '@/api/generated/api';
 
 const features = [
   { icon: Sparkles, text: 'AI-powered script generation' },
@@ -30,7 +30,7 @@ export default function LoginPage() {
     setMounted(true);
     const checkAuth = async () => {
       try {
-        await auth.me();
+        await authControllerMe();
         router.replace('/dashboard');
       } catch {
         // Not logged in, show the page
@@ -55,7 +55,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await auth.requestLink(email);
+      await authControllerRequestLink({ email });
       setSubmitted(true);
       toast({
         title: mode === 'login' ? 'Magic link sent' : 'Request submitted',

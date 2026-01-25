@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { auth } from '@/lib/api';
+import { authControllerConsumeLink } from '@/api/generated/api';
 
 export function AuthCallbackContent() {
   const router = useRouter();
@@ -20,7 +20,7 @@ export function AuthCallbackContent() {
 
     const consumeToken = async () => {
       try {
-        await auth.consumeLink(token);
+        await authControllerConsumeLink({ token });
         router.push('/projects');
       } catch (err) {
         setError('Invalid or expired magic link. Please request a new one.');

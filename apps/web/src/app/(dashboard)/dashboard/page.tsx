@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -17,15 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { projects } from "@/lib/api";
-
-interface Project {
-  id: string;
-  name: string;
-  productDescription: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useProjectsControllerFindAll } from "@/api/generated/api";
 
 interface StatCard {
   label: string;
@@ -36,23 +27,9 @@ interface StatCard {
 }
 
 export default function DashboardPage() {
-  const [projectsList, setProjectsList] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await projects.list();
-        setProjectsList(data);
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProjects();
-  }, []);
+  const { data, isLoading } = useProjectsControllerFindAll();
+  const projectsList = data?.data ?? [];
 
   // Mock data for demo - in production, these would come from API
   const stats: StatCard[] = [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Trash2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
-import { settings, UserProfile } from "@/lib/api";
+import {
+  useSettingsControllerGetProfile,
+  useSettingsControllerUpdateProfile,
+  useSettingsControllerDeleteAccount,
+} from "@/api/generated/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,39 +32,25 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function SettingsPage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [name, setName] = useState("");
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const { data, isLoading } = useSettingsControllerGetProfile();
+  const updateMutation = useSettingsControllerUpdateProfile();
+  const deleteMutation = useSettingsControllerDeleteAccount();
 
-  const loadProfile = async () => {
-    try {
-      const data = await settings.getProfile();
-      setProfile(data);
-      setName(data.name || "");
-    } catch {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load profile",
-      });
-    } finally {
-      setIsLoading(false);
+  const profile = data?.data ?? null;
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.name || "");
     }
-  };
+  }, [profile]);
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
-      const updated = await settings.updateProfile({ name: name || undefined });
-      setProfile(updated);
+      await updateMutation.mutateAsync({ data: { name: name || undefined } });
       toast({
         title: "Profile saved",
         description: "Your name has been updated.",
@@ -71,15 +61,12 @@ export default function SettingsPage() {
         title: "Error",
         description: "Failed to save profile",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    setIsDeleting(true);
     try {
-      await settings.deleteAccount();
+      await deleteMutation.mutateAsync();
       toast({
         title: "Account deleted",
         description: "Your account has been permanently deleted.",
@@ -91,7 +78,6 @@ export default function SettingsPage() {
         title: "Error",
         description: "Failed to delete account",
       });
-      setIsDeleting(false);
     }
   };
 
@@ -155,8 +141,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <Button onClick={handleSave} disabled={updateMutation.isPending}>
+            {updateMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save Changes
           </Button>
         </CardContent>
@@ -201,10 +187,10 @@ export default function SettingsPage() {
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAccount}
-                    disabled={isDeleting}
+                    disabled={deleteMutation.isPending}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
-                    {isDeleting && (
+                    {deleteMutation.isPending && (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     )}
                     Delete Account

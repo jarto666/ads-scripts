@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Search,
@@ -30,26 +31,16 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { projects } from '@/lib/api';
-
-interface Project {
-  id: string;
-  name: string;
-  productDescription: string;
-  createdAt: string;
-  updatedAt: string;
-  _count?: {
-    batches: number;
-  };
-}
+import {
+  useProjectsControllerFindAll,
+  useProjectsControllerCreate,
+  useProjectsControllerDelete,
+  getProjectsControllerFindAllQueryKey,
+} from '@/api/generated/api';
 
 export default function ProjectsPage() {
-  const [projectsList, setProjectsList] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [newProject, setNewProject] = useState({
@@ -58,25 +49,13 @@ export default function ProjectsPage() {
   });
   const { toast } = useToast();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const fetchProjects = async () => {
-    try {
-      const data = await projects.list();
-      setProjectsList(data);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load projects',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data, isLoading } = useProjectsControllerFindAll();
+  const createMutation = useProjectsControllerCreate();
+  const deleteMutation = useProjectsControllerDelete();
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  const projectsList = data?.data ?? [];
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,12 +69,12 @@ export default function ProjectsPage() {
       return;
     }
 
-    setIsCreating(true);
-
     try {
-      const result = await projects.create({
-        name: newProject.name,
-        productDescription: newProject.productDescription,
+      const result = await createMutation.mutateAsync({
+        data: {
+          name: newProject.name,
+          productDescription: newProject.productDescription,
+        },
       });
       toast({
         title: 'Project created',
@@ -103,15 +82,34 @@ export default function ProjectsPage() {
       });
       setDialogOpen(false);
       setNewProject({ name: '', productDescription: '' });
-      router.push(`/projects/${result.id}`);
-    } catch (error) {
+      router.push(`/projects/${result.data.id}`);
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to create project',
         variant: 'destructive',
       });
-    } finally {
-      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string, projectName: string) => {
+    if (!confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteMutation.mutateAsync({ id: projectId });
+      toast({
+        title: 'Project deleted',
+        description: 'The project has been permanently deleted.',
+      });
+      queryClient.invalidateQueries({ queryKey: getProjectsControllerFindAllQueryKey() });
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete project',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -128,27 +126,6 @@ export default function ProjectsPage() {
       day: 'numeric',
       year: 'numeric',
     });
-  };
-
-  const handleDeleteProject = async (projectId: string, projectName: string) => {
-    if (!confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      await projects.delete(projectId);
-      toast({
-        title: 'Project deleted',
-        description: 'The project has been permanently deleted.',
-      });
-      fetchProjects();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to delete project',
-        variant: 'destructive',
-      });
-    }
   };
 
   if (isLoading) {
@@ -230,8 +207,8 @@ export default function ProjectsPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? (
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       Creating...
@@ -282,7 +259,7 @@ export default function ProjectsPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project, i) => (
+          {filteredProjects.map((project) => (
             <Card
               key={project.id}
               className="group cursor-pointer hover:border-primary/30"
@@ -324,10 +301,10 @@ export default function ProjectsPage() {
                       <Calendar className="h-3 w-3" />
                       {formatDate(project.createdAt)}
                     </span>
-                    {project._count?.batches !== undefined && (
+                    {(project as unknown as { _count?: { batches?: number } })._count?.batches !== undefined && (
                       <span className="flex items-center gap-1">
                         <FileText className="h-3 w-3" />
-                        {project._count.batches} batches
+                        {(project as unknown as { _count: { batches: number } })._count.batches} batches
                       </span>
                     )}
                   </div>

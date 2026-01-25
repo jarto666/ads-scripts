@@ -49,12 +49,45 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import {
-  auth,
-  admin,
-  type AccessRequest,
-  type AdminUser,
-  type AdminStats,
-} from '@/lib/api';
+  authControllerMe,
+  adminControllerGetStats,
+  adminControllerGetRequests,
+  adminControllerGetUsers,
+  adminControllerApproveRequest,
+  adminControllerRejectRequest,
+  adminControllerDeleteRequest,
+  adminControllerCreateUser,
+  adminControllerDeleteUser,
+  adminControllerToggleAdmin,
+  adminControllerUpdateUserPlan,
+  adminControllerGenerateMagicLink,
+} from '@/api/generated/api';
+
+interface AccessRequest {
+  id: string;
+  email: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+}
+
+interface AdminUser {
+  id: string;
+  email: string;
+  isAdmin: boolean;
+  plan: 'free' | 'pro';
+  createdAt: string;
+  _count: {
+    projects: number;
+  };
+}
+
+interface AdminStats {
+  totalUsers: number;
+  totalProjects: number;
+  totalScripts: number;
+  totalRequests: number;
+  pendingRequests: number;
+}
 
 export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +113,8 @@ export default function AdminPage() {
 
   const checkAdminAccess = async () => {
     try {
-      const user = await auth.me();
+      const result = await authControllerMe();
+      const user = result.data;
       if (!user.isAdmin) {
         router.push('/projects');
         return;
@@ -96,8 +130,8 @@ export default function AdminPage() {
 
   const fetchStats = async () => {
     try {
-      const data = await admin.getStats();
-      setStats(data);
+      const result = await adminControllerGetStats();
+      setStats(result.data as unknown as AdminStats);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
@@ -105,8 +139,8 @@ export default function AdminPage() {
 
   const fetchRequests = async () => {
     try {
-      const data = await admin.getRequests();
-      setRequests(data);
+      const result = await adminControllerGetRequests({ status: 'all' });
+      setRequests(result.data as unknown as AccessRequest[]);
     } catch (error) {
       console.error('Failed to fetch requests:', error);
     }
@@ -114,8 +148,8 @@ export default function AdminPage() {
 
   const fetchUsers = async () => {
     try {
-      const data = await admin.getUsers();
-      setUsers(data);
+      const result = await adminControllerGetUsers();
+      setUsers(result.data as unknown as AdminUser[]);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     }
@@ -123,7 +157,8 @@ export default function AdminPage() {
 
   const handleApprove = async (requestId: string) => {
     try {
-      const result = await admin.approveRequest(requestId);
+      const response = await adminControllerApproveRequest(requestId);
+      const result = response.data as unknown as { user: { email: string }; created: boolean };
       toast({
         title: 'Request approved',
         description: result.created
@@ -142,7 +177,7 @@ export default function AdminPage() {
 
   const handleReject = async (requestId: string) => {
     try {
-      await admin.rejectRequest(requestId);
+      await adminControllerRejectRequest(requestId);
       toast({ title: 'Request rejected' });
       await Promise.all([fetchStats(), fetchRequests()]);
     } catch {
@@ -156,7 +191,7 @@ export default function AdminPage() {
 
   const handleDeleteRequest = async (requestId: string) => {
     try {
-      await admin.deleteRequest(requestId);
+      await adminControllerDeleteRequest(requestId);
       toast({ title: 'Request deleted' });
       await Promise.all([fetchStats(), fetchRequests()]);
     } catch {
@@ -173,7 +208,7 @@ export default function AdminPage() {
 
     setIsCreatingUser(true);
     try {
-      await admin.createUser(newUserEmail);
+      await adminControllerCreateUser();
       toast({ title: 'User created', description: newUserEmail });
       setNewUserEmail('');
       await Promise.all([fetchStats(), fetchUsers()]);
@@ -190,7 +225,7 @@ export default function AdminPage() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      await admin.deleteUser(userId);
+      await adminControllerDeleteUser(userId);
       toast({ title: 'User deleted' });
       await Promise.all([fetchStats(), fetchUsers()]);
     } catch {
@@ -204,7 +239,8 @@ export default function AdminPage() {
 
   const handleToggleAdmin = async (userId: string) => {
     try {
-      const updated = await admin.toggleAdmin(userId);
+      const response = await adminControllerToggleAdmin(userId);
+      const updated = response.data as unknown as { email: string; isAdmin: boolean };
       toast({
         title: updated.isAdmin ? 'Admin granted' : 'Admin revoked',
         description: updated.email,
@@ -221,7 +257,8 @@ export default function AdminPage() {
 
   const handleUpdatePlan = async (userId: string, plan: 'free' | 'pro') => {
     try {
-      const updated = await admin.updateUserPlan(userId, plan);
+      const response = await adminControllerUpdateUserPlan(userId);
+      const updated = response.data as unknown as { email: string };
       toast({
         title: 'Plan updated',
         description: `${updated.email} is now on ${plan} plan`,
@@ -239,7 +276,8 @@ export default function AdminPage() {
   const handleGenerateMagicLink = async (userId: string) => {
     setGeneratingLinkFor(userId);
     try {
-      const result = await admin.generateMagicLink(userId);
+      const response = await adminControllerGenerateMagicLink(userId);
+      const result = response.data as unknown as { magicLink: string };
       setGeneratedLink(result.magicLink);
       setMagicLinkDialog(true);
     } catch {

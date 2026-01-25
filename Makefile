@@ -1,11 +1,11 @@
-.PHONY: help install dev dev-api dev-web build build-api build-web db-up db-down db-push db-migrate db-generate db-studio clean
+.PHONY: help install dev dev-api dev-web dev-api-watch build build-api build-web db-up db-down db-push db-migrate db-generate db-studio api-generate clean
 
 # Default target
 help:
 	@echo "UGC Script Factory - Available commands:"
 	@echo ""
 	@echo "  make install      - Install all dependencies"
-	@echo "  make dev          - Start all services (db + api + web)"
+	@echo "  make dev          - Start all services (db + api + web + api-watch)"
 	@echo "  make dev-api      - Start API server only"
 	@echo "  make dev-web      - Start web server only"
 	@echo "  make build        - Build all packages"
@@ -20,6 +20,9 @@ help:
 	@echo "  make db-generate  - Generate Prisma client"
 	@echo "  make db-studio    - Open Prisma Studio"
 	@echo ""
+	@echo "API Client:"
+	@echo "  make api-generate - Generate API client from OpenAPI spec"
+	@echo ""
 	@echo "  make clean        - Remove node_modules and build artifacts"
 
 # Install dependencies
@@ -31,13 +34,16 @@ install:
 # Development
 dev: db-up
 	@echo "Starting development servers..."
-	@make dev-api & make dev-web
+	@make dev-api & sleep 3 && make dev-api-watch & make dev-web
 
 dev-api:
 	npm run dev -w apps/api
 
 dev-web:
 	npm run dev -w apps/web
+
+dev-api-watch:
+	npm run api:watch -w apps/web
 
 # Build
 build: build-shared build-api build-web
@@ -71,6 +77,10 @@ db-generate:
 
 db-studio:
 	cd apps/api && npx prisma studio
+
+# API client generation
+api-generate:
+	npm run api:generate -w apps/web
 
 # Clean
 clean:

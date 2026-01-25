@@ -39,9 +39,16 @@ export default function DashboardLayout({
     return null;
   }
 
+  const sidebarUser = {
+    email: user.email,
+    name: typeof user.name === 'string' ? user.name : undefined,
+    isAdmin: user.isAdmin,
+    plan: user.plan,
+  };
+
   return (
     <div className="min-h-screen flex">
-      <Sidebar user={user} onLogout={logout} />
+      <Sidebar user={sidebarUser} onLogout={logout} />
       <main className="flex-1 ml-[260px] min-h-screen flex flex-col">
         <div className="p-8 flex-1">{children}</div>
       </main>

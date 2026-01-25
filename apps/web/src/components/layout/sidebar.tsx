@@ -31,9 +31,9 @@ import { Avatar } from '@/components/ui/avatar';
 interface SidebarProps {
   user: {
     email: string;
-    name?: string;
+    name?: string | null;
     isAdmin?: boolean;
-    plan?: 'free' | 'pro';
+    plan?: string;
     credits?: number;
   };
   onLogout: () => void;

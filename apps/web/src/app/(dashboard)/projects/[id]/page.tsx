@@ -64,14 +64,18 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  projects,
-  personas,
-  batches,
-  scripts as scriptsApi,
-  type Persona,
-  type Batch,
-  type Script,
-} from "@/lib/api";
+  projectsControllerFindOne,
+  projectsControllerUpdate,
+  batchesControllerFindAllByProject,
+  batchesControllerFindOne,
+  batchesControllerGetScripts,
+  batchesControllerCreate,
+  batchesControllerRegenerateScript,
+  exportsControllerExportBatch,
+  personasControllerCreate,
+  personasControllerDelete,
+} from "@/api/generated/api";
+import type { PersonaDto, BatchDto, ScriptDto } from "@/api/generated/models";
 
 interface ProjectData {
   id: string;
@@ -82,7 +86,7 @@ interface ProjectData {
   forbiddenClaims: string[];
   language: string;
   region?: string;
-  personas: Persona[];
+  personas: PersonaDto[];
 }
 
 const SCRIPT_ANGLES = [
@@ -172,9 +176,9 @@ export default function ProjectDetailPage({
 
   // Scripts tab state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [batchesList, setBatchesList] = useState<Batch[]>([]);
+  const [batchesList, setBatchesList] = useState<BatchDto[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
-  const [scriptsList, setScriptsList] = useState<Script[]>([]);
+  const [scriptsList, setScriptsList] = useState<ScriptDto[]>([]);
   const [expandedScript, setExpandedScript] = useState<string | null>(null);
   const [regenerateDialogOpen, setRegenerateDialogOpen] = useState(false);
   const [regenerateScriptId, setRegenerateScriptId] = useState<string | null>(
@@ -219,7 +223,7 @@ export default function ProjectDetailPage({
       url.searchParams.set("tab", tab);
       router.replace(url.pathname + url.search, { scroll: false });
     },
-    [router]
+    [router],
   );
 
   useEffect(() => {
@@ -258,8 +262,9 @@ export default function ProjectDetailPage({
   useEffect(() => {
     if (!initialTabSet && batchesList.length > 0) {
       const totalScripts = batchesList.reduce(
-        (sum, batch) => sum + (batch._count?.scripts || batch.scriptsCount || 0),
-        0
+        (sum, batch) =>
+          sum + (batch._count?.scripts || batch.scriptsCount || 0),
+        0,
       );
       if (totalScripts > 0) {
         handleTabChange("scripts");
@@ -270,14 +275,15 @@ export default function ProjectDetailPage({
 
   const fetchProject = async () => {
     try {
-      const data = await projects.get(id);
-      setProject(data);
+      const result = await projectsControllerFindOne(id);
+      const data = result.data;
+      setProject(data as ProjectData);
       setFormData({
         name: data.name,
         productDescription: data.productDescription,
         offer: data.offer || "",
         brandVoice: data.brandVoice || "",
-        forbiddenClaims: data.forbiddenClaims.join("\n"),
+        forbiddenClaims: (data.forbiddenClaims || []).join("\n"),
         language: data.language,
         region: data.region || "",
       });
@@ -295,7 +301,8 @@ export default function ProjectDetailPage({
 
   const fetchBatches = async () => {
     try {
-      const batchList = await batches.listByProject(id);
+      const result = await batchesControllerFindAllByProject(id);
+      const batchList = result.data;
       setBatchesList(batchList);
       // Auto-select the latest batch if none selected
       if (batchList.length > 0 && !selectedBatchId) {
@@ -309,7 +316,8 @@ export default function ProjectDetailPage({
   const refreshSelectedBatch = async () => {
     if (!selectedBatchId) return;
     try {
-      const batch = await batches.get(selectedBatchId);
+      const result = await batchesControllerFindOne(selectedBatchId);
+      const batch = result.data;
       // Update the batch in the list
       setBatchesList((prev) =>
         prev.map((b) => (b.id === batch.id ? batch : b)),
@@ -326,8 +334,8 @@ export default function ProjectDetailPage({
 
   const fetchScripts = async (batchId: string) => {
     try {
-      const scripts = await batches.getScripts(batchId);
-      setScriptsList(scripts);
+      const result = await batchesControllerGetScripts(batchId);
+      setScriptsList(result.data);
     } catch (error) {
       console.error("Failed to fetch scripts:", error);
     }
@@ -336,7 +344,7 @@ export default function ProjectDetailPage({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await projects.update(id, {
+      await projectsControllerUpdate(id, {
         name: formData.name,
         productDescription: formData.productDescription,
         offer: formData.offer || undefined,
@@ -375,7 +383,7 @@ export default function ProjectDetailPage({
     }
 
     try {
-      await personas.create(id, {
+      await personasControllerCreate(id, {
         name: newPersona.name,
         description: newPersona.description,
         demographics: newPersona.demographics || undefined,
@@ -414,7 +422,7 @@ export default function ProjectDetailPage({
 
   const handleDeletePersona = async (personaId: string) => {
     try {
-      await personas.delete(personaId);
+      await personasControllerDelete(personaId);
       toast({ title: "Persona deleted" });
       fetchProject();
     } catch (error) {
@@ -459,9 +467,13 @@ export default function ProjectDetailPage({
 
     setIsGenerating(true);
     try {
-      const batch = await batches.create(id, {
+      const result = await batchesControllerCreate(id, {
         requestedCount: totalScripts,
-        platform: genSettings.platform,
+        platform: genSettings.platform as
+          | "tiktok"
+          | "reels"
+          | "shorts"
+          | "universal",
         angles: genSettings.angles,
         durations: genSettings.durations,
         personaIds:
@@ -470,6 +482,7 @@ export default function ProjectDetailPage({
             : undefined,
         quality: genSettings.quality,
       });
+      const batch = result.data;
       // Add new batch to the top of the list and select it
       setBatchesList((prev) => [batch, ...prev]);
       setSelectedBatchId(batch.id);
@@ -497,11 +510,11 @@ export default function ProjectDetailPage({
 
     setIsRegenerating(true);
     try {
-      const newScript = await scriptsApi.regenerate(
+      const result = await batchesControllerRegenerateScript(
         regenerateScriptId,
-        regenerateInstruction,
+        { instruction: regenerateInstruction },
       );
-      setScriptsList((prev) => [newScript, ...prev]);
+      setScriptsList((prev) => [result.data, ...prev]);
       setRegenerateDialogOpen(false);
       setRegenerateInstruction("");
       toast({
@@ -523,7 +536,8 @@ export default function ProjectDetailPage({
     if (!selectedBatchId) return;
     setIsExporting(true);
     try {
-      const urls = await batches.export(selectedBatchId);
+      const result = await exportsControllerExportBatch(selectedBatchId);
+      const urls = result.data;
       if (urls.pdfUrl) {
         window.open(urls.pdfUrl, "_blank");
       }
@@ -1426,7 +1440,7 @@ export default function ProjectDetailPage({
                     value={selectedBatchId || ""}
                     onValueChange={handleSelectBatch}
                   >
-                    <SelectTrigger className="w-72">
+                    <SelectTrigger className="w-[400px]">
                       <SelectValue placeholder="Select a batch" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1467,7 +1481,6 @@ export default function ProjectDetailPage({
                                     variant="warning"
                                     className="text-[10px] px-1.5 py-0 gap-0.5"
                                   >
-                                    <Crown className="h-2.5 w-2.5" />
                                     Premium
                                   </Badge>
                                 )}
@@ -1511,9 +1524,6 @@ export default function ProjectDetailPage({
                       }
                       className="text-[10px] capitalize gap-1"
                     >
-                      {selectedBatch.quality === "premium" && (
-                        <Crown className="h-3 w-3" />
-                      )}
                       {selectedBatch.quality || "standard"}
                     </Badge>
                     <div className="flex flex-wrap gap-1 ml-auto">
