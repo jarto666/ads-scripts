@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   FolderKanban,
   Sparkles,
@@ -21,12 +21,12 @@ import {
   Crown,
   Shield,
   CreditCard,
-} from 'lucide-react';
-import { Credits } from '@/components/ui/credits';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Avatar } from '@/components/ui/avatar';
+} from "lucide-react";
+import { Credits } from "@/components/ui/credits";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Avatar } from "@/components/ui/avatar";
 
 interface SidebarProps {
   user: {
@@ -49,21 +49,19 @@ interface NavItem {
 }
 
 const mainNavItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Projects', href: '/projects', icon: FolderKanban },
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Projects", href: "/projects", icon: FolderKanban },
 ];
 
 const futureNavItems: NavItem[] = [
-  { label: 'Analytics', href: '/analytics', icon: BarChart3, soon: true },
-  { label: 'Marketplace', href: '/marketplace', icon: Store, soon: true },
-  { label: 'Script to Video', href: '/video', icon: Video, soon: true },
-  { label: 'Templates', href: '/templates', icon: FileText, soon: true },
-  { label: 'Team', href: '/team', icon: Users, soon: true },
+  { label: "Script to Video", href: "/video", icon: Video, soon: true },
+  { label: "Templates", href: "/templates", icon: FileText, soon: true },
+  { label: "Team", href: "/team", icon: Users, soon: true },
 ];
 
 const bottomNavItems: NavItem[] = [
-  { label: 'Settings', href: '/settings', icon: Settings },
-  { label: 'Help & Support', href: '/help', icon: HelpCircle },
+  { label: "Settings", href: "/settings", icon: Settings },
+  { label: "Help & Support", href: "/help", icon: HelpCircle },
 ];
 
 export function Sidebar({ user, onLogout }: SidebarProps) {
@@ -71,7 +69,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard';
+    if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
 
@@ -83,8 +81,8 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       return (
         <div
           className={cn(
-            'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-not-allowed opacity-50',
-            collapsed && 'justify-center px-2',
+            "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-not-allowed opacity-50",
+            collapsed && "justify-center px-2",
           )}
         >
           <Icon className="h-5 w-5 shrink-0" />
@@ -106,17 +104,17 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
       <Link
         href={item.href}
         className={cn(
-          'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+          "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
           active
-            ? 'bg-primary/15 text-primary'
-            : 'text-muted-foreground hover:bg-secondary hover:text-foreground',
-          collapsed && 'justify-center px-2',
+            ? "bg-primary/15 text-primary"
+            : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+          collapsed && "justify-center px-2",
         )}
       >
         {active && (
           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
         )}
-        <Icon className={cn('h-5 w-5 shrink-0', active && 'text-primary')} />
+        <Icon className={cn("h-5 w-5 shrink-0", active && "text-primary")} />
         {!collapsed && (
           <>
             <span className="flex-1">{item.label}</span>
@@ -134,20 +132,29 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen flex flex-col bg-sidebar border-r border-border transition-all duration-300',
-        collapsed ? 'w-[72px]' : 'w-[260px]',
+        "fixed left-0 top-0 z-40 h-screen flex flex-col bg-sidebar border-r border-border transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-[260px]",
       )}
     >
       {/* Logo */}
-      <div className={cn('flex items-center h-16 px-4 border-b border-border', collapsed && 'justify-center px-2')}>
+      <div
+        className={cn(
+          "flex items-center h-16 px-4 border-b border-border",
+          collapsed && "justify-center px-2",
+        )}
+      >
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15">
             <Zap className="h-5 w-5 text-primary" />
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="font-semibold text-foreground tracking-tight">Script Factory</span>
-              <span className="text-[10px] text-muted-foreground">UGC Scripts</span>
+              <span className="font-semibold text-foreground tracking-tight">
+                Script Factory
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                UGC Scripts
+              </span>
             </div>
           )}
         </Link>
@@ -160,9 +167,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             <NavLink key={item.href} item={item} />
           ))}
           {user.isAdmin && (
-            <NavLink
-              item={{ label: 'Admin', href: '/admin', icon: Shield }}
-            />
+            <NavLink item={{ label: "Admin", href: "/admin", icon: Shield }} />
           )}
         </div>
 
@@ -188,18 +193,24 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         {/* Credits & Plan Section */}
         {!collapsed && (
           <div className="p-3">
-            {user.plan === 'pro' ? (
+            {user.plan === "pro" ? (
               /* Pro User - Show credits and manage subscription */
               <div className="rounded-xl bg-secondary/50 border border-border p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <Crown className="h-4 w-4 text-warning" />
-                    <span className="text-xs font-semibold text-foreground">Pro Plan</span>
+                    <span className="text-xs font-semibold text-foreground">
+                      Pro Plan
+                    </span>
                   </div>
                   <Credits amount={user.credits ?? 0} size="sm" />
                 </div>
                 <Link href="/pricing">
-                  <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full h-8 text-xs gap-1.5"
+                  >
                     <CreditCard className="h-3.5 w-3.5" />
                     Manage Subscription
                   </Button>
@@ -212,7 +223,9 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-semibold text-primary">Free Plan</span>
+                      <span className="text-xs font-semibold text-primary">
+                        Free Plan
+                      </span>
                     </div>
                     <Credits amount={user.credits ?? 0} size="sm" />
                   </div>
@@ -239,8 +252,13 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
         </div>
 
         {/* User Section */}
-        <div className={cn('p-3 border-t border-border', collapsed && 'px-2')}>
-          <div className={cn('flex items-center gap-3', collapsed && 'justify-center')}>
+        <div className={cn("p-3 border-t border-border", collapsed && "px-2")}>
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              collapsed && "justify-center",
+            )}
+          >
             <Avatar
               fallback={user.name || user.email}
               size="sm"
@@ -249,9 +267,11 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  {user.name || user.email.split('@')[0]}
+                  {user.name || user.email.split("@")[0]}
                 </p>
-                <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                <p className="text-[11px] text-muted-foreground truncate">
+                  {user.email}
+                </p>
               </div>
             )}
             {!collapsed && (
@@ -287,8 +307,8 @@ export function SidebarSpacer({ collapsed = false }: { collapsed?: boolean }) {
   return (
     <div
       className={cn(
-        'shrink-0 transition-all duration-300',
-        collapsed ? 'w-[72px]' : 'w-[260px]',
+        "shrink-0 transition-all duration-300",
+        collapsed ? "w-[72px]" : "w-[260px]",
       )}
     />
   );

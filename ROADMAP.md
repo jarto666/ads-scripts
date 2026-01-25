@@ -5,7 +5,28 @@
 - Script performance tracking (link to ad platform)
 - A/B hook variants
 - More angle templates
-- Script templates/examples
+
+### Project Templates
+
+Pre-configured project setups for specific industries. Each template includes:
+
+- **Sample personas** — 2-3 target audience profiles with pain points, desires, objections
+- **Brand voice guidelines** — Tone and style appropriate for the industry
+- **Forbidden claims** — Compliance phrases to avoid (FDA, FTC, platform policies)
+- **Recommended angles** — Which of the 8 angles work best for this vertical
+
+**Initial template ideas:**
+
+| Template | Example Personas | Key Forbidden Claims |
+|----------|------------------|---------------------|
+| Skincare/Beauty | Acne sufferer, Anti-aging seeker, Sensitive skin | "cures", "dermatologist approved", "clinically proven" |
+| Supplements/Wellness | Fitness enthusiast, Busy professional, Health-conscious parent | "treats", "FDA approved", "guaranteed results" |
+| SaaS/App | Small business owner, Freelancer, Enterprise buyer | "100% uptime", "#1 rated", "instant ROI" |
+| E-commerce/DTC | Impulse buyer, Deal hunter, Quality seeker | "best price", "limited time" (if not true) |
+| Finance/Fintech | First-time investor, Debt reducer, Side hustler | "guaranteed returns", "get rich", "no risk" |
+| Fitness/Weight Loss | New year resolver, Postpartum mom, Busy executive | "lose X lbs", "burn fat", "no diet needed" |
+
+**Implementation:** Templates page with preview → "Use this template" creates new project with all fields pre-filled → user customizes for their specific product
 
 ## Phase 2: Intelligence (3-6 months)
 
