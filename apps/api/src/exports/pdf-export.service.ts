@@ -18,6 +18,7 @@ export class PdfExportService {
   async generatePdf(
     project: ProjectWithPersonas,
     scripts: Script[],
+    personaIds: string[] = [],
   ): Promise<Buffer> {
     // Dynamically import puppeteer to avoid issues if not installed
     let puppeteer: typeof import('puppeteer');
@@ -28,7 +29,13 @@ export class PdfExportService {
       throw new Error('PDF export not available - puppeteer not installed');
     }
 
-    const html = this.generateHtml(project, scripts);
+    // Filter personas to only those used in the batch
+    const usedPersonas =
+      personaIds.length > 0
+        ? project.personas.filter((p) => personaIds.includes(p.id))
+        : project.personas;
+
+    const html = this.generateHtml(project, scripts, usedPersonas);
 
     const browser = await puppeteer.default.launch({
       headless: true,
@@ -42,10 +49,10 @@ export class PdfExportService {
       const pdfBuffer = await page.pdf({
         format: 'A4',
         margin: {
-          top: '20mm',
-          right: '15mm',
-          bottom: '20mm',
-          left: '15mm',
+          top: '15mm',
+          right: '12mm',
+          bottom: '15mm',
+          left: '12mm',
         },
         printBackground: true,
       });
@@ -59,6 +66,7 @@ export class PdfExportService {
   private generateHtml(
     project: ProjectWithPersonas,
     scripts: Script[],
+    usedPersonas: Persona[],
   ): string {
     const completedScripts = scripts.filter((s) => s.status === 'completed');
 
@@ -74,7 +82,7 @@ export class PdfExportService {
       {} as Record<string, Script[]>,
     );
 
-    const personasList = project.personas
+    const personasList = usedPersonas
       .map((p) => `<li><strong>${p.name}</strong>: ${p.description}</li>`)
       .join('');
 
@@ -107,146 +115,171 @@ export class PdfExportService {
             }
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              font-size: 11px;
-              line-height: 1.5;
+              font-size: 10px;
+              line-height: 1.4;
               color: #333;
             }
             .header {
               text-align: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
+              margin-bottom: 20px;
+              padding-bottom: 15px;
               border-bottom: 2px solid #000;
             }
             .header h1 {
-              font-size: 24px;
-              margin-bottom: 5px;
+              font-size: 20px;
+              margin-bottom: 3px;
             }
             .header p {
               color: #666;
+              font-size: 11px;
             }
             .section {
-              margin-bottom: 25px;
+              margin-bottom: 20px;
             }
             .section-title {
-              font-size: 14px;
+              font-size: 12px;
               font-weight: bold;
-              margin-bottom: 10px;
-              padding-bottom: 5px;
+              margin-bottom: 8px;
+              padding-bottom: 4px;
               border-bottom: 1px solid #ddd;
             }
             .summary-grid {
               display: grid;
               grid-template-columns: 1fr 1fr;
-              gap: 15px;
+              gap: 10px;
             }
             .summary-item {
               background: #f9f9f9;
-              padding: 10px;
+              padding: 8px;
               border-radius: 4px;
+              font-size: 9px;
             }
             .summary-item h4 {
-              font-size: 11px;
+              font-size: 9px;
               color: #666;
-              margin-bottom: 5px;
+              margin-bottom: 4px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .summary-item p, .summary-item ul {
+              font-size: 9px;
             }
             .angle-section {
-              page-break-inside: avoid;
-              margin-bottom: 30px;
+              margin-bottom: 20px;
             }
             .angle-title {
-              font-size: 16px;
+              font-size: 13px;
               background: #000;
               color: #fff;
-              padding: 8px 12px;
-              margin-bottom: 15px;
+              padding: 6px 10px;
+              margin-bottom: 10px;
+              page-break-after: avoid;
             }
             .script-card {
               border: 1px solid #ddd;
               border-radius: 4px;
-              margin-bottom: 20px;
-              page-break-inside: avoid;
+              margin-bottom: 15px;
+              page-break-inside: auto;
             }
             .script-header {
               background: #f5f5f5;
-              padding: 10px;
+              padding: 6px 10px;
               border-bottom: 1px solid #ddd;
               display: flex;
               justify-content: space-between;
               align-items: center;
+              page-break-after: avoid;
             }
             .script-meta {
               display: flex;
-              gap: 10px;
+              gap: 8px;
             }
             .script-meta span {
               background: #e0e0e0;
-              padding: 2px 8px;
+              padding: 2px 6px;
               border-radius: 3px;
-              font-size: 10px;
+              font-size: 9px;
             }
             .script-score {
               font-weight: bold;
-              font-size: 14px;
+              font-size: 12px;
             }
             .script-score.high { color: #22c55e; }
             .script-score.medium { color: #eab308; }
             .script-score.low { color: #ef4444; }
             .script-body {
-              padding: 15px;
+              padding: 10px;
             }
             .hook {
-              font-size: 14px;
+              font-size: 11px;
               font-weight: bold;
-              margin-bottom: 15px;
-              padding: 10px;
+              margin-bottom: 10px;
+              padding: 8px;
               background: #fff3cd;
               border-radius: 4px;
+              page-break-after: avoid;
             }
             .storyboard {
-              margin-bottom: 15px;
+              margin-bottom: 10px;
+            }
+            .storyboard h4 {
+              font-size: 10px;
+              margin-bottom: 6px;
+              page-break-after: avoid;
             }
             .storyboard-step {
-              border-left: 3px solid #000;
-              padding-left: 10px;
-              margin-bottom: 10px;
+              border-left: 2px solid #000;
+              padding-left: 8px;
+              margin-bottom: 6px;
+              page-break-inside: avoid;
             }
             .storyboard-time {
               font-weight: bold;
               color: #666;
+              font-size: 9px;
             }
             .storyboard-shot {
               color: #666;
-              font-size: 10px;
+              font-size: 9px;
             }
             .storyboard-spoken {
               font-style: italic;
+              font-size: 9px;
+            }
+            .storyboard-onscreen {
+              font-size: 9px;
             }
             .cta-section, .checklist-section {
               background: #f9f9f9;
-              padding: 10px;
+              padding: 8px;
               border-radius: 4px;
-              margin-bottom: 10px;
+              margin-bottom: 8px;
+              page-break-inside: avoid;
             }
             .cta-section h4, .checklist-section h4 {
-              font-size: 11px;
-              margin-bottom: 5px;
+              font-size: 9px;
+              margin-bottom: 4px;
+              font-weight: bold;
             }
             .warnings {
               background: #fef2f2;
               border: 1px solid #fecaca;
-              padding: 10px;
+              padding: 8px;
               border-radius: 4px;
+              page-break-inside: avoid;
             }
             .warnings h4 {
               color: #dc2626;
-              font-size: 11px;
-              margin-bottom: 5px;
+              font-size: 9px;
+              margin-bottom: 4px;
+              font-weight: bold;
             }
             ul {
-              margin-left: 20px;
+              margin-left: 15px;
+              font-size: 9px;
             }
             li {
-              margin-bottom: 3px;
+              margin-bottom: 2px;
             }
           </style>
         </head>
@@ -261,7 +294,7 @@ export class PdfExportService {
             <div class="summary-grid">
               <div class="summary-item">
                 <h4>Product</h4>
-                <p>${project.productDescription.substring(0, 300)}${project.productDescription.length > 300 ? '...' : ''}</p>
+                <p>${project.productDescription.substring(0, 250)}${project.productDescription.length > 250 ? '...' : ''}</p>
               </div>
               ${
                 project.offer
@@ -274,7 +307,7 @@ export class PdfExportService {
                   : ''
               }
               ${
-                project.personas.length > 0
+                usedPersonas.length > 0
                   ? `
                 <div class="summary-item">
                   <h4>Target Audiences</h4>
@@ -319,7 +352,7 @@ export class PdfExportService {
             <div class="storyboard-time">${step.t}</div>
             <div class="storyboard-shot">Shot: ${step.shot}</div>
             <div class="storyboard-spoken">"${step.spoken}"</div>
-            ${step.onScreen ? `<div>On-screen: ${step.onScreen}</div>` : ''}
+            ${step.onScreen ? `<div class="storyboard-onscreen">On-screen: ${step.onScreen}</div>` : ''}
           </div>
         `,
           )

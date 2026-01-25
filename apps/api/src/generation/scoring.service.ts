@@ -38,9 +38,17 @@ const HOOK_POWER_WORDS = [
   // Direct challenge
   'bet you', 'prove me wrong', 'change my mind',
   // Story hooks
-  'story time', 'true story', 'confession', 'finally',
+  'story time', 'storytime', 'true story', 'confession', 'finally',
   // Results
   'works', 'changed', 'discovered', 'found', 'realized',
+  // TikTok-native patterns
+  'pov', 'pov:', 'me when', 'that moment when', 'when your',
+  // Emotional hooks
+  'scared', 'stressed', 'hate', 'tired of', 'sick of', 'struggling',
+  // TikTok slang/emphasis
+  'crazy', 'literally', 'lowkey', 'highkey', 'ngl', 'fr',
+  // Relatable hooks
+  'anyone else', 'tell me why', 'is it just me', 'not me',
 ];
 
 // Words indicating benefits and transformation
@@ -150,7 +158,7 @@ export class ScoringService {
       authenticityScore;
 
     // Generate warnings for low-scoring areas
-    if (hookScore < 10) {
+    if (hookScore < 6) {
       warnings.push('Hook could be stronger - try adding power words or a question');
     }
     if (clarityScore < 10) {

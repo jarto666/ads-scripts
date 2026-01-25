@@ -69,6 +69,7 @@ export class ExportsService {
     const pdfBuffer = await this.pdfExport.generatePdf(
       batch.project,
       completedScripts,
+      batch.personaIds,
     );
     const pdfKey = `${basePath}/creator-pack.pdf`;
     const pdfUrl = await this.storage.uploadFile(
