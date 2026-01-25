@@ -20,6 +20,8 @@ export interface ScriptDto {
   warnings: string[];
   score?: number;
   errorMessage?: string;
+  /** ID of the parent script if this is a regenerated version */
+  parentScriptId?: string;
   createdAt: string;
   updatedAt: string;
 }

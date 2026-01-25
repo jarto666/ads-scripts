@@ -74,7 +74,7 @@ export class BatchesService {
     // Add job to queue for processing
     const job = await this.scriptQueue.add(
       'generate-batch',
-      { batchId: batch.id },
+      { type: 'generate-batch', batchId: batch.id },
       {
         jobId: `batch-${batch.id}`,
       },
@@ -152,6 +152,40 @@ export class BatchesService {
       throw new ForbiddenException('Access denied');
     }
 
-    return this.scriptGenerator.regenerateScript(scriptId, dto.instruction);
+    // Always link to the root original (1 level deep max)
+    // If this script has a parent, use that parent as the root
+    // Otherwise, this script IS the root
+    const rootParentId = script.parentScriptId || scriptId;
+
+    // Create new script with pending status and link to root parent
+    const newScript = await this.prisma.script.create({
+      data: {
+        batchId: script.batchId,
+        parentScriptId: rootParentId,
+        status: 'pending',
+        angle: script.angle,
+        duration: script.duration,
+      },
+    });
+
+    // Queue the regeneration job
+    // sourceScriptId is the script we're regenerating FROM (for content)
+    // scriptId is the new script being created
+    const job = await this.scriptQueue.add(
+      'regenerate-script',
+      {
+        type: 'regenerate-script',
+        scriptId: newScript.id,
+        sourceScriptId: scriptId,
+        instruction: dto.instruction,
+      },
+      {
+        jobId: `regen-${newScript.id}`,
+      },
+    );
+
+    this.logger.log(`Queued regeneration job ${job.id} for script ${newScript.id}`);
+
+    return newScript;
   }
 }

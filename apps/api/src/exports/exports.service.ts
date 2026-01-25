@@ -42,14 +42,7 @@ export class ExportsService {
       throw new Error('Batch is not completed yet');
     }
 
-    // Check if already exported
-    if (batch.pdfUrl && batch.csvUrl) {
-      return {
-        pdfUrl: batch.pdfUrl,
-        csvUrl: batch.csvUrl,
-      };
-    }
-
+    // Always regenerate exports (scripts may have been added via regeneration)
     const completedScripts = batch.scripts.filter(
       (s) => s.status === 'completed',
     );
@@ -58,7 +51,9 @@ export class ExportsService {
       throw new Error('No completed scripts to export');
     }
 
-    const basePath = `exports/${batch.projectId}/${batchId}`;
+    // Use timestamp to ensure fresh URLs
+    const timestamp = Date.now();
+    const basePath = `exports/${batch.projectId}/${batchId}/${timestamp}`;
 
     // Generate and upload CSV
     const csvContent = this.csvExport.generateCsv(completedScripts);

@@ -21,7 +21,6 @@ export class CsvExportService {
       'cta1',
       'cta2',
       'cta3',
-      'score',
       'warnings',
     ];
 
@@ -41,7 +40,6 @@ export class CsvExportService {
           this.escapeCsv(ctaVariants[0] || ''),
           this.escapeCsv(ctaVariants[1] || ''),
           this.escapeCsv(ctaVariants[2] || ''),
-          script.score?.toString() || '',
           this.escapeCsv(script.warnings.join('; ')),
         ];
       });

@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Project, Persona, Script } from '@prisma/client';
+import { Injectable, Logger } from "@nestjs/common";
+import { Project, Persona, Script } from "@prisma/client";
 
 interface StoryboardStep {
   t: string;
@@ -21,12 +21,12 @@ export class PdfExportService {
     personaIds: string[] = [],
   ): Promise<Buffer> {
     // Dynamically import puppeteer to avoid issues if not installed
-    let puppeteer: typeof import('puppeteer');
+    let puppeteer: typeof import("puppeteer");
     try {
-      puppeteer = await import('puppeteer');
+      puppeteer = await import("puppeteer");
     } catch (error) {
-      this.logger.error('Puppeteer not installed. PDF export unavailable.');
-      throw new Error('PDF export not available - puppeteer not installed');
+      this.logger.error("Puppeteer not installed. PDF export unavailable.");
+      throw new Error("PDF export not available - puppeteer not installed");
     }
 
     // Filter personas to only those used in the batch
@@ -39,20 +39,20 @@ export class PdfExportService {
 
     const browser = await puppeteer.default.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     try {
       const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+      await page.setContent(html, { waitUntil: "networkidle0" });
 
       const pdfBuffer = await page.pdf({
-        format: 'A4',
+        format: "A4",
         margin: {
-          top: '15mm',
-          right: '12mm',
-          bottom: '15mm',
-          left: '12mm',
+          top: "15mm",
+          right: "12mm",
+          bottom: "15mm",
+          left: "12mm",
         },
         printBackground: true,
       });
@@ -68,7 +68,7 @@ export class PdfExportService {
     scripts: Script[],
     usedPersonas: Persona[],
   ): string {
-    const completedScripts = scripts.filter((s) => s.status === 'completed');
+    const completedScripts = scripts.filter((s) => s.status === "completed");
 
     // Group scripts by angle
     const scriptsByAngle = completedScripts.reduce(
@@ -84,13 +84,13 @@ export class PdfExportService {
 
     const personasList = usedPersonas
       .map((p) => `<li><strong>${p.name}</strong>: ${p.description}</li>`)
-      .join('');
+      .join("");
 
     const scriptsHtml = Object.entries(scriptsByAngle)
       .map(([angle, angleScripts]) => {
         const scriptCards = angleScripts
           .map((script) => this.renderScriptCard(script))
-          .join('');
+          .join("");
 
         return `
           <div class="angle-section">
@@ -99,14 +99,14 @@ export class PdfExportService {
           </div>
         `;
       })
-      .join('');
+      .join("");
 
     return `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Creator Pack - ${project.name}</title>
+          <title>Scripts Pack - ${project.name}</title>
           <style>
             * {
               margin: 0;
@@ -200,13 +200,6 @@ export class PdfExportService {
               border-radius: 3px;
               font-size: 9px;
             }
-            .script-score {
-              font-weight: bold;
-              font-size: 12px;
-            }
-            .script-score.high { color: #22c55e; }
-            .script-score.medium { color: #eab308; }
-            .script-score.low { color: #ef4444; }
             .script-body {
               padding: 10px;
             }
@@ -286,7 +279,7 @@ export class PdfExportService {
         <body>
           <div class="header">
             <h1>${project.name}</h1>
-            <p>Creator Pack - ${completedScripts.length} Scripts</p>
+            <p>Scripts Pack - ${completedScripts.length} Scripts</p>
           </div>
 
           <div class="section">
@@ -294,7 +287,7 @@ export class PdfExportService {
             <div class="summary-grid">
               <div class="summary-item">
                 <h4>Product</h4>
-                <p>${project.productDescription.substring(0, 250)}${project.productDescription.length > 250 ? '...' : ''}</p>
+                <p>${project.productDescription.substring(0, 250)}${project.productDescription.length > 250 ? "..." : ""}</p>
               </div>
               ${
                 project.offer
@@ -304,7 +297,7 @@ export class PdfExportService {
                   <p>${project.offer}</p>
                 </div>
               `
-                  : ''
+                  : ""
               }
               ${
                 usedPersonas.length > 0
@@ -314,7 +307,7 @@ export class PdfExportService {
                   <ul>${personasList}</ul>
                 </div>
               `
-                  : ''
+                  : ""
               }
               ${
                 project.brandVoice
@@ -324,7 +317,7 @@ export class PdfExportService {
                   <p>${project.brandVoice}</p>
                 </div>
               `
-                  : ''
+                  : ""
               }
             </div>
           </div>
@@ -337,12 +330,6 @@ export class PdfExportService {
 
   private renderScriptCard(script: Script): string {
     const storyboard = script.storyboard as StoryboardStep[] | null;
-    const scoreClass =
-      (script.score ?? 0) >= 80
-        ? 'high'
-        : (script.score ?? 0) >= 60
-          ? 'medium'
-          : 'low';
 
     const storyboardHtml = storyboard
       ? storyboard
@@ -352,12 +339,12 @@ export class PdfExportService {
             <div class="storyboard-time">${step.t}</div>
             <div class="storyboard-shot">Shot: ${step.shot}</div>
             <div class="storyboard-spoken">"${step.spoken}"</div>
-            ${step.onScreen ? `<div class="storyboard-onscreen">On-screen: ${step.onScreen}</div>` : ''}
+            ${step.onScreen ? `<div class="storyboard-onscreen">On-screen: ${step.onScreen}</div>` : ""}
           </div>
         `,
           )
-          .join('')
-      : '';
+          .join("")
+      : "";
 
     const ctaHtml =
       script.ctaVariants.length > 0
@@ -365,11 +352,11 @@ export class PdfExportService {
         <div class="cta-section">
           <h4>CTA Variants</h4>
           <ul>
-            ${script.ctaVariants.map((cta) => `<li>${cta}</li>`).join('')}
+            ${script.ctaVariants.map((cta) => `<li>${cta}</li>`).join("")}
           </ul>
         </div>
       `
-        : '';
+        : "";
 
     const checklistHtml =
       script.filmingChecklist.length > 0
@@ -377,11 +364,11 @@ export class PdfExportService {
         <div class="checklist-section">
           <h4>Filming Checklist</h4>
           <ul>
-            ${script.filmingChecklist.map((item) => `<li>${item}</li>`).join('')}
+            ${script.filmingChecklist.map((item) => `<li>${item}</li>`).join("")}
           </ul>
         </div>
       `
-        : '';
+        : "";
 
     const warningsHtml =
       script.warnings.length > 0
@@ -389,11 +376,11 @@ export class PdfExportService {
         <div class="warnings">
           <h4>Warnings</h4>
           <ul>
-            ${script.warnings.map((w) => `<li>${w}</li>`).join('')}
+            ${script.warnings.map((w) => `<li>${w}</li>`).join("")}
           </ul>
         </div>
       `
-        : '';
+        : "";
 
     return `
       <div class="script-card">
@@ -401,10 +388,9 @@ export class PdfExportService {
           <div class="script-meta">
             <span>${script.duration}s</span>
           </div>
-          <div class="script-score ${scoreClass}">${script.score ?? '-'}/100</div>
         </div>
         <div class="script-body">
-          <div class="hook">${script.hook || 'No hook'}</div>
+          <div class="hook">${script.hook || "No hook"}</div>
           <div class="storyboard">
             <h4>Storyboard</h4>
             ${storyboardHtml}
@@ -419,8 +405,8 @@ export class PdfExportService {
 
   private formatAngle(angle: string): string {
     return angle
-      .split('_')
+      .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+      .join(" ");
   }
 }

@@ -75,7 +75,7 @@ export class ScriptDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ enum: ['pending', 'completed', 'failed'] })
+  @ApiProperty({ enum: ['pending', 'generating', 'completed', 'failed'] })
   status: string;
 
   @ApiProperty()
@@ -104,6 +104,9 @@ export class ScriptDto {
 
   @ApiPropertyOptional()
   errorMessage?: string;
+
+  @ApiPropertyOptional({ description: 'ID of the parent script if this is a regenerated version' })
+  parentScriptId?: string;
 
   @ApiProperty()
   createdAt: Date;

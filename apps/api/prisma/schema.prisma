@@ -107,7 +107,7 @@ model Batch {
 
 model Script {
   id               String   @id @default(cuid())
-  status           String   @default("pending") // pending, completed, failed
+  status           String   @default("pending") // pending, generating, completed, failed
   angle            String
   duration         Int
   hook             String?  @db.Text
@@ -120,9 +120,13 @@ model Script {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  batchId String
-  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batchId        String
+  batch          Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  parentScriptId String?
+  parent         Script?  @relation("ScriptVersions", fields: [parentScriptId], references: [id], onDelete: SetNull)
+  versions       Script[] @relation("ScriptVersions")
 
   @@index([batchId])
   @@index([status])
+  @@index([parentScriptId])
 }

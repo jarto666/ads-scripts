@@ -11,6 +11,7 @@ export type ScriptDtoStatus = typeof ScriptDtoStatus[keyof typeof ScriptDtoStatu
 
 export const ScriptDtoStatus = {
   pending: 'pending',
+  generating: 'generating',
   completed: 'completed',
   failed: 'failed',
 } as const;

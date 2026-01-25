@@ -50,6 +50,10 @@ import type {
 } from './models';
 
 import { customInstance } from '../customInstance';
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
 /**
  * @summary Request a magic link for authentication
  */
@@ -89,15 +93,15 @@ export const authControllerRequestLink = async (requestMagicLinkDto: RequestMagi
 
 
 export const getAuthControllerRequestLinkMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRequestLink>>, TError,{data: RequestMagicLinkDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRequestLink>>, TError,{data: RequestMagicLinkDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerRequestLink>>, TError,{data: RequestMagicLinkDto}, TContext> => {
 
 const mutationKey = ['authControllerRequestLink'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -105,7 +109,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerRequestLink>>, {data: RequestMagicLinkDto}> = (props) => {
           const {data} = props ?? {};
 
-          return  authControllerRequestLink(data,)
+          return  authControllerRequestLink(data,requestOptions)
         }
 
 
@@ -123,7 +127,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Request a magic link for authentication
  */
 export const useAuthControllerRequestLink = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRequestLink>>, TError,{data: RequestMagicLinkDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRequestLink>>, TError,{data: RequestMagicLinkDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerRequestLink>>,
         TError,
@@ -172,15 +176,15 @@ export const authControllerConsumeLink = async (consumeMagicLinkDto: ConsumeMagi
 
 
 export const getAuthControllerConsumeLinkMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerConsumeLink>>, TError,{data: ConsumeMagicLinkDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerConsumeLink>>, TError,{data: ConsumeMagicLinkDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerConsumeLink>>, TError,{data: ConsumeMagicLinkDto}, TContext> => {
 
 const mutationKey = ['authControllerConsumeLink'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -188,7 +192,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerConsumeLink>>, {data: ConsumeMagicLinkDto}> = (props) => {
           const {data} = props ?? {};
 
-          return  authControllerConsumeLink(data,)
+          return  authControllerConsumeLink(data,requestOptions)
         }
 
 
@@ -206,7 +210,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Consume a magic link token and authenticate
  */
 export const useAuthControllerConsumeLink = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerConsumeLink>>, TError,{data: ConsumeMagicLinkDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerConsumeLink>>, TError,{data: ConsumeMagicLinkDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerConsumeLink>>,
         TError,
@@ -254,15 +258,15 @@ export const authControllerLogout = async ( options?: RequestInit): Promise<auth
 
 
 export const getAuthControllerLogoutMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext> => {
 
 const mutationKey = ['authControllerLogout'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -270,7 +274,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerLogout>>, void> = () => {
           
 
-          return  authControllerLogout()
+          return  authControllerLogout(requestOptions)
         }
 
 
@@ -288,7 +292,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Logout the current user
  */
 export const useAuthControllerLogout = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof authControllerLogout>>,
         TError,
@@ -343,16 +347,16 @@ export const getAuthControllerMeQueryKey = () => {
     }
 
     
-export const getAuthControllerMeQueryOptions = <TData = Awaited<ReturnType<typeof authControllerMe>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, }
+export const getAuthControllerMeQueryOptions = <TData = Awaited<ReturnType<typeof authControllerMe>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAuthControllerMeQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerMe>>> = ({ signal }) => authControllerMe({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerMe>>> = ({ signal }) => authControllerMe({ signal, ...requestOptions });
 
       
 
@@ -372,7 +376,7 @@ export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authContro
           TError,
           Awaited<ReturnType<typeof authControllerMe>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authControllerMe>>, TError = unknown>(
@@ -382,11 +386,11 @@ export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authContro
           TError,
           Awaited<ReturnType<typeof authControllerMe>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authControllerMe>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -394,7 +398,7 @@ export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authContro
  */
 
 export function useAuthControllerMe<TData = Awaited<ReturnType<typeof authControllerMe>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerMe>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -448,15 +452,15 @@ export const projectsControllerCreate = async (createProjectDto: CreateProjectDt
 
 
 export const getProjectsControllerCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerCreate>>, TError,{data: CreateProjectDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerCreate>>, TError,{data: CreateProjectDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof projectsControllerCreate>>, TError,{data: CreateProjectDto}, TContext> => {
 
 const mutationKey = ['projectsControllerCreate'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -464,7 +468,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectsControllerCreate>>, {data: CreateProjectDto}> = (props) => {
           const {data} = props ?? {};
 
-          return  projectsControllerCreate(data,)
+          return  projectsControllerCreate(data,requestOptions)
         }
 
 
@@ -482,7 +486,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Create a new project
  */
 export const useProjectsControllerCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerCreate>>, TError,{data: CreateProjectDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerCreate>>, TError,{data: CreateProjectDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof projectsControllerCreate>>,
         TError,
@@ -537,16 +541,16 @@ export const getProjectsControllerFindAllQueryKey = () => {
     }
 
     
-export const getProjectsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof projectsControllerFindAll>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, }
+export const getProjectsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof projectsControllerFindAll>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getProjectsControllerFindAllQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof projectsControllerFindAll>>> = ({ signal }) => projectsControllerFindAll({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof projectsControllerFindAll>>> = ({ signal }) => projectsControllerFindAll({ signal, ...requestOptions });
 
       
 
@@ -566,7 +570,7 @@ export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof projectsControllerFindAll>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof projectsControllerFindAll>>, TError = unknown>(
@@ -576,11 +580,11 @@ export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof projectsControllerFindAll>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof projectsControllerFindAll>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -588,7 +592,7 @@ export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof p
  */
 
 export function useProjectsControllerFindAll<TData = Awaited<ReturnType<typeof projectsControllerFindAll>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindAll>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -648,16 +652,16 @@ export const getProjectsControllerFindOneQueryKey = (id: string,) => {
     }
 
     
-export const getProjectsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof projectsControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, }
+export const getProjectsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof projectsControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getProjectsControllerFindOneQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof projectsControllerFindOne>>> = ({ signal }) => projectsControllerFindOne(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof projectsControllerFindOne>>> = ({ signal }) => projectsControllerFindOne(id, { signal, ...requestOptions });
 
       
 
@@ -677,7 +681,7 @@ export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof projectsControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof projectsControllerFindOne>>, TError = unknown>(
@@ -687,11 +691,11 @@ export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof projectsControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof projectsControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -699,7 +703,7 @@ export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof p
  */
 
 export function useProjectsControllerFindOne<TData = Awaited<ReturnType<typeof projectsControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -754,15 +758,15 @@ export const projectsControllerUpdate = async (id: string,
 
 
 export const getProjectsControllerUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerUpdate>>, TError,{id: string;data: UpdateProjectDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerUpdate>>, TError,{id: string;data: UpdateProjectDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof projectsControllerUpdate>>, TError,{id: string;data: UpdateProjectDto}, TContext> => {
 
 const mutationKey = ['projectsControllerUpdate'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -770,7 +774,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectsControllerUpdate>>, {id: string;data: UpdateProjectDto}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  projectsControllerUpdate(id,data,)
+          return  projectsControllerUpdate(id,data,requestOptions)
         }
 
 
@@ -788,7 +792,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Update a project
  */
 export const useProjectsControllerUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerUpdate>>, TError,{id: string;data: UpdateProjectDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerUpdate>>, TError,{id: string;data: UpdateProjectDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof projectsControllerUpdate>>,
         TError,
@@ -836,15 +840,15 @@ export const projectsControllerDelete = async (id: string, options?: RequestInit
 
 
 export const getProjectsControllerDeleteMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerDelete>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerDelete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof projectsControllerDelete>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['projectsControllerDelete'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -852,7 +856,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectsControllerDelete>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  projectsControllerDelete(id,)
+          return  projectsControllerDelete(id,requestOptions)
         }
 
 
@@ -870,7 +874,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Delete a project
  */
 export const useProjectsControllerDelete = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerDelete>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectsControllerDelete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof projectsControllerDelete>>,
         TError,
@@ -920,15 +924,15 @@ export const personasControllerCreate = async (projectId: string,
 
 
 export const getPersonasControllerCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerCreate>>, TError,{projectId: string;data: CreatePersonaDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerCreate>>, TError,{projectId: string;data: CreatePersonaDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof personasControllerCreate>>, TError,{projectId: string;data: CreatePersonaDto}, TContext> => {
 
 const mutationKey = ['personasControllerCreate'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -936,7 +940,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof personasControllerCreate>>, {projectId: string;data: CreatePersonaDto}> = (props) => {
           const {projectId,data} = props ?? {};
 
-          return  personasControllerCreate(projectId,data,)
+          return  personasControllerCreate(projectId,data,requestOptions)
         }
 
 
@@ -954,7 +958,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Create a new persona for a project
  */
 export const usePersonasControllerCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerCreate>>, TError,{projectId: string;data: CreatePersonaDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerCreate>>, TError,{projectId: string;data: CreatePersonaDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof personasControllerCreate>>,
         TError,
@@ -1009,16 +1013,16 @@ export const getPersonasControllerFindAllByProjectQueryKey = (projectId: string,
     }
 
     
-export const getPersonasControllerFindAllByProjectQueryOptions = <TData = Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError = unknown>(projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, }
+export const getPersonasControllerFindAllByProjectQueryOptions = <TData = Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError = unknown>(projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getPersonasControllerFindAllByProjectQueryKey(projectId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof personasControllerFindAllByProject>>> = ({ signal }) => personasControllerFindAllByProject(projectId, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof personasControllerFindAllByProject>>> = ({ signal }) => personasControllerFindAllByProject(projectId, { signal, ...requestOptions });
 
       
 
@@ -1038,7 +1042,7 @@ export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType
           TError,
           Awaited<ReturnType<typeof personasControllerFindAllByProject>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError = unknown>(
@@ -1048,11 +1052,11 @@ export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType
           TError,
           Awaited<ReturnType<typeof personasControllerFindAllByProject>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError = unknown>(
- projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, }
+ projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1060,7 +1064,7 @@ export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType
  */
 
 export function usePersonasControllerFindAllByProject<TData = Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError = unknown>(
- projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, }
+ projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1120,16 +1124,16 @@ export const getPersonasControllerFindOneQueryKey = (id: string,) => {
     }
 
     
-export const getPersonasControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof personasControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, }
+export const getPersonasControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof personasControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getPersonasControllerFindOneQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof personasControllerFindOne>>> = ({ signal }) => personasControllerFindOne(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof personasControllerFindOne>>> = ({ signal }) => personasControllerFindOne(id, { signal, ...requestOptions });
 
       
 
@@ -1149,7 +1153,7 @@ export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof personasControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof personasControllerFindOne>>, TError = unknown>(
@@ -1159,11 +1163,11 @@ export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof p
           TError,
           Awaited<ReturnType<typeof personasControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof personasControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1171,7 +1175,7 @@ export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof p
  */
 
 export function usePersonasControllerFindOne<TData = Awaited<ReturnType<typeof personasControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof personasControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1226,15 +1230,15 @@ export const personasControllerUpdate = async (id: string,
 
 
 export const getPersonasControllerUpdateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerUpdate>>, TError,{id: string;data: UpdatePersonaDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerUpdate>>, TError,{id: string;data: UpdatePersonaDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof personasControllerUpdate>>, TError,{id: string;data: UpdatePersonaDto}, TContext> => {
 
 const mutationKey = ['personasControllerUpdate'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -1242,7 +1246,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof personasControllerUpdate>>, {id: string;data: UpdatePersonaDto}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  personasControllerUpdate(id,data,)
+          return  personasControllerUpdate(id,data,requestOptions)
         }
 
 
@@ -1260,7 +1264,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Update a persona
  */
 export const usePersonasControllerUpdate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerUpdate>>, TError,{id: string;data: UpdatePersonaDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerUpdate>>, TError,{id: string;data: UpdatePersonaDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof personasControllerUpdate>>,
         TError,
@@ -1308,15 +1312,15 @@ export const personasControllerDelete = async (id: string, options?: RequestInit
 
 
 export const getPersonasControllerDeleteMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerDelete>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerDelete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof personasControllerDelete>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['personasControllerDelete'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -1324,7 +1328,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof personasControllerDelete>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  personasControllerDelete(id,)
+          return  personasControllerDelete(id,requestOptions)
         }
 
 
@@ -1342,7 +1346,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Delete a persona
  */
 export const usePersonasControllerDelete = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerDelete>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerDelete>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof personasControllerDelete>>,
         TError,
@@ -1392,15 +1396,15 @@ export const batchesControllerCreate = async (projectId: string,
 
 
 export const getBatchesControllerCreateMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerCreate>>, TError,{projectId: string;data: CreateBatchDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerCreate>>, TError,{projectId: string;data: CreateBatchDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof batchesControllerCreate>>, TError,{projectId: string;data: CreateBatchDto}, TContext> => {
 
 const mutationKey = ['batchesControllerCreate'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -1408,7 +1412,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof batchesControllerCreate>>, {projectId: string;data: CreateBatchDto}> = (props) => {
           const {projectId,data} = props ?? {};
 
-          return  batchesControllerCreate(projectId,data,)
+          return  batchesControllerCreate(projectId,data,requestOptions)
         }
 
 
@@ -1426,7 +1430,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Create a new batch for script generation
  */
 export const useBatchesControllerCreate = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerCreate>>, TError,{projectId: string;data: CreateBatchDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerCreate>>, TError,{projectId: string;data: CreateBatchDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof batchesControllerCreate>>,
         TError,
@@ -1481,16 +1485,16 @@ export const getBatchesControllerFindAllByProjectQueryKey = (projectId: string,)
     }
 
     
-export const getBatchesControllerFindAllByProjectQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError = unknown>(projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, }
+export const getBatchesControllerFindAllByProjectQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError = unknown>(projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getBatchesControllerFindAllByProjectQueryKey(projectId);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>> = ({ signal }) => batchesControllerFindAllByProject(projectId, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>> = ({ signal }) => batchesControllerFindAllByProject(projectId, { signal, ...requestOptions });
 
       
 
@@ -1510,7 +1514,7 @@ export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<
           TError,
           Awaited<ReturnType<typeof batchesControllerFindAllByProject>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError = unknown>(
@@ -1520,11 +1524,11 @@ export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<
           TError,
           Awaited<ReturnType<typeof batchesControllerFindAllByProject>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError = unknown>(
- projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, }
+ projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1532,7 +1536,7 @@ export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<
  */
 
 export function useBatchesControllerFindAllByProject<TData = Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError = unknown>(
- projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, }
+ projectId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindAllByProject>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1592,16 +1596,16 @@ export const getBatchesControllerFindOneQueryKey = (id: string,) => {
     }
 
     
-export const getBatchesControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, }
+export const getBatchesControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerFindOne>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getBatchesControllerFindOneQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerFindOne>>> = ({ signal }) => batchesControllerFindOne(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerFindOne>>> = ({ signal }) => batchesControllerFindOne(id, { signal, ...requestOptions });
 
       
 
@@ -1621,7 +1625,7 @@ export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof ba
           TError,
           Awaited<ReturnType<typeof batchesControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof batchesControllerFindOne>>, TError = unknown>(
@@ -1631,11 +1635,11 @@ export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof ba
           TError,
           Awaited<ReturnType<typeof batchesControllerFindOne>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof batchesControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1643,7 +1647,7 @@ export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof ba
  */
 
 export function useBatchesControllerFindOne<TData = Awaited<ReturnType<typeof batchesControllerFindOne>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1703,16 +1707,16 @@ export const getBatchesControllerGetScriptsQueryKey = (id: string,) => {
     }
 
     
-export const getBatchesControllerGetScriptsQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, }
+export const getBatchesControllerGetScriptsQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getBatchesControllerGetScriptsQueryKey(id);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerGetScripts>>> = ({ signal }) => batchesControllerGetScripts(id, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerGetScripts>>> = ({ signal }) => batchesControllerGetScripts(id, { signal, ...requestOptions });
 
       
 
@@ -1732,7 +1736,7 @@ export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof batchesControllerGetScripts>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError = unknown>(
@@ -1742,11 +1746,11 @@ export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof batchesControllerGetScripts>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1754,7 +1758,7 @@ export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof
  */
 
 export function useBatchesControllerGetScripts<TData = Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError = unknown>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, }
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1809,15 +1813,15 @@ export const batchesControllerRegenerateScript = async (id: string,
 
 
 export const getBatchesControllerRegenerateScriptMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, TError,{id: string;data: RegenerateDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, TError,{id: string;data: RegenerateDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, TError,{id: string;data: RegenerateDto}, TContext> => {
 
 const mutationKey = ['batchesControllerRegenerateScript'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -1825,7 +1829,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, {id: string;data: RegenerateDto}> = (props) => {
           const {id,data} = props ?? {};
 
-          return  batchesControllerRegenerateScript(id,data,)
+          return  batchesControllerRegenerateScript(id,data,requestOptions)
         }
 
 
@@ -1843,7 +1847,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Regenerate a script with new instructions
  */
 export const useBatchesControllerRegenerateScript = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, TError,{id: string;data: RegenerateDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchesControllerRegenerateScript>>, TError,{id: string;data: RegenerateDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof batchesControllerRegenerateScript>>,
         TError,
@@ -1891,15 +1895,15 @@ export const exportsControllerExportBatch = async (id: string, options?: Request
 
 
 export const getExportsControllerExportBatchMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportBatch>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportBatch>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportBatch>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['exportsControllerExportBatch'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -1907,7 +1911,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof exportsControllerExportBatch>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  exportsControllerExportBatch(id,)
+          return  exportsControllerExportBatch(id,requestOptions)
         }
 
 
@@ -1925,7 +1929,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Export batch scripts to PDF and CSV
  */
 export const useExportsControllerExportBatch = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportBatch>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportBatch>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof exportsControllerExportBatch>>,
         TError,
@@ -1977,16 +1981,16 @@ export const getAdminControllerGetStatsQueryKey = () => {
     }
 
     
-export const getAdminControllerGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetStats>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, }
+export const getAdminControllerGetStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetStats>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetStatsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetStats>>> = ({ signal }) => adminControllerGetStats({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetStats>>> = ({ signal }) => adminControllerGetStats({ signal, ...requestOptions });
 
       
 
@@ -2006,7 +2010,7 @@ export function useAdminControllerGetStats<TData = Awaited<ReturnType<typeof adm
           TError,
           Awaited<ReturnType<typeof adminControllerGetStats>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetStats<TData = Awaited<ReturnType<typeof adminControllerGetStats>>, TError = unknown>(
@@ -2016,16 +2020,16 @@ export function useAdminControllerGetStats<TData = Awaited<ReturnType<typeof adm
           TError,
           Awaited<ReturnType<typeof adminControllerGetStats>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetStats<TData = Awaited<ReturnType<typeof adminControllerGetStats>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetStats<TData = Awaited<ReturnType<typeof adminControllerGetStats>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -2089,16 +2093,16 @@ export const getAdminControllerGetRequestsQueryKey = (params?: AdminControllerGe
     }
 
     
-export const getAdminControllerGetRequestsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, }
+export const getAdminControllerGetRequestsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetRequestsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetRequests>>> = ({ signal }) => adminControllerGetRequests(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetRequests>>> = ({ signal }) => adminControllerGetRequests(params, { signal, ...requestOptions });
 
       
 
@@ -2118,7 +2122,7 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
           TError,
           Awaited<ReturnType<typeof adminControllerGetRequests>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
@@ -2128,16 +2132,16 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
           TError,
           Awaited<ReturnType<typeof adminControllerGetRequests>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, }
+ params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, }
+ params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -2187,15 +2191,15 @@ export const adminControllerApproveRequest = async (id: string, options?: Reques
 
 
 export const getAdminControllerApproveRequestMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerApproveRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerApproveRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerApproveRequest>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerApproveRequest'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2203,7 +2207,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerApproveRequest>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerApproveRequest(id,)
+          return  adminControllerApproveRequest(id,requestOptions)
         }
 
 
@@ -2218,7 +2222,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerApproveRequestMutationError = unknown
 
     export const useAdminControllerApproveRequest = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerApproveRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerApproveRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerApproveRequest>>,
         TError,
@@ -2263,15 +2267,15 @@ export const adminControllerRejectRequest = async (id: string, options?: Request
 
 
 export const getAdminControllerRejectRequestMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRejectRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRejectRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerRejectRequest>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerRejectRequest'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2279,7 +2283,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerRejectRequest>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerRejectRequest(id,)
+          return  adminControllerRejectRequest(id,requestOptions)
         }
 
 
@@ -2294,7 +2298,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerRejectRequestMutationError = unknown
 
     export const useAdminControllerRejectRequest = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRejectRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRejectRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerRejectRequest>>,
         TError,
@@ -2339,15 +2343,15 @@ export const adminControllerDeleteRequest = async (id: string, options?: Request
 
 
 export const getAdminControllerDeleteRequestMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerDeleteRequest'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2355,7 +2359,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerDeleteRequest(id,)
+          return  adminControllerDeleteRequest(id,requestOptions)
         }
 
 
@@ -2370,7 +2374,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerDeleteRequestMutationError = unknown
 
     export const useAdminControllerDeleteRequest = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteRequest>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerDeleteRequest>>,
         TError,
@@ -2422,16 +2426,16 @@ export const getAdminControllerGetUsersQueryKey = () => {
     }
 
     
-export const getAdminControllerGetUsersQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetUsers>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, }
+export const getAdminControllerGetUsersQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetUsers>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetUsersQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetUsers>>> = ({ signal }) => adminControllerGetUsers({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetUsers>>> = ({ signal }) => adminControllerGetUsers({ signal, ...requestOptions });
 
       
 
@@ -2451,7 +2455,7 @@ export function useAdminControllerGetUsers<TData = Awaited<ReturnType<typeof adm
           TError,
           Awaited<ReturnType<typeof adminControllerGetUsers>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetUsers<TData = Awaited<ReturnType<typeof adminControllerGetUsers>>, TError = unknown>(
@@ -2461,16 +2465,16 @@ export function useAdminControllerGetUsers<TData = Awaited<ReturnType<typeof adm
           TError,
           Awaited<ReturnType<typeof adminControllerGetUsers>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetUsers<TData = Awaited<ReturnType<typeof adminControllerGetUsers>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetUsers<TData = Awaited<ReturnType<typeof adminControllerGetUsers>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUsers>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -2520,15 +2524,15 @@ export const adminControllerCreateUser = async ( options?: RequestInit): Promise
 
 
 export const getAdminControllerCreateUserMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerCreateUser>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerCreateUser>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerCreateUser>>, TError,void, TContext> => {
 
 const mutationKey = ['adminControllerCreateUser'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2536,7 +2540,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerCreateUser>>, void> = () => {
           
 
-          return  adminControllerCreateUser()
+          return  adminControllerCreateUser(requestOptions)
         }
 
 
@@ -2551,7 +2555,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerCreateUserMutationError = unknown
 
     export const useAdminControllerCreateUser = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerCreateUser>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerCreateUser>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerCreateUser>>,
         TError,
@@ -2596,15 +2600,15 @@ export const adminControllerDeleteUser = async (id: string, options?: RequestIni
 
 
 export const getAdminControllerDeleteUserMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteUser>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteUser>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteUser>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerDeleteUser'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2612,7 +2616,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerDeleteUser>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerDeleteUser(id,)
+          return  adminControllerDeleteUser(id,requestOptions)
         }
 
 
@@ -2627,7 +2631,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerDeleteUserMutationError = unknown
 
     export const useAdminControllerDeleteUser = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteUser>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteUser>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerDeleteUser>>,
         TError,
@@ -2672,15 +2676,15 @@ export const adminControllerToggleAdmin = async (id: string, options?: RequestIn
 
 
 export const getAdminControllerToggleAdminMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerToggleAdmin'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2688,7 +2692,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerToggleAdmin(id,)
+          return  adminControllerToggleAdmin(id,requestOptions)
         }
 
 
@@ -2703,7 +2707,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerToggleAdminMutationError = unknown
 
     export const useAdminControllerToggleAdmin = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerToggleAdmin>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerToggleAdmin>>,
         TError,
@@ -2748,15 +2752,15 @@ export const adminControllerGenerateMagicLink = async (id: string, options?: Req
 
 
 export const getAdminControllerGenerateMagicLinkMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerGenerateMagicLink'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2764,7 +2768,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerGenerateMagicLink(id,)
+          return  adminControllerGenerateMagicLink(id,requestOptions)
         }
 
 
@@ -2779,7 +2783,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerGenerateMagicLinkMutationError = unknown
 
     export const useAdminControllerGenerateMagicLink = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerGenerateMagicLink>>,
         TError,
@@ -2824,15 +2828,15 @@ export const adminControllerUpdateUserPlan = async (id: string, options?: Reques
 
 
 export const getAdminControllerUpdateUserPlanMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerUpdateUserPlan'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -2840,7 +2844,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerUpdateUserPlan(id,)
+          return  adminControllerUpdateUserPlan(id,requestOptions)
         }
 
 
@@ -2855,7 +2859,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerUpdateUserPlanMutationError = unknown
 
     export const useAdminControllerUpdateUserPlan = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerUpdateUserPlan>>,
         TError,
@@ -2907,16 +2911,16 @@ export const getAdminControllerGetQueueStatsQueryKey = () => {
     }
 
     
-export const getAdminControllerGetQueueStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, }
+export const getAdminControllerGetQueueStatsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetQueueStatsQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetQueueStats>>> = ({ signal }) => adminControllerGetQueueStats({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetQueueStats>>> = ({ signal }) => adminControllerGetQueueStats({ signal, ...requestOptions });
 
       
 
@@ -2936,7 +2940,7 @@ export function useAdminControllerGetQueueStats<TData = Awaited<ReturnType<typeo
           TError,
           Awaited<ReturnType<typeof adminControllerGetQueueStats>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetQueueStats<TData = Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError = unknown>(
@@ -2946,16 +2950,16 @@ export function useAdminControllerGetQueueStats<TData = Awaited<ReturnType<typeo
           TError,
           Awaited<ReturnType<typeof adminControllerGetQueueStats>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetQueueStats<TData = Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetQueueStats<TData = Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -3019,16 +3023,16 @@ export const getAdminControllerGetQueueJobsQueryKey = (params?: AdminControllerG
     }
 
     
-export const getAdminControllerGetQueueJobsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError = unknown>(params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, }
+export const getAdminControllerGetQueueJobsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError = unknown>(params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetQueueJobsQueryKey(params);
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>> = ({ signal }) => adminControllerGetQueueJobs(params, { signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>> = ({ signal }) => adminControllerGetQueueJobs(params, { signal, ...requestOptions });
 
       
 
@@ -3048,7 +3052,7 @@ export function useAdminControllerGetQueueJobs<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof adminControllerGetQueueJobs>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetQueueJobs<TData = Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError = unknown>(
@@ -3058,16 +3062,16 @@ export function useAdminControllerGetQueueJobs<TData = Awaited<ReturnType<typeof
           TError,
           Awaited<ReturnType<typeof adminControllerGetQueueJobs>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetQueueJobs<TData = Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError = unknown>(
- params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, }
+ params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetQueueJobs<TData = Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError = unknown>(
- params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, }
+ params: AdminControllerGetQueueJobsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetQueueJobs>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -3117,15 +3121,15 @@ export const adminControllerRetryJob = async (id: string, options?: RequestInit)
 
 
 export const getAdminControllerRetryJobMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRetryJob>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRetryJob>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof adminControllerRetryJob>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['adminControllerRetryJob'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -3133,7 +3137,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerRetryJob>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
-          return  adminControllerRetryJob(id,)
+          return  adminControllerRetryJob(id,requestOptions)
         }
 
 
@@ -3148,7 +3152,7 @@ const {mutation: mutationOptions} = options ?
     export type AdminControllerRetryJobMutationError = unknown
 
     export const useAdminControllerRetryJob = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRetryJob>>, TError,{id: string}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerRetryJob>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof adminControllerRetryJob>>,
         TError,
@@ -3203,16 +3207,16 @@ export const getSettingsControllerGetProfileQueryKey = () => {
     }
 
     
-export const getSettingsControllerGetProfileQueryOptions = <TData = Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, }
+export const getSettingsControllerGetProfileQueryOptions = <TData = Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
-const {query: queryOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getSettingsControllerGetProfileQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof settingsControllerGetProfile>>> = ({ signal }) => settingsControllerGetProfile({ signal });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof settingsControllerGetProfile>>> = ({ signal }) => settingsControllerGetProfile({ signal, ...requestOptions });
 
       
 
@@ -3232,7 +3236,7 @@ export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeo
           TError,
           Awaited<ReturnType<typeof settingsControllerGetProfile>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError = unknown>(
@@ -3242,11 +3246,11 @@ export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeo
           TError,
           Awaited<ReturnType<typeof settingsControllerGetProfile>>
         > , 'initialData'
-      >, }
+      >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -3254,7 +3258,7 @@ export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeo
  */
 
 export function useSettingsControllerGetProfile<TData = Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError = unknown>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, }
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof settingsControllerGetProfile>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -3308,15 +3312,15 @@ export const settingsControllerUpdateProfile = async (updateProfileDto: UpdatePr
 
 
 export const getSettingsControllerUpdateProfileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, TError,{data: UpdateProfileDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, TError,{data: UpdateProfileDto}, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, TError,{data: UpdateProfileDto}, TContext> => {
 
 const mutationKey = ['settingsControllerUpdateProfile'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -3324,7 +3328,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, {data: UpdateProfileDto}> = (props) => {
           const {data} = props ?? {};
 
-          return  settingsControllerUpdateProfile(data,)
+          return  settingsControllerUpdateProfile(data,requestOptions)
         }
 
 
@@ -3342,7 +3346,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Update the current user profile
  */
 export const useSettingsControllerUpdateProfile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, TError,{data: UpdateProfileDto}, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerUpdateProfile>>, TError,{data: UpdateProfileDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof settingsControllerUpdateProfile>>,
         TError,
@@ -3390,15 +3394,15 @@ export const settingsControllerDeleteAccount = async ( options?: RequestInit): P
 
 
 export const getSettingsControllerDeleteAccountMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
 ): UseMutationOptions<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, TError,void, TContext> => {
 
 const mutationKey = ['settingsControllerDeleteAccount'];
-const {mutation: mutationOptions} = options ?
+const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
       : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }};
+      : {mutation: { mutationKey, }, request: undefined};
 
       
 
@@ -3406,7 +3410,7 @@ const {mutation: mutationOptions} = options ?
       const mutationFn: MutationFunction<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, void> = () => {
           
 
-          return  settingsControllerDeleteAccount()
+          return  settingsControllerDeleteAccount(requestOptions)
         }
 
 
@@ -3424,7 +3428,7 @@ const {mutation: mutationOptions} = options ?
  * @summary Delete the current user account
  */
 export const useSettingsControllerDeleteAccount = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, TError,void, TContext>, }
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof settingsControllerDeleteAccount>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof settingsControllerDeleteAccount>>,
         TError,

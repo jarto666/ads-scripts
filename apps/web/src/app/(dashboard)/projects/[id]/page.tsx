@@ -30,6 +30,7 @@ import {
   Crown,
 } from "lucide-react";
 import { getProjectGenSettingsAtom } from "@/lib/atoms";
+import { useAuth } from "@/lib/auth";
 import { Credits, CreditsCost } from "@/components/ui/credits";
 import { InfoTip } from "@/components/ui/info-block";
 import { Button } from "@/components/ui/button";
@@ -138,6 +139,239 @@ const DURATIONS = [
   { value: 45, label: "45s", description: "Detailed" },
 ];
 
+// Script Card Component
+function ScriptCard({
+  script,
+  index,
+  isExpanded,
+  onToggleExpand,
+  onRegenerate,
+  getScoreVariant,
+  isVersion = false,
+  versionNumber,
+  versionCount = 0,
+  isAdmin = false,
+}: {
+  script: ScriptDto;
+  index: number;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onRegenerate: () => void;
+  getScoreVariant: (score: number | null | undefined) => "success" | "warning" | "destructive" | "secondary";
+  isVersion?: boolean;
+  versionNumber?: number;
+  versionCount?: number;
+  isAdmin?: boolean;
+}) {
+  const isRegenerating = script.status === "pending" || script.status === "generating";
+
+  return (
+    <Card
+      className={`script-card animate-fade-up overflow-visible ${
+        isRegenerating ? "border-primary/30 bg-primary/5" : ""
+      } ${isVersion ? "border-l-2 border-l-primary/30" : ""}`}
+      style={{ animationDelay: `${index * 0.03}s` }}
+    >
+      <CardContent className="pt-5">
+        {/* Regenerating indicator */}
+        {isRegenerating && (
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-primary/20">
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-primary/15">
+              <RefreshCw className="h-4 w-4 text-primary animate-spin" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-primary">Regenerating...</p>
+              <p className="text-xs text-muted-foreground">
+                New version is being created
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div
+          className={`${!isRegenerating ? "cursor-pointer" : ""}`}
+          onClick={() => !isRegenerating && onToggleExpand()}
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {isVersion && versionNumber && (
+                  <Badge variant="secondary" className="text-xs gap-1">
+                    <RefreshCw className="h-3 w-3" />
+                    v{versionNumber}
+                  </Badge>
+                )}
+                {!isVersion && versionCount > 0 && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    {versionCount + 1} versions
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs">
+                  {script.angle?.replace("_", " ")}
+                </Badge>
+                <Badge variant="secondary" className="text-xs">
+                  {script.duration}s
+                </Badge>
+                {!isRegenerating && isAdmin && (
+                  <Badge
+                    variant={getScoreVariant(script.score)}
+                    className="text-xs"
+                  >
+                    Score: {script.score ?? "-"}
+                  </Badge>
+                )}
+                {script.warnings && script.warnings.length > 0 && (
+                  <Badge variant="warning" className="text-xs gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    {script.warnings.length}
+                  </Badge>
+                )}
+              </div>
+              <p className={`font-medium text-lg leading-snug ${
+                isRegenerating ? "text-muted-foreground" : "text-foreground"
+              }`}>
+                {isRegenerating ? "Generating new version..." : (script.hook || "No hook")}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {!isRegenerating && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRegenerate();
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              )}
+              {!isRegenerating && (
+                isExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Expanded Content */}
+        {isExpanded && script.storyboard && (
+          <div className="mt-6 pt-6 border-t border-border space-y-6">
+            {/* Storyboard */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <Camera className="h-4 w-4 text-primary" />
+                <h4 className="font-semibold text-foreground">Storyboard</h4>
+              </div>
+              <div className="space-y-3">
+                {script.storyboard.map((step, i) => (
+                  <div
+                    key={i}
+                    className="relative pl-6 pb-3 border-l-2 border-border last:border-l-0"
+                  >
+                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-primary-foreground">
+                        {i + 1}
+                      </span>
+                    </div>
+                    <div className="bg-secondary/30 rounded-xl p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-xs">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {step.t}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        <span className="font-medium text-foreground">Shot:</span>{" "}
+                        {step.shot}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium text-foreground">Spoken:</span>{" "}
+                        <span className="text-primary">&ldquo;{step.spoken}&rdquo;</span>
+                      </p>
+                      {step.onScreen && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          <span className="font-medium text-foreground">On-screen:</span>{" "}
+                          {step.onScreen}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* CTAs */}
+              {script.ctaVariants && script.ctaVariants.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    <h4 className="font-semibold text-foreground">CTA Variants</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {script.ctaVariants.map((cta, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30"
+                      >
+                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
+                        <span className="text-sm">{cta}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Filming Checklist */}
+              {script.filmingChecklist && script.filmingChecklist.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="h-4 w-4 text-primary" />
+                    <h4 className="font-semibold text-foreground">Filming Checklist</h4>
+                  </div>
+                  <div className="space-y-2">
+                    {script.filmingChecklist.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30"
+                      >
+                        <div className="w-4 h-4 rounded border border-border shrink-0" />
+                        <span className="text-sm">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Warnings */}
+            {script.warnings && script.warnings.length > 0 && (
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle className="h-4 w-4 text-warning" />
+                  <h4 className="font-semibold text-warning">Warnings</h4>
+                </div>
+                <ul className="space-y-1 list-disc list-inside marker:text-warning">
+                  {script.warnings.map((warning, i) => (
+                    <li key={i} className="text-sm text-warning/90">
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ProjectDetailPage({
   params,
 }: {
@@ -146,6 +380,8 @@ export default function ProjectDetailPage({
   const { id } = use(params);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const { user } = useAuth();
+  const isAdmin = user?.isAdmin ?? false;
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -514,12 +750,13 @@ export default function ProjectDetailPage({
         regenerateScriptId,
         { instruction: regenerateInstruction },
       );
+      // Add the new script (with pending status) to the list
       setScriptsList((prev) => [result.data, ...prev]);
       setRegenerateDialogOpen(false);
       setRegenerateInstruction("");
       toast({
-        title: "Script regenerated",
-        description: "A new version has been created",
+        title: "Regeneration started",
+        description: "A new version is being generated",
       });
     } catch (error) {
       toast({
@@ -531,6 +768,21 @@ export default function ProjectDetailPage({
       setIsRegenerating(false);
     }
   };
+
+  // Check if any scripts are currently regenerating
+  const hasRegeneratingScripts = scriptsList.some(
+    (s) => s.status === "pending" || s.status === "generating"
+  );
+
+  // Poll for regenerating script updates
+  useEffect(() => {
+    if (hasRegeneratingScripts && selectedBatchId) {
+      const interval = setInterval(() => {
+        fetchScripts(selectedBatchId);
+      }, 2000);
+      return () => clearInterval(interval);
+    }
+  }, [hasRegeneratingScripts, selectedBatchId]);
 
   const handleExport = async () => {
     if (!selectedBatchId) return;
@@ -1629,211 +1881,68 @@ export default function ProjectDetailPage({
                 </div>
               </div>
 
-              {/* Scripts List */}
+              {/* Scripts List - Grouped by parent */}
               <div className="space-y-4">
-                {filteredScripts.map((script, i) => (
-                  <Card
-                    key={script.id}
-                    className="script-card animate-fade-up overflow-visible"
-                    style={{ animationDelay: `${i * 0.03}s` }}
-                  >
-                    <CardContent className="pt-5">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() =>
-                          setExpandedScript(
-                            expandedScript === script.id ? null : script.id,
-                          )
-                        }
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <Badge variant="outline" className="text-xs">
-                                {script.angle?.replace("_", " ")}
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs">
-                                {script.duration}s
-                              </Badge>
-                              <Badge
-                                variant={getScoreVariant(script.score)}
-                                className="text-xs"
-                              >
-                                Score: {script.score ?? "-"}
-                              </Badge>
-                              {script.warnings &&
-                                script.warnings.length > 0 && (
-                                  <Badge
-                                    variant="warning"
-                                    className="text-xs gap-1"
-                                  >
-                                    <AlertTriangle className="h-3 w-3" />
-                                    {script.warnings.length}
-                                  </Badge>
-                                )}
-                            </div>
-                            <p className="font-medium text-foreground text-lg leading-snug">
-                              {script.hook || "No hook"}
-                            </p>
+                {(() => {
+                  // Group scripts: originals (no parent) with their versions
+                  const originals = filteredScripts.filter(s => !s.parentScriptId);
+                  const versionsByParent = filteredScripts.reduce((acc, s) => {
+                    if (s.parentScriptId) {
+                      if (!acc[s.parentScriptId]) acc[s.parentScriptId] = [];
+                      acc[s.parentScriptId].push(s);
+                    }
+                    return acc;
+                  }, {} as Record<string, typeof filteredScripts>);
+
+                  return originals.map((script, i) => {
+                    // Sort versions by creation date (oldest first) so version numbers are correct
+                    const versions = (versionsByParent[script.id] || [])
+                      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+                    const hasVersions = versions.length > 0;
+
+                    return (
+                      <div key={script.id} className="space-y-2">
+                        {/* Original Script Card */}
+                        <ScriptCard
+                          script={script}
+                          index={i}
+                          isExpanded={expandedScript === script.id}
+                          onToggleExpand={() => setExpandedScript(expandedScript === script.id ? null : script.id)}
+                          onRegenerate={() => {
+                            setRegenerateScriptId(script.id);
+                            setRegenerateDialogOpen(true);
+                          }}
+                          getScoreVariant={getScoreVariant}
+                          versionCount={versions.length}
+                          isAdmin={isAdmin}
+                        />
+
+                        {/* Child Versions */}
+                        {hasVersions && (
+                          <div className="ml-6 pl-4 border-l-2 border-border space-y-2">
+                            {versions.map((version, vi) => (
+                              <ScriptCard
+                                key={version.id}
+                                script={version}
+                                index={i + vi + 1}
+                                isExpanded={expandedScript === version.id}
+                                onToggleExpand={() => setExpandedScript(expandedScript === version.id ? null : version.id)}
+                                onRegenerate={() => {
+                                  setRegenerateScriptId(version.id);
+                                  setRegenerateDialogOpen(true);
+                                }}
+                                getScoreVariant={getScoreVariant}
+                                isVersion
+                                versionNumber={vi + 2}
+                                isAdmin={isAdmin}
+                              />
+                            ))}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-1"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRegenerateScriptId(script.id);
-                                setRegenerateDialogOpen(true);
-                              }}
-                            >
-                              <RefreshCw className="h-4 w-4" />
-                            </Button>
-                            {expandedScript === script.id ? (
-                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                        </div>
+                        )}
                       </div>
-
-                      {/* Expanded Content */}
-                      {expandedScript === script.id && script.storyboard && (
-                        <div className="mt-6 pt-6 border-t border-border space-y-6">
-                          {/* Storyboard */}
-                          <div>
-                            <div className="flex items-center gap-2 mb-4">
-                              <Camera className="h-4 w-4 text-primary" />
-                              <h4 className="font-semibold text-foreground">
-                                Storyboard
-                              </h4>
-                            </div>
-                            <div className="space-y-3">
-                              {script.storyboard.map((step, i) => (
-                                <div
-                                  key={i}
-                                  className="relative pl-6 pb-3 border-l-2 border-border last:border-l-0"
-                                >
-                                  <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-                                    <span className="text-[10px] font-bold text-primary-foreground">
-                                      {i + 1}
-                                    </span>
-                                  </div>
-                                  <div className="bg-secondary/30 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Badge
-                                        variant="outline"
-                                        className="text-xs"
-                                      >
-                                        <Clock className="h-3 w-3 mr-1" />
-                                        {step.t}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-2">
-                                      <span className="font-medium text-foreground">
-                                        Shot:
-                                      </span>{" "}
-                                      {step.shot}
-                                    </p>
-                                    <p className="text-sm">
-                                      <span className="font-medium text-foreground">
-                                        Spoken:
-                                      </span>{" "}
-                                      <span className="text-primary">
-                                        &ldquo;{step.spoken}&rdquo;
-                                      </span>
-                                    </p>
-                                    {step.onScreen && (
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        <span className="font-medium text-foreground">
-                                          On-screen:
-                                        </span>{" "}
-                                        {step.onScreen}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="grid gap-6 md:grid-cols-2">
-                            {/* CTAs */}
-                            {script.ctaVariants &&
-                              script.ctaVariants.length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <MessageSquare className="h-4 w-4 text-primary" />
-                                    <h4 className="font-semibold text-foreground">
-                                      CTA Variants
-                                    </h4>
-                                  </div>
-                                  <div className="space-y-2">
-                                    {script.ctaVariants.map((cta, i) => (
-                                      <div
-                                        key={i}
-                                        className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30"
-                                      >
-                                        <CheckCircle2 className="h-4 w-4 text-success shrink-0" />
-                                        <span className="text-sm">{cta}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                            {/* Filming Checklist */}
-                            {script.filmingChecklist &&
-                              script.filmingChecklist.length > 0 && (
-                                <div>
-                                  <div className="flex items-center gap-2 mb-3">
-                                    <FileText className="h-4 w-4 text-primary" />
-                                    <h4 className="font-semibold text-foreground">
-                                      Filming Checklist
-                                    </h4>
-                                  </div>
-                                  <div className="space-y-2">
-                                    {script.filmingChecklist.map((item, i) => (
-                                      <div
-                                        key={i}
-                                        className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30"
-                                      >
-                                        <div className="w-4 h-4 rounded border border-border shrink-0" />
-                                        <span className="text-sm">{item}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                          </div>
-
-                          {/* Warnings */}
-                          {script.warnings && script.warnings.length > 0 && (
-                            <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
-                              <div className="flex items-center gap-2 mb-2">
-                                <AlertTriangle className="h-4 w-4 text-warning" />
-                                <h4 className="font-semibold text-warning">
-                                  Warnings
-                                </h4>
-                              </div>
-                              <ul className="space-y-1 list-disc list-inside marker:text-warning">
-                                {script.warnings.map((warning, i) => (
-                                  <li
-                                    key={i}
-                                    className="text-sm text-warning/90"
-                                  >
-                                    {warning}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                    );
+                  });
+                })()}
               </div>
             </>
           )}
@@ -1896,6 +2005,13 @@ export default function ProjectDetailPage({
               value={regenerateInstruction}
               onChange={(e) => setRegenerateInstruction(e.target.value)}
             />
+            {/* Cost indicator */}
+            {selectedBatch && (
+              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border">
+                <span className="text-sm text-muted-foreground">Regeneration cost</span>
+                <CreditsCost amount={selectedBatch.quality === "premium" ? 5 : 1} />
+              </div>
+            )}
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
@@ -1910,10 +2026,13 @@ export default function ProjectDetailPage({
                 {isRegenerating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Regenerating...
+                    Starting...
                   </>
                 ) : (
-                  "Regenerate"
+                  <>
+                    Regenerate
+                    <CreditsCost amount={selectedBatch?.quality === "premium" ? 5 : 1} className="ml-1.5" />
+                  </>
                 )}
               </Button>
             </div>

@@ -267,47 +267,63 @@ export class ScriptGeneratorService {
     return response;
   }
 
-  async regenerateScript(
-    scriptId: string,
-    instruction: string,
-  ): Promise<Script> {
-    const existingScript = await this.prisma.script.findUnique({
+  /**
+   * Process regeneration job from queue.
+   * The script already exists with pending status and parentScriptId set.
+   * @param scriptId - The new script being created
+   * @param sourceScriptId - The script we're regenerating FROM (for content)
+   * @param instruction - User's modification instructions
+   */
+  async processRegeneration(scriptId: string, sourceScriptId: string, instruction: string): Promise<void> {
+    const script = await this.prisma.script.findUnique({
       where: { id: scriptId },
       include: {
         batch: {
           include: {
-            project: {
-              include: {
-                personas: true,
-              },
-            },
+            project: true,
           },
         },
       },
     });
 
-    if (!existingScript || !existingScript.storyboard) {
-      throw new Error('Script not found or invalid');
+    if (!script) {
+      throw new Error('Script not found');
     }
 
-    const prompt = `You are a UGC script writer. Modify the following script based on the instruction.
+    // Fetch the source script (the one we're regenerating FROM)
+    const sourceScript = await this.prisma.script.findUnique({
+      where: { id: sourceScriptId },
+    });
+
+    if (!sourceScript || !sourceScript.storyboard) {
+      throw new Error('Source script not found or invalid');
+    }
+
+    try {
+      // Update status to generating
+      await this.prisma.script.update({
+        where: { id: scriptId },
+        data: { status: 'generating' },
+      });
+
+      const prompt = `You are a UGC script writer. Modify the following script based on the instruction.
 
 ## Original Script
-${JSON.stringify(existingScript.storyboard, null, 2)}
+${JSON.stringify(sourceScript.storyboard, null, 2)}
 
-Hook: ${existingScript.hook}
-CTAs: ${existingScript.ctaVariants.join(', ')}
+Hook: ${sourceScript.hook}
+CTAs: ${sourceScript.ctaVariants.join(', ')}
 
 ## Modification Instruction
 ${instruction}
 
 ## Product Context
-${existingScript.batch.project.productDescription}
+${script.batch.project.productDescription}
 
 Return the modified script in the same JSON format:
 {
-  "angle": "${existingScript.angle}",
-  "duration": ${existingScript.duration},
+  "angle": "${sourceScript.angle}",
+  "duration": ${sourceScript.duration},
   "hook": "...",
   "storyboard": [...],
   "ctaVariants": [...],
@@ -317,41 +333,58 @@ Return the modified script in the same JSON format:
 
 Return ONLY valid JSON.`;
 
-    const response = await this.openRouter.chatCompletion(
-      [
-        { role: 'system', content: 'You modify UGC scripts. Always respond with valid JSON.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.5, jsonMode: true },
-    );
+      // Use model based on batch quality
+      const model = QUALITY_MODELS[script.batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+      this.logger.log(`Regenerating script ${scriptId} with model ${model}`);
 
-    let scriptOutput: ScriptOutput;
-    try {
-      scriptOutput = JSON.parse(response);
-    } catch {
-      const repaired = await this.repairJson(response, 'JSON parse error');
-      scriptOutput = JSON.parse(repaired);
+      const response = await this.openRouter.chatCompletion(
+        [
+          { role: 'system', content: 'You modify UGC scripts. Always respond with valid JSON.' },
+          { role: 'user', content: prompt },
+        ],
+        { model, temperature: 0.5, jsonMode: true },
+      );
+
+      let scriptOutput: ScriptOutput;
+      try {
+        scriptOutput = JSON.parse(response);
+      } catch {
+        const repaired = await this.repairJson(response, 'JSON parse error');
+        scriptOutput = JSON.parse(repaired);
+      }
+
+      const { score, warnings } = this.scoringService.scoreScript(
+        scriptOutput,
+        script.batch.project.forbiddenClaims,
+      );
+
+      // Update the script with generated content
+      await this.prisma.script.update({
+        where: { id: scriptId },
+        data: {
+          status: 'completed',
+          hook: scriptOutput.hook,
+          storyboard: scriptOutput.storyboard,
+          ctaVariants: scriptOutput.ctaVariants,
+          filmingChecklist: scriptOutput.filmingChecklist,
+          warnings: [...(scriptOutput.warnings || []), ...warnings],
+          score,
+        },
+      });
+
+      this.logger.log(`Regeneration completed for script ${scriptId}`);
+    } catch (error) {
+      this.logger.error(`Regeneration failed for script ${scriptId}: ${error}`);
+
+      await this.prisma.script.update({
+        where: { id: scriptId },
+        data: {
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+
+      throw error;
     }
-
-    const { score, warnings } = this.scoringService.scoreScript(
-      scriptOutput,
-      existingScript.batch.project.forbiddenClaims,
-    );
-
-    // Create new script (don't overwrite original)
-    return this.prisma.script.create({
-      data: {
-        batchId: existingScript.batchId,
-        status: 'completed',
-        angle: scriptOutput.angle,
-        duration: scriptOutput.duration,
-        hook: scriptOutput.hook,
-        storyboard: scriptOutput.storyboard,
-        ctaVariants: scriptOutput.ctaVariants,
-        filmingChecklist: scriptOutput.filmingChecklist,
-        warnings: [...(scriptOutput.warnings || []), ...warnings],
-        score,
-      },
-    });
   }
 }
