@@ -10,7 +10,9 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
+  name      String?
   isAdmin   Boolean  @default(false)
+  plan      String   @default("free") // "free" | "pro"
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -88,6 +90,7 @@ model Batch {
   angles         String[]
   durations      Int[]    // 15, 30, 45
   personaIds     String[] @default([]) // Empty = all personas
+  quality        String   @default("standard") // "standard" | "premium"
   pdfUrl         String?
   csvUrl         String?
   errorMessage   String?

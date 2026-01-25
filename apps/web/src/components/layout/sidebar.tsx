@@ -20,7 +20,9 @@ import {
   FileText,
   Crown,
   Shield,
+  CreditCard,
 } from 'lucide-react';
+import { Credits } from '@/components/ui/credits';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -31,6 +33,8 @@ interface SidebarProps {
     email: string;
     name?: string;
     isAdmin?: boolean;
+    plan?: 'free' | 'pro';
+    credits?: number;
   };
   onLogout: () => void;
 }
@@ -181,24 +185,49 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="mt-auto border-t border-border">
-        {/* Upgrade Banner */}
+        {/* Credits & Plan Section */}
         {!collapsed && (
           <div className="p-3">
-            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 p-4">
-              <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-semibold text-primary">Upgrade to Pro</span>
+            {user.plan === 'pro' ? (
+              /* Pro User - Show credits and manage subscription */
+              <div className="rounded-xl bg-secondary/50 border border-border p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-warning" />
+                    <span className="text-xs font-semibold text-foreground">Pro Plan</span>
+                  </div>
+                  <Credits amount={user.credits ?? 0} size="sm" />
                 </div>
-                <p className="text-[11px] text-muted-foreground mb-3">
-                  Get 500 scripts/month and unlock all features
-                </p>
-                <Button size="sm" className="w-full h-8 text-xs">
-                  Upgrade — $12/mo
-                </Button>
+                <Link href="/pricing">
+                  <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5" />
+                    Manage Subscription
+                  </Button>
+                </Link>
               </div>
-              <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-primary/10 blur-xl" />
-            </div>
+            ) : (
+              /* Free User - Show upgrade banner */
+              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 p-4">
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-semibold text-primary">Free Plan</span>
+                    </div>
+                    <Credits amount={user.credits ?? 0} size="sm" />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mb-3">
+                    Upgrade to Pro for 200 credits/month
+                  </p>
+                  <Link href="/pricing">
+                    <Button size="sm" className="w-full h-8 text-xs">
+                      Upgrade to Pro — $12/mo
+                    </Button>
+                  </Link>
+                </div>
+                <div className="absolute -right-4 -bottom-4 w-20 h-20 rounded-full bg-primary/10 blur-xl" />
+              </div>
+            )}
           </div>
         )}
 

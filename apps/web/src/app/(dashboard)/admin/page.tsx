@@ -18,6 +18,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Crown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +39,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -206,6 +214,23 @@ export default function AdminPage() {
       toast({
         title: 'Error',
         description: 'Failed to update admin status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdatePlan = async (userId: string, plan: 'free' | 'pro') => {
+    try {
+      const updated = await admin.updateUserPlan(userId, plan);
+      toast({
+        title: 'Plan updated',
+        description: `${updated.email} is now on ${plan} plan`,
+      });
+      await fetchUsers();
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to update plan',
         variant: 'destructive',
       });
     }
@@ -539,6 +564,12 @@ export default function AdminPage() {
                               Admin
                             </Badge>
                           )}
+                          {user.plan === 'pro' && (
+                            <Badge variant="warning" className="text-xs gap-1">
+                              <Crown className="h-3 w-3" />
+                              Pro
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {user._count.projects} projects · Joined{' '}
@@ -547,6 +578,25 @@ export default function AdminPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Select
+                        value={user.plan}
+                        onValueChange={(value: 'free' | 'pro') =>
+                          handleUpdatePlan(user.id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-24 h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="free">Free</SelectItem>
+                          <SelectItem value="pro">
+                            <span className="flex items-center gap-1.5">
+                              <Crown className="h-3 w-3 text-warning" />
+                              Pro
+                            </span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         size="sm"
                         variant="outline"

@@ -53,6 +53,10 @@ export class BatchesService {
   async create(userId: string, projectId: string, dto: CreateBatchDto) {
     await this.verifyProjectAccess(userId, projectId);
 
+    const quality = dto.quality || 'standard';
+
+    // TODO: Add credit balance check here when credits system is implemented
+
     // Create batch
     const batch = await this.prisma.batch.create({
       data: {
@@ -62,6 +66,7 @@ export class BatchesService {
         angles: dto.angles,
         durations: dto.durations,
         personaIds: dto.personaIds || [],
+        quality,
         status: 'pending',
       },
     });

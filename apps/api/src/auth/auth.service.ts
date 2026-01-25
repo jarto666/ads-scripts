@@ -70,7 +70,7 @@ export class AuthService {
   }
 
   async consumeMagicLink(token: string): Promise<{
-    user: { id: string; email: string; isAdmin: boolean; createdAt: Date };
+    user: { id: string; email: string; isAdmin: boolean; plan: string; createdAt: Date };
     accessToken: string;
   }> {
     // Find all unexpired, unused tokens for verification
@@ -111,6 +111,7 @@ export class AuthService {
         id: matchedToken.user.id,
         email: matchedToken.user.email,
         isAdmin: matchedToken.user.isAdmin,
+        plan: matchedToken.user.plan,
         createdAt: matchedToken.user.createdAt,
       },
       accessToken,
@@ -130,6 +131,7 @@ export class AuthService {
       id: user.id,
       email: user.email,
       isAdmin: user.isAdmin,
+      plan: user.plan,
       createdAt: user.createdAt,
     };
   }

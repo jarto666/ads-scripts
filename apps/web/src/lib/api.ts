@@ -53,7 +53,7 @@ export const auth = {
     }),
 
   consumeLink: (token: string) =>
-    fetchApi<{ user: { id: string; email: string; isAdmin: boolean; createdAt: string } }>(
+    fetchApi<{ user: { id: string; email: string; isAdmin: boolean; plan: 'free' | 'pro'; createdAt: string } }>(
       '/auth/consume-link',
       {
         method: 'POST',
@@ -67,7 +67,7 @@ export const auth = {
     }),
 
   me: () =>
-    fetchApi<{ id: string; email: string; isAdmin: boolean; createdAt: string }>('/auth/me'),
+    fetchApi<{ id: string; email: string; isAdmin: boolean; plan: 'free' | 'pro'; createdAt: string }>('/auth/me'),
 };
 
 // Admin API
@@ -84,6 +84,7 @@ export interface AdminUser {
   id: string;
   email: string;
   isAdmin: boolean;
+  plan: 'free' | 'pro';
   createdAt: string;
   _count: {
     projects: number;
@@ -140,6 +141,12 @@ export const admin = {
   generateMagicLink: (id: string) =>
     fetchApi<{ magicLink: string }>(`/admin/users/${id}/magic-link`, {
       method: 'POST',
+    }),
+
+  updateUserPlan: (id: string, plan: 'free' | 'pro') =>
+    fetchApi<AdminUser>(`/admin/users/${id}/plan`, {
+      method: 'PATCH',
+      json: { plan },
     }),
 };
 
@@ -275,6 +282,7 @@ export interface Batch {
   angles: string[];
   durations: number[];
   personaIds: string[];
+  quality: 'standard' | 'premium';
   pdfUrl?: string;
   csvUrl?: string;
   errorMessage?: string;
@@ -322,6 +330,7 @@ export const batches = {
       angles: string[];
       durations: number[];
       personaIds?: string[];
+      quality?: 'standard' | 'premium';
     },
   ) =>
     fetchApi<Batch>(`/projects/${projectId}/batches`, {
@@ -348,6 +357,31 @@ export const scripts = {
     fetchApi<Script>(`/scripts/${id}/regenerate`, {
       method: 'POST',
       json: { instruction },
+    }),
+};
+
+// Settings types
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: 'free' | 'pro';
+  createdAt: string;
+}
+
+// Settings API
+export const settings = {
+  getProfile: () => fetchApi<UserProfile>('/settings/profile'),
+
+  updateProfile: (data: { name?: string }) =>
+    fetchApi<UserProfile>('/settings/profile', {
+      method: 'PATCH',
+      json: data,
+    }),
+
+  deleteAccount: () =>
+    fetchApi<{ success: boolean }>('/settings/account', {
+      method: 'DELETE',
     }),
 };
 

@@ -33,6 +33,11 @@ export class CreateBatchDto {
   @IsString({ each: true })
   @IsOptional()
   personaIds?: string[]; // Empty or omitted = all personas
+
+  @IsString()
+  @IsIn(['standard', 'premium'])
+  @IsOptional()
+  quality?: 'standard' | 'premium';
 }
 
 export class RegenerateDto {

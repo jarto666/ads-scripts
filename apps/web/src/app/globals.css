@@ -3,6 +3,10 @@
 
 @import "tailwindcss";
 
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
 @font-face {
   font-family: "Geist";
   src: url("https://cdn.jsdelivr.net/npm/geist@1.2.0/dist/fonts/geist-sans/Geist-Regular.woff2")

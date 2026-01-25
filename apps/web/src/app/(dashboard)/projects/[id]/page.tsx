@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, use, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useAtom } from "jotai";
 import {
   ArrowLeft,
   Plus,
@@ -26,7 +27,10 @@ import {
   CheckCircle2,
   Loader2,
   Users,
+  Crown,
 } from "lucide-react";
+import { getProjectGenSettingsAtom } from "@/lib/atoms";
+import { Credits, CreditsCost } from "@/components/ui/credits";
 import { InfoTip } from "@/components/ui/info-block";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -136,10 +140,14 @@ export default function ProjectDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+
   const [project, setProject] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState("product");
+  const [activeTab, setActiveTab] = useState(tabParam || "product");
+  const [initialTabSet, setInitialTabSet] = useState(!!tabParam);
   const [personaDialogOpen, setPersonaDialogOpen] = useState(false);
   const [newPersona, setNewPersona] = useState({
     name: "",
@@ -176,16 +184,19 @@ export default function ProjectDetailPage({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const [genSettings, setGenSettings] = useState({
-    scriptsPerAngle: 3,
-    platform: "universal",
-    angles: ["pain_agitation", "objection_reversal", "problem_solution"],
-    durations: [15, 30],
-    personaIds: [] as string[], // Empty = all personas
-  });
+  // Per-project generation settings stored in localStorage via jotai
+  const genSettingsAtom = useMemo(() => getProjectGenSettingsAtom(id), [id]);
+  const [genSettings, setGenSettings] = useAtom(genSettingsAtom);
+
+  // Credits per script by quality
+  const CREDITS_PER_SCRIPT = {
+    standard: 1,
+    premium: 5,
+  };
 
   // Calculate total scripts
   const totalScripts = genSettings.scriptsPerAngle * genSettings.angles.length;
+  const totalCredits = totalScripts * CREDITS_PER_SCRIPT[genSettings.quality];
 
   const [filterAngle, setFilterAngle] = useState<string>("all");
   const [filterDuration, setFilterDuration] = useState<string>("all");
@@ -199,6 +210,17 @@ export default function ProjectDetailPage({
   const isBatchGenerating =
     selectedBatch?.status === "pending" ||
     selectedBatch?.status === "processing";
+
+  // Update URL when tab changes
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      setActiveTab(tab);
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      router.replace(url.pathname + url.search, { scroll: false });
+    },
+    [router]
+  );
 
   useEffect(() => {
     fetchProject();
@@ -231,6 +253,20 @@ export default function ProjectDetailPage({
       setScriptsList([]);
     }
   }, [selectedBatchId, selectedBatch?.status]);
+
+  // Auto-navigate to scripts tab if there are scripts and no tab was specified
+  useEffect(() => {
+    if (!initialTabSet && batchesList.length > 0) {
+      const totalScripts = batchesList.reduce(
+        (sum, batch) => sum + (batch._count?.scripts || batch.scriptsCount || 0),
+        0
+      );
+      if (totalScripts > 0) {
+        handleTabChange("scripts");
+      }
+      setInitialTabSet(true);
+    }
+  }, [batchesList, initialTabSet, handleTabChange]);
 
   const fetchProject = async () => {
     try {
@@ -432,6 +468,7 @@ export default function ProjectDetailPage({
           genSettings.personaIds.length > 0
             ? genSettings.personaIds
             : undefined,
+        quality: genSettings.quality,
       });
       // Add new batch to the top of the list and select it
       setBatchesList((prev) => [batch, ...prev]);
@@ -599,7 +636,7 @@ export default function ProjectDetailPage({
       {/* Tabs */}
       <Tabs
         value={activeTab}
-        onValueChange={setActiveTab}
+        onValueChange={handleTabChange}
         className="space-y-6"
       >
         <TabsList className="bg-secondary/50 p-1">
@@ -1259,6 +1296,47 @@ export default function ProjectDetailPage({
                 </div>
               </div>
 
+              {/* Quality */}
+              <div className="space-y-2">
+                <Label className="flex items-center">
+                  Quality
+                  <InfoTip>
+                    Premium (5 credits) uses more expensive models for better
+                    hooks and dialogue.
+                  </InfoTip>
+                </Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={
+                      genSettings.quality === "standard" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setGenSettings((s) => ({ ...s, quality: "standard" }))
+                    }
+                    className="h-9"
+                  >
+                    Standard
+                    <CreditsCost amount={1} className="ml-1.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={
+                      genSettings.quality === "premium" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() =>
+                      setGenSettings((s) => ({ ...s, quality: "premium" }))
+                    }
+                    className="h-9"
+                  >
+                    Premium
+                    <CreditsCost amount={5} className="ml-1.5" />
+                  </Button>
+                </div>
+              </div>
+
               <Button
                 onClick={handleGenerate}
                 disabled={
@@ -1278,6 +1356,7 @@ export default function ProjectDetailPage({
                   <>
                     <Sparkles className="h-5 w-5" />
                     Generate {totalScripts} Scripts
+                    <CreditsCost amount={totalCredits} className="ml-1" />
                   </>
                 )}
               </Button>
@@ -1373,15 +1452,26 @@ export default function ProjectDetailPage({
                               </Badge>
                             )}
                             {batch.status === "completed" && (
-                              <Badge
-                                variant="outline"
-                                className="text-[10px] px-1.5 py-0"
-                              >
-                                {batch._count?.scripts ||
-                                  batch.scriptsCount ||
-                                  batch.requestedCount}{" "}
-                                scripts
-                              </Badge>
+                              <>
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] px-1.5 py-0"
+                                >
+                                  {batch._count?.scripts ||
+                                    batch.scriptsCount ||
+                                    batch.requestedCount}{" "}
+                                  scripts
+                                </Badge>
+                                {batch.quality === "premium" && (
+                                  <Badge
+                                    variant="warning"
+                                    className="text-[10px] px-1.5 py-0 gap-0.5"
+                                  >
+                                    <Crown className="h-2.5 w-2.5" />
+                                    Premium
+                                  </Badge>
+                                )}
+                              </>
                             )}
                           </div>
                         </SelectItem>
@@ -1412,6 +1502,20 @@ export default function ProjectDetailPage({
                       {selectedBatch.angles.length}{" "}
                       {selectedBatch.angles.length === 1 ? "angle" : "angles"}
                     </span>
+                    <span className="text-muted-foreground">·</span>
+                    <Badge
+                      variant={
+                        selectedBatch.quality === "premium"
+                          ? "warning"
+                          : "secondary"
+                      }
+                      className="text-[10px] capitalize gap-1"
+                    >
+                      {selectedBatch.quality === "premium" && (
+                        <Crown className="h-3 w-3" />
+                      )}
+                      {selectedBatch.quality || "standard"}
+                    </Badge>
                     <div className="flex flex-wrap gap-1 ml-auto">
                       {selectedBatch.angles.map((angle) => (
                         <Badge
@@ -1469,14 +1573,18 @@ export default function ProjectDetailPage({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All angles</SelectItem>
-                      {[...new Set(scriptsList.map((s) => s.angle))].map((angle) => {
-                        const angleInfo = SCRIPT_ANGLES.find((a) => a.value === angle);
-                        return (
-                          <SelectItem key={angle} value={angle}>
-                            {angleInfo?.label || angle?.replace("_", " ")}
-                          </SelectItem>
-                        );
-                      })}
+                      {[...new Set(scriptsList.map((s) => s.angle))].map(
+                        (angle) => {
+                          const angleInfo = SCRIPT_ANGLES.find(
+                            (a) => a.value === angle,
+                          );
+                          return (
+                            <SelectItem key={angle} value={angle}>
+                              {angleInfo?.label || angle?.replace("_", " ")}
+                            </SelectItem>
+                          );
+                        },
+                      )}
                     </SelectContent>
                   </Select>
                   {/* <Select

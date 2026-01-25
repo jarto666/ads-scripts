@@ -10,6 +10,12 @@ import { validateBeatCount } from './platform-profiles';
 import { ScoringService } from './scoring.service';
 import { Project, Persona, Batch, Script } from '@prisma/client';
 
+// Model configuration by quality tier
+const QUALITY_MODELS = {
+  standard: 'anthropic/claude-3.5-haiku',
+  premium: 'anthropic/claude-3.5-sonnet',
+} as const;
+
 interface ScriptPlan {
   angle: string;
   duration: number;
@@ -196,12 +202,15 @@ export class ScriptGeneratorService {
       count: batch.requestedCount,
     });
 
+    const model = QUALITY_MODELS[batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+    this.logger.log(`Using model ${model} for batch ${batch.id} (quality: ${batch.quality})`);
+
     const response = await this.openRouter.chatCompletion(
       [
         { role: 'system', content: 'You are a UGC script planning assistant. Always respond with valid JSON.' },
         { role: 'user', content: prompt },
       ],
-      { temperature: 0.7, jsonMode: true },
+      { model, temperature: 0.7, jsonMode: true },
     );
 
     try {
@@ -224,12 +233,14 @@ export class ScriptGeneratorService {
   ): Promise<ScriptOutput> {
     const prompt = buildPass2Prompt(batch.project, plan, batch.platform);
 
+    const model = QUALITY_MODELS[batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+
     const response = await this.openRouter.chatCompletion(
       [
         { role: 'system', content: 'You are a UGC script writer. Always respond with valid JSON.' },
         { role: 'user', content: prompt },
       ],
-      { temperature: 0.7, jsonMode: true },
+      { model, temperature: 0.7, jsonMode: true },
     );
 
     try {

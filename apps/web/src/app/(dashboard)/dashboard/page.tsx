@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Sparkles,
@@ -11,13 +11,13 @@ import {
   ArrowRight,
   Clock,
   Zap,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { projects } from '@/lib/api';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { projects } from "@/lib/api";
 
 interface Project {
   id: string;
@@ -46,7 +46,7 @@ export default function DashboardPage() {
         const data = await projects.list();
         setProjectsList(data);
       } catch (error) {
-        console.error('Failed to fetch projects:', error);
+        console.error("Failed to fetch projects:", error);
       } finally {
         setIsLoading(false);
       }
@@ -57,43 +57,61 @@ export default function DashboardPage() {
   // Mock data for demo - in production, these would come from API
   const stats: StatCard[] = [
     {
-      label: 'Scripts Generated',
+      label: "Scripts Generated",
       value: 127,
-      subtext: 'This month',
+      subtext: "This month",
       icon: FileText,
       trend: { value: 23, positive: true },
     },
     {
-      label: 'Active Projects',
+      label: "Active Projects",
       value: projectsList.length,
-      subtext: 'Total projects',
+      subtext: "Total projects",
       icon: FolderKanban,
     },
     {
-      label: 'Scripts Remaining',
+      label: "Scripts Remaining",
       value: 50,
-      subtext: 'Free tier',
+      subtext: "Free tier",
       icon: Sparkles,
     },
     {
-      label: 'Avg. Script Score',
-      value: '82',
-      subtext: 'Quality score',
+      label: "Avg. Script Score",
+      value: "82",
+      subtext: "Quality score",
       icon: TrendingUp,
       trend: { value: 5, positive: true },
     },
   ];
 
   const recentScripts = [
-    { id: '1', hook: 'Stop scrolling if you want clearer skin...', angle: 'pain_agitation', score: 85, createdAt: '2h ago' },
-    { id: '2', hook: 'I was skeptical too, until I tried this...', angle: 'objection_reversal', score: 78, createdAt: '3h ago' },
-    { id: '3', hook: 'The secret that dermatologists don\'t want you to know', angle: 'curiosity_hook', score: 92, createdAt: '5h ago' },
+    {
+      id: "1",
+      hook: "Stop scrolling if you want clearer skin...",
+      angle: "pain_agitation",
+      score: 85,
+      createdAt: "2h ago",
+    },
+    {
+      id: "2",
+      hook: "I was skeptical too, until I tried this...",
+      angle: "objection_reversal",
+      score: 78,
+      createdAt: "3h ago",
+    },
+    {
+      id: "3",
+      hook: "The secret that dermatologists don't want you to know",
+      angle: "curiosity_hook",
+      score: 92,
+      createdAt: "5h ago",
+    },
   ];
 
   const getScoreVariant = (score: number) => {
-    if (score >= 80) return 'success';
-    if (score >= 60) return 'warning';
-    return 'destructive';
+    if (score >= 80) return "success";
+    if (score >= 60) return "warning";
+    return "destructive";
   };
 
   if (isLoading) {
@@ -122,9 +140,11 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Welcome back! Here&apos;s your script generation overview.</p>
+          <p className="text-muted-foreground mt-1">
+            Welcome back! Here&apos;s your script generation overview.
+          </p>
         </div>
-        <Button onClick={() => router.push('/projects')} className="gap-2">
+        <Button onClick={() => router.push("/projects")} className="gap-2">
           <Plus className="h-4 w-4" />
           New Project
         </Button>
@@ -141,9 +161,13 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{stat.value}</p>
+                <p className="text-3xl font-bold text-foreground mt-1">
+                  {stat.value}
+                </p>
                 {stat.subtext && (
-                  <p className="text-xs text-muted-foreground mt-1">{stat.subtext}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {stat.subtext}
+                  </p>
                 )}
               </div>
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
@@ -152,11 +176,18 @@ export default function DashboardPage() {
             </div>
             {stat.trend && (
               <div className="flex items-center gap-1 mt-3">
-                <TrendingUp className={`h-3 w-3 ${stat.trend.positive ? 'text-success' : 'text-destructive'}`} />
-                <span className={`text-xs ${stat.trend.positive ? 'text-success' : 'text-destructive'}`}>
-                  {stat.trend.positive ? '+' : ''}{stat.trend.value}%
+                <TrendingUp
+                  className={`h-3 w-3 ${stat.trend.positive ? "text-success" : "text-destructive"}`}
+                />
+                <span
+                  className={`text-xs ${stat.trend.positive ? "text-success" : "text-destructive"}`}
+                >
+                  {stat.trend.positive ? "+" : ""}
+                  {stat.trend.value}%
                 </span>
-                <span className="text-xs text-muted-foreground">vs last month</span>
+                <span className="text-xs text-muted-foreground">
+                  vs last month
+                </span>
               </div>
             )}
           </div>
@@ -166,10 +197,16 @@ export default function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Projects */}
-        <Card className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.2s" }}>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg font-semibold">Recent Projects</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => router.push('/projects')}>
+            <CardTitle className="text-lg font-semibold">
+              Recent Projects
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/projects")}
+            >
               View all
               <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
@@ -181,7 +218,7 @@ export default function DashboardPage() {
                   <FolderKanban className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <p className="text-muted-foreground mb-4">No projects yet</p>
-                <Button onClick={() => router.push('/projects')}>
+                <Button onClick={() => router.push("/projects")}>
                   <Plus className="h-4 w-4 mr-2" />
                   Create your first project
                 </Button>
@@ -214,9 +251,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Scripts */}
-        <Card className="animate-fade-up" style={{ animationDelay: '0.25s' }}>
+        <Card className="animate-fade-up" style={{ animationDelay: "0.25s" }}>
           <CardHeader className="flex flex-row items-center justify-between pb-4">
-            <CardTitle className="text-lg font-semibold">Recent Scripts</CardTitle>
+            <CardTitle className="text-lg font-semibold">
+              Recent Scripts
+            </CardTitle>
             <Button variant="ghost" size="sm">
               View all
               <ArrowRight className="h-4 w-4 ml-1" />
@@ -228,7 +267,9 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-secondary mb-4">
                   <FileText className="h-6 w-6 text-muted-foreground" />
                 </div>
-                <p className="text-muted-foreground">No scripts generated yet</p>
+                <p className="text-muted-foreground">
+                  No scripts generated yet
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -241,13 +282,16 @@ export default function DashboardPage() {
                       <p className="text-sm text-foreground line-clamp-1 flex-1">
                         {script.hook}
                       </p>
-                      <Badge variant={getScoreVariant(script.score)} className="shrink-0">
+                      <Badge
+                        variant={getScoreVariant(script.score)}
+                        className="shrink-0"
+                      >
                         {script.score}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className="text-xs">
-                        {script.angle.replace('_', ' ')}
+                        {script.angle.replace("_", " ")}
                       </Badge>
                       <span className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
@@ -261,41 +305,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Usage Section */}
-      <Card className="animate-fade-up" style={{ animationDelay: '0.3s' }}>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-lg font-semibold">Monthly Usage</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">Free tier - 50 scripts/month</p>
-            </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Zap className="h-4 w-4 text-primary" />
-              Upgrade to Pro
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Scripts used this month</span>
-              <span className="font-medium text-foreground">27 / 50</span>
-            </div>
-            <Progress value={54} className="h-2" />
-            <div className="flex items-center gap-4 pt-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-                <span className="text-xs text-muted-foreground">Used (27)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-secondary" />
-                <span className="text-xs text-muted-foreground">Remaining (23)</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

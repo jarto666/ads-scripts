@@ -7,6 +7,7 @@ import { PersonasModule } from './personas/personas.module';
 import { BatchesModule } from './batches/batches.module';
 import { ExportsModule } from './exports/exports.module';
 import { AdminModule } from './admin/admin.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AdminModule } from './admin/admin.module';
     BatchesModule,
     ExportsModule,
     AdminModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

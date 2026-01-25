@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -69,6 +70,14 @@ export class AdminController {
   async generateMagicLink(@Param('id') id: string) {
     const link = await this.adminService.generateMagicLink(id);
     return { magicLink: link };
+  }
+
+  @Patch('users/:id/plan')
+  async updateUserPlan(
+    @Param('id') id: string,
+    @Body() body: { plan: 'free' | 'pro' },
+  ) {
+    return this.adminService.updateUserPlan(id, body.plan);
   }
 
   // Queue

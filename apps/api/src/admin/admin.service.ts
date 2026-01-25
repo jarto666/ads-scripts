@@ -94,6 +94,7 @@ export class AdminService {
         id: true,
         email: true,
         isAdmin: true,
+        plan: true,
         createdAt: true,
         _count: {
           select: { projects: true },
@@ -139,6 +140,21 @@ export class AdminService {
     return this.prisma.user.update({
       where: { id: userId },
       data: { isAdmin: !user.isAdmin },
+    });
+  }
+
+  async updateUserPlan(userId: string, plan: 'free' | 'pro') {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { plan },
     });
   }
 
