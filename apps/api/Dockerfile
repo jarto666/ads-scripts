@@ -75,8 +75,8 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY apps/api/prisma ./apps/api/prisma
 
 # Copy generated Prisma client from builder
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=builder /app/apps/api/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/apps/api/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
