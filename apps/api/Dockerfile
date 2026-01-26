@@ -30,7 +30,7 @@ COPY packages/shared ./packages/shared
 RUN pnpm --filter @ugc/shared build
 
 # Generate Prisma client
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Build the application
 RUN pnpm --filter api build
@@ -74,8 +74,9 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 # Copy Prisma schema (needed for migrations)
 COPY apps/api/prisma ./apps/api/prisma
 
-# Generate Prisma client in production image
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+# Copy generated Prisma client from builder
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
