@@ -3,92 +3,53 @@
 import { useRouter } from "next/navigation";
 import {
   Plus,
-  Sparkles,
   FolderKanban,
   FileText,
-  TrendingUp,
   ArrowRight,
   Clock,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProjectsControllerFindAll } from "@/api/generated/api";
+import {
+  useProjectsControllerFindAll,
+  useBatchesControllerGetRecentScripts,
+} from "@/api/generated/api";
+import type { RecentScriptDto } from "@/api/generated/models";
 
-interface StatCard {
-  label: string;
-  value: string | number;
-  subtext?: string;
-  icon: React.ElementType;
-  trend?: { value: number; positive: boolean };
+// Helper to format relative time
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data, isLoading } = useProjectsControllerFindAll();
-  const projectsList = data?.data ?? [];
+  const { data: projectsData, isLoading: projectsLoading } =
+    useProjectsControllerFindAll();
+  const { data: scriptsData, isLoading: scriptsLoading } =
+    useBatchesControllerGetRecentScripts();
 
-  // Mock data for demo - in production, these would come from API
-  const stats: StatCard[] = [
-    {
-      label: "Scripts Generated",
-      value: 127,
-      subtext: "This month",
-      icon: FileText,
-      trend: { value: 23, positive: true },
-    },
-    {
-      label: "Active Projects",
-      value: projectsList.length,
-      subtext: "Total projects",
-      icon: FolderKanban,
-    },
-    {
-      label: "Scripts Remaining",
-      value: 50,
-      subtext: "Free tier",
-      icon: Sparkles,
-    },
-    {
-      label: "Avg. Script Score",
-      value: "82",
-      subtext: "Quality score",
-      icon: TrendingUp,
-      trend: { value: 5, positive: true },
-    },
-  ];
+  const projectsList = projectsData?.data ?? [];
+  const recentScripts = (scriptsData?.data ?? []) as unknown as RecentScriptDto[];
 
-  const recentScripts = [
-    {
-      id: "1",
-      hook: "Stop scrolling if you want clearer skin...",
-      angle: "pain_agitation",
-      score: 85,
-      createdAt: "2h ago",
-    },
-    {
-      id: "2",
-      hook: "I was skeptical too, until I tried this...",
-      angle: "objection_reversal",
-      score: 78,
-      createdAt: "3h ago",
-    },
-    {
-      id: "3",
-      hook: "The secret that dermatologists don't want you to know",
-      angle: "curiosity_hook",
-      score: 92,
-      createdAt: "5h ago",
-    },
-  ];
+  const isLoading = projectsLoading || scriptsLoading;
 
-  const getScoreVariant = (score: number) => {
-    if (score >= 80) return "success";
-    if (score >= 60) return "warning";
-    return "destructive";
+  const handleScriptClick = (script: RecentScriptDto) => {
+    // Navigate to project page with tab=scripts, batch and script params for highlighting
+    router.push(
+      `/projects/${script.projectId}?tab=scripts&batch=${script.batchId}&script=${script.id}`
+    );
   };
 
   if (isLoading) {
@@ -97,11 +58,6 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-48" />
           <Skeleton className="h-10 w-36" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <Skeleton className="h-80" />
@@ -125,50 +81,6 @@ export default function DashboardPage() {
           <Plus className="h-4 w-4" />
           New Project
         </Button>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
-          <div
-            key={stat.label}
-            className="stat-card animate-fade-up"
-            style={{ animationDelay: `${i * 0.05}s` }}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-                <p className="text-3xl font-bold text-foreground mt-1">
-                  {stat.value}
-                </p>
-                {stat.subtext && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {stat.subtext}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-                <stat.icon className="h-5 w-5" />
-              </div>
-            </div>
-            {stat.trend && (
-              <div className="flex items-center gap-1 mt-3">
-                <TrendingUp
-                  className={`h-3 w-3 ${stat.trend.positive ? "text-success" : "text-destructive"}`}
-                />
-                <span
-                  className={`text-xs ${stat.trend.positive ? "text-success" : "text-destructive"}`}
-                >
-                  {stat.trend.positive ? "+" : ""}
-                  {stat.trend.value}%
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  vs last month
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
       </div>
 
       {/* Main Content Grid */}
@@ -202,7 +114,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {projectsList.slice(0, 4).map((project, i) => (
+                {projectsList.slice(0, 4).map((project) => (
                   <div
                     key={project.id}
                     onClick={() => router.push(`/projects/${project.id}`)}
@@ -229,14 +141,10 @@ export default function DashboardPage() {
 
         {/* Recent Scripts */}
         <Card className="animate-fade-up" style={{ animationDelay: "0.25s" }}>
-          <CardHeader className="flex flex-row items-center justify-between pb-4">
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">
               Recent Scripts
             </CardTitle>
-            <Button variant="ghost" size="sm">
-              View all
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
           </CardHeader>
           <CardContent>
             {recentScripts.length === 0 ? (
@@ -253,26 +161,38 @@ export default function DashboardPage() {
                 {recentScripts.map((script) => (
                   <div
                     key={script.id}
+                    onClick={() => handleScriptClick(script)}
                     className="group p-3 rounded-xl bg-secondary/30 hover:bg-secondary/60 cursor-pointer transition-all duration-200"
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
-                      <p className="text-sm text-foreground line-clamp-1 flex-1">
+                      <p className="text-sm text-foreground line-clamp-1 flex-1 group-hover:text-primary transition-colors">
                         {script.hook}
                       </p>
-                      <Badge
-                        variant={getScoreVariant(script.score)}
-                        className="shrink-0"
-                      >
-                        {script.score}
-                      </Badge>
+                      {/* {script.score && (
+                        <Badge
+                          variant={
+                            script.score >= 80
+                              ? "success"
+                              : script.score >= 60
+                              ? "warning"
+                              : "destructive"
+                          }
+                          className="shrink-0"
+                        >
+                          {script.score}
+                        </Badge>
+                      )} */}
                     </div>
                     <div className="flex items-center gap-3">
                       <Badge variant="outline" className="text-xs">
-                        {script.angle.replace("_", " ")}
+                        {script.angle.replace(/_/g, " ")}
                       </Badge>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span className="text-xs text-muted-foreground truncate">
+                        {script.projectName}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                         <Clock className="h-3 w-3" />
-                        {script.createdAt}
+                        {formatRelativeTime(script.createdAt)}
                       </span>
                     </div>
                   </div>

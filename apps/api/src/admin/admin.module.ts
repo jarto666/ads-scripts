@@ -3,9 +3,11 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { AdminGuard } from './admin.guard';
 import { QueueModule } from '../queue/queue.module';
+import { CreditsModule } from '../credits/credits.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [QueueModule],
+  imports: [QueueModule, CreditsModule, AuthModule],
   controllers: [AdminController],
   providers: [AdminService, AdminGuard],
   exports: [AdminService, AdminGuard],

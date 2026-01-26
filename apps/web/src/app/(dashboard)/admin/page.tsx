@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   XCircle,
   Crown,
+  Coins,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -139,7 +141,7 @@ export default function AdminPage() {
 
   const fetchRequests = async () => {
     try {
-      const result = await adminControllerGetRequests({ status: 'all' });
+      const result = await adminControllerGetRequests();
       setRequests(result.data as unknown as AccessRequest[]);
     } catch (error) {
       console.error('Failed to fetch requests:', error);
@@ -584,9 +586,12 @@ export default function AdminPage() {
                 {users.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border"
+                    className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-colors"
                   >
-                    <div className="flex items-center gap-3">
+                    <div
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                      onClick={() => router.push(`/admin/users/${user.id}`)}
+                    >
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-secondary">
                         {user.isAdmin ? (
                           <Shield className="h-5 w-5 text-primary" />
@@ -594,7 +599,7 @@ export default function AdminPage() {
                           <Users className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{user.email}</p>
                           {user.isAdmin && (
@@ -614,8 +619,18 @@ export default function AdminPage() {
                           {formatDate(user.createdAt)}
                         </p>
                       </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 ml-4">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/admin/users/${user.id}`)}
+                        className="gap-1"
+                      >
+                        <Coins className="h-4 w-4" />
+                        Credits
+                      </Button>
                       <Select
                         value={user.plan}
                         onValueChange={(value: 'free' | 'pro') =>

@@ -151,6 +151,7 @@ function ScriptCard({
   versionNumber,
   versionCount = 0,
   isAdmin = false,
+  isHighlighted = false,
 }: {
   script: ScriptDto;
   index: number;
@@ -162,14 +163,18 @@ function ScriptCard({
   versionNumber?: number;
   versionCount?: number;
   isAdmin?: boolean;
+  isHighlighted?: boolean;
 }) {
   const isRegenerating = script.status === "pending" || script.status === "generating";
 
   return (
     <Card
+      id={`script-${script.id}`}
       className={`script-card animate-fade-up overflow-visible ${
         isRegenerating ? "border-primary/30 bg-primary/5" : ""
-      } ${isVersion ? "border-l-2 border-l-primary/30" : ""}`}
+      } ${isVersion ? "border-l-2 border-l-primary/30" : ""} ${
+        isHighlighted ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
+      }`}
       style={{ animationDelay: `${index * 0.03}s` }}
     >
       <CardContent className="pt-5">
@@ -380,6 +385,8 @@ export default function ProjectDetailPage({
   const { id } = use(params);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const batchParam = searchParams.get("batch");
+  const scriptParam = searchParams.get("script");
   const { user } = useAuth();
   const isAdmin = user?.isAdmin ?? false;
 
@@ -388,6 +395,9 @@ export default function ProjectDetailPage({
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(tabParam || "product");
   const [initialTabSet, setInitialTabSet] = useState(!!tabParam);
+  const [highlightedScriptId, setHighlightedScriptId] = useState<string | null>(
+    scriptParam
+  );
   const [personaDialogOpen, setPersonaDialogOpen] = useState(false);
   const [newPersona, setNewPersona] = useState({
     name: "",
@@ -508,6 +518,43 @@ export default function ProjectDetailPage({
       setInitialTabSet(true);
     }
   }, [batchesList, initialTabSet, handleTabChange]);
+
+  // Handle batch param from URL (e.g., from dashboard click)
+  useEffect(() => {
+    if (batchParam && batchesList.length > 0) {
+      const batchExists = batchesList.some((b) => b.id === batchParam);
+      if (batchExists && selectedBatchId !== batchParam) {
+        setSelectedBatchId(batchParam);
+      }
+    }
+  }, [batchParam, batchesList, selectedBatchId]);
+
+  // Scroll to and highlight script when specified in URL
+  useEffect(() => {
+    if (highlightedScriptId && scriptsList.length > 0) {
+      // Find and expand the script
+      const scriptExists = scriptsList.some((s) => s.id === highlightedScriptId);
+      if (scriptExists) {
+        setExpandedScript(highlightedScriptId);
+        // Scroll to the script after a short delay for render
+        setTimeout(() => {
+          const element = document.getElementById(`script-${highlightedScriptId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }, 100);
+        // Clear highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedScriptId(null);
+          // Clean up URL params
+          const url = new URL(window.location.href);
+          url.searchParams.delete("batch");
+          url.searchParams.delete("script");
+          router.replace(url.pathname + url.search, { scroll: false });
+        }, 3000);
+      }
+    }
+  }, [highlightedScriptId, scriptsList, router]);
 
   const fetchProject = async () => {
     try {
@@ -1915,6 +1962,7 @@ export default function ProjectDetailPage({
                           getScoreVariant={getScoreVariant}
                           versionCount={versions.length}
                           isAdmin={isAdmin}
+                          isHighlighted={highlightedScriptId === script.id}
                         />
 
                         {/* Child Versions */}
@@ -1935,6 +1983,7 @@ export default function ProjectDetailPage({
                                 isVersion
                                 versionNumber={vi + 2}
                                 isAdmin={isAdmin}
+                                isHighlighted={highlightedScriptId === version.id}
                               />
                             ))}
                           </div>

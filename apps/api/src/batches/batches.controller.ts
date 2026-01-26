@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { BatchesService } from './batches.service';
-import { CreateBatchDto, RegenerateDto, BatchDto, ScriptDto } from './dto';
+import { CreateBatchDto, RegenerateDto, BatchDto, ScriptDto, RecentScriptDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator';
 
@@ -17,6 +17,13 @@ import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator'
 @UseGuards(JwtAuthGuard)
 export class BatchesController {
   constructor(private batchesService: BatchesService) {}
+
+  @Get('scripts/recent')
+  @ApiOperation({ summary: 'Get recent scripts across all projects' })
+  @ApiResponse({ status: 200, type: [RecentScriptDto] })
+  async getRecentScripts(@CurrentUser() user: CurrentUserPayload) {
+    return this.batchesService.getRecentScripts(user.id);
+  }
 
   @Post('projects/:projectId/batches')
   @ApiOperation({ summary: 'Create a new batch for script generation' })

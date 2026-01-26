@@ -9,9 +9,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
+import { AdminUserDetailDto, GrantCreditsDto, GrantCreditsResponseDto } from './dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -78,6 +80,23 @@ export class AdminController {
     @Body() body: { plan: 'free' | 'pro' },
   ) {
     return this.adminService.updateUserPlan(id, body.plan);
+  }
+
+  @Get('users/:id')
+  @ApiOperation({ summary: 'Get user details with credits' })
+  @ApiResponse({ status: 200, type: AdminUserDetailDto })
+  async getUserDetail(@Param('id') id: string) {
+    return this.adminService.getUserDetail(id);
+  }
+
+  @Post('users/:id/credits')
+  @ApiOperation({ summary: 'Grant credits to user' })
+  @ApiResponse({ status: 201, type: GrantCreditsResponseDto })
+  async grantCredits(
+    @Param('id') id: string,
+    @Body() body: GrantCreditsDto,
+  ) {
+    return this.adminService.grantCredits(id, body);
   }
 
   // Queue

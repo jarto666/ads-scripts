@@ -27,22 +27,30 @@ import type {
 import type {
   AdminControllerGetQueueJobsParams,
   AdminControllerGetRequestsParams,
+  AdminUserDetailDto,
   AuthResponseDto,
   BatchDto,
+  CheckoutUrlDto,
   ConsumeMagicLinkDto,
   CreateBatchDto,
   CreatePersonaDto,
   CreateProjectDto,
+  CreditTransactionDto,
+  CreditsBalancesResponseDto,
   DeleteAccountResultDto,
   ExportResultDto,
+  GrantCreditsDto,
+  GrantCreditsResponseDto,
   MessageDto,
   PersonaResponseDto,
   ProfileDto,
   ProjectDto,
   ProjectListItemDto,
+  RecentScriptDto,
   RegenerateDto,
   RequestMagicLinkDto,
   ScriptDto,
+  SubscriptionInfoDto,
   UpdatePersonaDto,
   UpdateProfileDto,
   UpdateProjectDto,
@@ -1357,6 +1365,117 @@ export const usePersonasControllerDelete = <TError = unknown,
     }
     
 /**
+ * @summary Get recent scripts across all projects
+ */
+export type batchesControllerGetRecentScriptsResponse200 = {
+  data: RecentScriptDto[]
+  status: 200
+}
+    
+export type batchesControllerGetRecentScriptsResponseSuccess = (batchesControllerGetRecentScriptsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type batchesControllerGetRecentScriptsResponse = (batchesControllerGetRecentScriptsResponseSuccess)
+
+export const getBatchesControllerGetRecentScriptsUrl = () => {
+
+
+  
+
+  return `/scripts/recent`
+}
+
+export const batchesControllerGetRecentScripts = async ( options?: RequestInit): Promise<batchesControllerGetRecentScriptsResponse> => {
+  
+  return customInstance<batchesControllerGetRecentScriptsResponse>(getBatchesControllerGetRecentScriptsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getBatchesControllerGetRecentScriptsQueryKey = () => {
+    return [
+    `/scripts/recent`
+    ] as const;
+    }
+
+    
+export const getBatchesControllerGetRecentScriptsQueryOptions = <TData = Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBatchesControllerGetRecentScriptsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>> = ({ signal }) => batchesControllerGetRecentScripts({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BatchesControllerGetRecentScriptsQueryResult = NonNullable<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>>
+export type BatchesControllerGetRecentScriptsQueryError = unknown
+
+
+export function useBatchesControllerGetRecentScripts<TData = Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>,
+          TError,
+          Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBatchesControllerGetRecentScripts<TData = Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>,
+          TError,
+          Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBatchesControllerGetRecentScripts<TData = Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get recent scripts across all projects
+ */
+
+export function useBatchesControllerGetRecentScripts<TData = Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof batchesControllerGetRecentScripts>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBatchesControllerGetRecentScriptsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
  * @summary Create a new batch for script generation
  */
 export type batchesControllerCreateResponse201 = {
@@ -1857,6 +1976,228 @@ export const useBatchesControllerRegenerateScript = <TError = unknown,
       return useMutation(getBatchesControllerRegenerateScriptMutationOptions(options), queryClient);
     }
     
+/**
+ * @summary Get current credit balances
+ */
+export type creditsControllerGetBalancesResponse200 = {
+  data: CreditsBalancesResponseDto
+  status: 200
+}
+    
+export type creditsControllerGetBalancesResponseSuccess = (creditsControllerGetBalancesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type creditsControllerGetBalancesResponse = (creditsControllerGetBalancesResponseSuccess)
+
+export const getCreditsControllerGetBalancesUrl = () => {
+
+
+  
+
+  return `/credits/balances`
+}
+
+export const creditsControllerGetBalances = async ( options?: RequestInit): Promise<creditsControllerGetBalancesResponse> => {
+  
+  return customInstance<creditsControllerGetBalancesResponse>(getCreditsControllerGetBalancesUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCreditsControllerGetBalancesQueryKey = () => {
+    return [
+    `/credits/balances`
+    ] as const;
+    }
+
+    
+export const getCreditsControllerGetBalancesQueryOptions = <TData = Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCreditsControllerGetBalancesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof creditsControllerGetBalances>>> = ({ signal }) => creditsControllerGetBalances({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CreditsControllerGetBalancesQueryResult = NonNullable<Awaited<ReturnType<typeof creditsControllerGetBalances>>>
+export type CreditsControllerGetBalancesQueryError = unknown
+
+
+export function useCreditsControllerGetBalances<TData = Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditsControllerGetBalances>>,
+          TError,
+          Awaited<ReturnType<typeof creditsControllerGetBalances>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreditsControllerGetBalances<TData = Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditsControllerGetBalances>>,
+          TError,
+          Awaited<ReturnType<typeof creditsControllerGetBalances>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreditsControllerGetBalances<TData = Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get current credit balances
+ */
+
+export function useCreditsControllerGetBalances<TData = Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetBalances>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCreditsControllerGetBalancesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Get credit transaction history
+ */
+export type creditsControllerGetTransactionsResponse200 = {
+  data: CreditTransactionDto[]
+  status: 200
+}
+    
+export type creditsControllerGetTransactionsResponseSuccess = (creditsControllerGetTransactionsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type creditsControllerGetTransactionsResponse = (creditsControllerGetTransactionsResponseSuccess)
+
+export const getCreditsControllerGetTransactionsUrl = () => {
+
+
+  
+
+  return `/credits/transactions`
+}
+
+export const creditsControllerGetTransactions = async ( options?: RequestInit): Promise<creditsControllerGetTransactionsResponse> => {
+  
+  return customInstance<creditsControllerGetTransactionsResponse>(getCreditsControllerGetTransactionsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getCreditsControllerGetTransactionsQueryKey = () => {
+    return [
+    `/credits/transactions`
+    ] as const;
+    }
+
+    
+export const getCreditsControllerGetTransactionsQueryOptions = <TData = Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getCreditsControllerGetTransactionsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof creditsControllerGetTransactions>>> = ({ signal }) => creditsControllerGetTransactions({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type CreditsControllerGetTransactionsQueryResult = NonNullable<Awaited<ReturnType<typeof creditsControllerGetTransactions>>>
+export type CreditsControllerGetTransactionsQueryError = unknown
+
+
+export function useCreditsControllerGetTransactions<TData = Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditsControllerGetTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof creditsControllerGetTransactions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreditsControllerGetTransactions<TData = Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof creditsControllerGetTransactions>>,
+          TError,
+          Awaited<ReturnType<typeof creditsControllerGetTransactions>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useCreditsControllerGetTransactions<TData = Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get credit transaction history
+ */
+
+export function useCreditsControllerGetTransactions<TData = Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof creditsControllerGetTransactions>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getCreditsControllerGetTransactionsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
 /**
  * @summary Export batch scripts to PDF and CSV
  */
@@ -2641,6 +2982,117 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       return useMutation(getAdminControllerDeleteUserMutationOptions(options), queryClient);
     }
     
+/**
+ * @summary Get user details with credits
+ */
+export type adminControllerGetUserDetailResponse200 = {
+  data: AdminUserDetailDto
+  status: 200
+}
+    
+export type adminControllerGetUserDetailResponseSuccess = (adminControllerGetUserDetailResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerGetUserDetailResponse = (adminControllerGetUserDetailResponseSuccess)
+
+export const getAdminControllerGetUserDetailUrl = (id: string,) => {
+
+
+  
+
+  return `/admin/users/${id}`
+}
+
+export const adminControllerGetUserDetail = async (id: string, options?: RequestInit): Promise<adminControllerGetUserDetailResponse> => {
+  
+  return customInstance<adminControllerGetUserDetailResponse>(getAdminControllerGetUserDetailUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getAdminControllerGetUserDetailQueryKey = (id: string,) => {
+    return [
+    `/admin/users/${id}`
+    ] as const;
+    }
+
+    
+export const getAdminControllerGetUserDetailQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError = unknown>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetUserDetailQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetUserDetail>>> = ({ signal }) => adminControllerGetUserDetail(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminControllerGetUserDetailQueryResult = NonNullable<Awaited<ReturnType<typeof adminControllerGetUserDetail>>>
+export type AdminControllerGetUserDetailQueryError = unknown
+
+
+export function useAdminControllerGetUserDetail<TData = Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError = unknown>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetUserDetail>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetUserDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetUserDetail<TData = Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetUserDetail>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetUserDetail>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetUserDetail<TData = Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get user details with credits
+ */
+
+export function useAdminControllerGetUserDetail<TData = Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError = unknown>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetUserDetail>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminControllerGetUserDetailQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
 export type adminControllerToggleAdminResponse201 = {
   data: void
   status: 201
@@ -2867,6 +3319,90 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getAdminControllerUpdateUserPlanMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Grant credits to user
+ */
+export type adminControllerGrantCreditsResponse201 = {
+  data: GrantCreditsResponseDto
+  status: 201
+}
+    
+export type adminControllerGrantCreditsResponseSuccess = (adminControllerGrantCreditsResponse201) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerGrantCreditsResponse = (adminControllerGrantCreditsResponseSuccess)
+
+export const getAdminControllerGrantCreditsUrl = (id: string,) => {
+
+
+  
+
+  return `/admin/users/${id}/credits`
+}
+
+export const adminControllerGrantCredits = async (id: string,
+    grantCreditsDto: GrantCreditsDto, options?: RequestInit): Promise<adminControllerGrantCreditsResponse> => {
+  
+  return customInstance<adminControllerGrantCreditsResponse>(getAdminControllerGrantCreditsUrl(id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      grantCreditsDto,)
+  }
+);}
+
+
+
+
+export const getAdminControllerGrantCreditsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGrantCredits>>, TError,{id: string;data: GrantCreditsDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminControllerGrantCredits>>, TError,{id: string;data: GrantCreditsDto}, TContext> => {
+
+const mutationKey = ['adminControllerGrantCredits'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerGrantCredits>>, {id: string;data: GrantCreditsDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  adminControllerGrantCredits(id,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminControllerGrantCreditsMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerGrantCredits>>>
+    export type AdminControllerGrantCreditsMutationBody = GrantCreditsDto
+    export type AdminControllerGrantCreditsMutationError = unknown
+
+    /**
+ * @summary Grant credits to user
+ */
+export const useAdminControllerGrantCredits = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerGrantCredits>>, TError,{id: string;data: GrantCreditsDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminControllerGrantCredits>>,
+        TError,
+        {id: string;data: GrantCreditsDto},
+        TContext
+      > => {
+      return useMutation(getAdminControllerGrantCreditsMutationOptions(options), queryClient);
     }
     
 export type adminControllerGetQueueStatsResponse200 = {
@@ -3436,4 +3972,390 @@ export const useSettingsControllerDeleteAccount = <TError = unknown,
         TContext
       > => {
       return useMutation(getSettingsControllerDeleteAccountMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Get checkout URL for Pro subscription
+ */
+export type billingControllerCreateCheckoutResponse200 = {
+  data: CheckoutUrlDto
+  status: 200
+}
+    
+export type billingControllerCreateCheckoutResponseSuccess = (billingControllerCreateCheckoutResponse200) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerCreateCheckoutResponse = (billingControllerCreateCheckoutResponseSuccess)
+
+export const getBillingControllerCreateCheckoutUrl = () => {
+
+
+  
+
+  return `/billing/checkout`
+}
+
+export const billingControllerCreateCheckout = async ( options?: RequestInit): Promise<billingControllerCreateCheckoutResponse> => {
+  
+  return customInstance<billingControllerCreateCheckoutResponse>(getBillingControllerCreateCheckoutUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getBillingControllerCreateCheckoutMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreateCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreateCheckout>>, TError,void, TContext> => {
+
+const mutationKey = ['billingControllerCreateCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof billingControllerCreateCheckout>>, void> = () => {
+          
+
+          return  billingControllerCreateCheckout(requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BillingControllerCreateCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof billingControllerCreateCheckout>>>
+    
+    export type BillingControllerCreateCheckoutMutationError = unknown
+
+    /**
+ * @summary Get checkout URL for Pro subscription
+ */
+export const useBillingControllerCreateCheckout = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreateCheckout>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof billingControllerCreateCheckout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getBillingControllerCreateCheckoutMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Get customer portal URL
+ */
+export type billingControllerGetPortalUrlResponse200 = {
+  data: CheckoutUrlDto
+  status: 200
+}
+    
+export type billingControllerGetPortalUrlResponseSuccess = (billingControllerGetPortalUrlResponse200) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerGetPortalUrlResponse = (billingControllerGetPortalUrlResponseSuccess)
+
+export const getBillingControllerGetPortalUrlUrl = () => {
+
+
+  
+
+  return `/billing/portal`
+}
+
+export const billingControllerGetPortalUrl = async ( options?: RequestInit): Promise<billingControllerGetPortalUrlResponse> => {
+  
+  return customInstance<billingControllerGetPortalUrlResponse>(getBillingControllerGetPortalUrlUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getBillingControllerGetPortalUrlQueryKey = () => {
+    return [
+    `/billing/portal`
+    ] as const;
+    }
+
+    
+export const getBillingControllerGetPortalUrlQueryOptions = <TData = Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBillingControllerGetPortalUrlQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>> = ({ signal }) => billingControllerGetPortalUrl({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BillingControllerGetPortalUrlQueryResult = NonNullable<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>>
+export type BillingControllerGetPortalUrlQueryError = unknown
+
+
+export function useBillingControllerGetPortalUrl<TData = Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof billingControllerGetPortalUrl>>,
+          TError,
+          Awaited<ReturnType<typeof billingControllerGetPortalUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBillingControllerGetPortalUrl<TData = Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof billingControllerGetPortalUrl>>,
+          TError,
+          Awaited<ReturnType<typeof billingControllerGetPortalUrl>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBillingControllerGetPortalUrl<TData = Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get customer portal URL
+ */
+
+export function useBillingControllerGetPortalUrl<TData = Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetPortalUrl>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBillingControllerGetPortalUrlQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Get subscription info
+ */
+export type billingControllerGetSubscriptionResponse200 = {
+  data: SubscriptionInfoDto
+  status: 200
+}
+    
+export type billingControllerGetSubscriptionResponseSuccess = (billingControllerGetSubscriptionResponse200) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerGetSubscriptionResponse = (billingControllerGetSubscriptionResponseSuccess)
+
+export const getBillingControllerGetSubscriptionUrl = () => {
+
+
+  
+
+  return `/billing/subscription`
+}
+
+export const billingControllerGetSubscription = async ( options?: RequestInit): Promise<billingControllerGetSubscriptionResponse> => {
+  
+  return customInstance<billingControllerGetSubscriptionResponse>(getBillingControllerGetSubscriptionUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getBillingControllerGetSubscriptionQueryKey = () => {
+    return [
+    `/billing/subscription`
+    ] as const;
+    }
+
+    
+export const getBillingControllerGetSubscriptionQueryOptions = <TData = Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getBillingControllerGetSubscriptionQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof billingControllerGetSubscription>>> = ({ signal }) => billingControllerGetSubscription({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type BillingControllerGetSubscriptionQueryResult = NonNullable<Awaited<ReturnType<typeof billingControllerGetSubscription>>>
+export type BillingControllerGetSubscriptionQueryError = unknown
+
+
+export function useBillingControllerGetSubscription<TData = Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof billingControllerGetSubscription>>,
+          TError,
+          Awaited<ReturnType<typeof billingControllerGetSubscription>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBillingControllerGetSubscription<TData = Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof billingControllerGetSubscription>>,
+          TError,
+          Awaited<ReturnType<typeof billingControllerGetSubscription>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useBillingControllerGetSubscription<TData = Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get subscription info
+ */
+
+export function useBillingControllerGetSubscription<TData = Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof billingControllerGetSubscription>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getBillingControllerGetSubscriptionQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Cancel subscription at end of billing period
+ */
+export type billingControllerCancelSubscriptionResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type billingControllerCancelSubscriptionResponseSuccess = (billingControllerCancelSubscriptionResponse200) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerCancelSubscriptionResponse = (billingControllerCancelSubscriptionResponseSuccess)
+
+export const getBillingControllerCancelSubscriptionUrl = () => {
+
+
+  
+
+  return `/billing/subscription`
+}
+
+export const billingControllerCancelSubscription = async ( options?: RequestInit): Promise<billingControllerCancelSubscriptionResponse> => {
+  
+  return customInstance<billingControllerCancelSubscriptionResponse>(getBillingControllerCancelSubscriptionUrl(),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getBillingControllerCancelSubscriptionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCancelSubscription>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof billingControllerCancelSubscription>>, TError,void, TContext> => {
+
+const mutationKey = ['billingControllerCancelSubscription'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof billingControllerCancelSubscription>>, void> = () => {
+          
+
+          return  billingControllerCancelSubscription(requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BillingControllerCancelSubscriptionMutationResult = NonNullable<Awaited<ReturnType<typeof billingControllerCancelSubscription>>>
+    
+    export type BillingControllerCancelSubscriptionMutationError = unknown
+
+    /**
+ * @summary Cancel subscription at end of billing period
+ */
+export const useBillingControllerCancelSubscription = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCancelSubscription>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof billingControllerCancelSubscription>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getBillingControllerCancelSubscriptionMutationOptions(options), queryClient);
     }

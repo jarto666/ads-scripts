@@ -6,11 +6,14 @@
  * OpenAPI spec version: 1.0
  */
 import type { ProfileDtoPlan } from './profileDtoPlan';
+import type { ProfileDtoSubscriptionStatus } from './profileDtoSubscriptionStatus';
 
 export interface ProfileDto {
   id: string;
   email: string;
   name?: string;
   plan: ProfileDtoPlan;
+  subscriptionStatus?: ProfileDtoSubscriptionStatus;
+  subscriptionEndsAt?: string;
   createdAt: string;
 }

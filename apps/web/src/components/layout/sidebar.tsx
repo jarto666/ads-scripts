@@ -8,14 +8,11 @@ import {
   Sparkles,
   LayoutDashboard,
   Users,
-  BarChart3,
   Settings,
   HelpCircle,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Zap,
-  Store,
   Video,
   FileText,
   Crown,
@@ -27,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar } from "@/components/ui/avatar";
+import { useCreditsControllerGetBalances } from "@/api/generated/api";
 
 interface SidebarProps {
   user: {
@@ -34,7 +32,6 @@ interface SidebarProps {
     name?: string | null;
     isAdmin?: boolean;
     plan?: string;
-    credits?: number;
   };
   onLogout: () => void;
 }
@@ -67,6 +64,10 @@ const bottomNavItems: NavItem[] = [
 export function Sidebar({ user, onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
+
+  // Fetch credits from API
+  const { data: creditsData } = useCreditsControllerGetBalances();
+  const totalCredits = creditsData?.data?.total ?? 0;
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
@@ -143,17 +144,29 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
           collapsed && "justify-center px-2",
         )}
       >
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15">
-            <Zap className="h-5 w-5 text-primary" />
-          </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="font-semibold text-foreground tracking-tight">
-                Script Factory
+        <Link href="/dashboard" className="group">
+          {collapsed ? (
+            /* Collapsed: Single letter mark */
+            <div className="relative">
+              <span className="text-2xl font-black tracking-tighter text-primary">
+                K
               </span>
-              <span className="text-[10px] text-muted-foreground">
-                UGC Scripts
+              <div className="absolute -inset-1 bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 rounded-lg" />
+            </div>
+          ) : (
+            /* Expanded: Full wordmark */
+            <div className="flex flex-col">
+              <div className="relative flex items-baseline">
+                <span className="text-[22px] font-black tracking-tight text-foreground">
+                  Klipp
+                </span>
+                <span className="text-[22px] font-black tracking-tight text-primary">
+                  li
+                </span>
+                <div className="absolute -inset-x-2 -inset-y-1 bg-primary/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 rounded-lg" />
+              </div>
+              <span className="text-[10px] text-muted-foreground/70 tracking-[0.2em] uppercase font-medium">
+                Script Studio
               </span>
             </div>
           )}
@@ -203,7 +216,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                       Pro Plan
                     </span>
                   </div>
-                  <Credits amount={user.credits ?? 0} size="sm" />
+                  <Credits amount={totalCredits} size="sm" />
                 </div>
                 <Link href="/pricing">
                   <Button
@@ -227,7 +240,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                         Free Plan
                       </span>
                     </div>
-                    <Credits amount={user.credits ?? 0} size="sm" />
+                    <Credits amount={totalCredits} size="sm" />
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-3">
                     Upgrade to Pro for 200 credits/month

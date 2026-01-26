@@ -16,8 +16,61 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  magicLinkTokens MagicLinkToken[]
-  projects        Project[]
+  // LemonSqueezy subscription
+  lemonSqueezyCustomerId    String?
+  lemonSqueezySubscriptionId String?
+  subscriptionStatus        String?  // "active" | "cancelled" | "expired" | "past_due"
+  subscriptionEndsAt        DateTime?
+
+  magicLinkTokens     MagicLinkToken[]
+  projects            Project[]
+  creditBalances      CreditBalance[]
+  creditTransactions  CreditTransaction[]
+}
+
+model CreditBalance {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // "free" | "subscription" | "pack"
+  balance   Int       @default(0)
+  expiresAt DateTime? // null for pack (never expires)
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model CreditTransaction {
+  id           String   @id @default(cuid())
+  userId       String
+  creditType   String   // "free" | "subscription" | "pack"
+  amount       Int      // +20 for grant, -5 for usage
+  balanceAfter Int      // snapshot after transaction
+
+  type         String   // "renewal" | "generation" | "purchase" | "admin" | "refund" | "expire"
+  description  String?  // "Monthly free credits" | "Generated 5 scripts" | etc.
+
+  // References
+  batchId      String?  // if type = "generation"
+  orderId      String?  // LemonSqueezy order ID if type = "purchase"
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+// Track deleted users to prevent free credit abuse
+model DeletedUser {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  originalPlan  String   // Plan they had when deleted
+  deletedAt     DateTime @default(now())
+
+  @@index([email])
 }
 
 model AccessRequest {

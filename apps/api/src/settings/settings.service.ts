@@ -14,6 +14,8 @@ export class SettingsService {
         email: true,
         name: true,
         plan: true,
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
         createdAt: true,
       },
     });
@@ -44,6 +46,8 @@ export class SettingsService {
         email: true,
         name: true,
         plan: true,
+        subscriptionStatus: true,
+        subscriptionEndsAt: true,
         createdAt: true,
       },
     });
@@ -57,6 +61,19 @@ export class SettingsService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Store in DeletedUser table to prevent free credit abuse on re-registration
+    await this.prisma.deletedUser.upsert({
+      where: { email: user.email },
+      update: {
+        originalPlan: user.plan,
+        deletedAt: new Date(),
+      },
+      create: {
+        email: user.email,
+        originalPlan: user.plan,
+      },
+    });
 
     // Delete user (cascades to projects, batches, scripts, etc.)
     await this.prisma.user.delete({

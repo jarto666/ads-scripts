@@ -23,6 +23,12 @@ export class ProfileDto {
   @ApiProperty({ enum: ['free', 'pro'] })
   plan: 'free' | 'pro';
 
+  @ApiPropertyOptional({ enum: ['active', 'cancelled', 'expired', 'past_due'] })
+  subscriptionStatus?: string;
+
+  @ApiPropertyOptional()
+  subscriptionEndsAt?: Date;
+
   @ApiProperty()
   createdAt: Date;
 }

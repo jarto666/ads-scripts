@@ -1,11 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { ScriptGeneratorService } from '../generation/script-generator.service';
+import { CreditsService } from '../credits/credits.service';
 import { CreateBatchDto, RegenerateDto } from './dto';
 import { SCRIPT_GENERATION_QUEUE } from '../queue/constants';
 import { ScriptGenerationJobData } from '../queue/script-generation.processor';
+
+// Credit cost per script based on quality
+const CREDIT_COSTS = {
+  standard: 1,
+  premium: 8,
+} as const;
 
 @Injectable()
 export class BatchesService {
@@ -14,6 +21,7 @@ export class BatchesService {
   constructor(
     private prisma: PrismaService,
     private scriptGenerator: ScriptGeneratorService,
+    private creditsService: CreditsService,
     @InjectQueue(SCRIPT_GENERATION_QUEUE) private scriptQueue: Queue<ScriptGenerationJobData>,
   ) {}
 
@@ -54,8 +62,17 @@ export class BatchesService {
     await this.verifyProjectAccess(userId, projectId);
 
     const quality = dto.quality || 'standard';
+    const creditCost = CREDIT_COSTS[quality] * dto.requestedCount;
 
-    // TODO: Add credit balance check here when credits system is implemented
+    // Check if user has enough credits
+    const hasCredits = await this.creditsService.hasEnoughCredits(userId, creditCost);
+    if (!hasCredits) {
+      const available = await this.creditsService.getTotalAvailable(userId);
+      throw new BadRequestException(
+        `Insufficient credits. Need ${creditCost}, have ${available}. ` +
+        `Each ${quality} script costs ${CREDIT_COSTS[quality]} credit(s).`,
+      );
+    }
 
     // Create batch
     const batch = await this.prisma.batch.create({
@@ -71,6 +88,14 @@ export class BatchesService {
       },
     });
 
+    // Consume credits
+    await this.creditsService.consume(
+      userId,
+      creditCost,
+      batch.id,
+      `Generated ${dto.requestedCount} ${quality} scripts`,
+    );
+
     // Add job to queue for processing
     const job = await this.scriptQueue.add(
       'generate-batch',
@@ -80,7 +105,7 @@ export class BatchesService {
       },
     );
 
-    this.logger.log(`Queued job ${job.id} for batch ${batch.id}`);
+    this.logger.log(`Queued job ${job.id} for batch ${batch.id}, consumed ${creditCost} credits`);
 
     return batch;
   }
@@ -130,6 +155,45 @@ export class BatchesService {
     });
   }
 
+  async getRecentScripts(userId: string, limit = 5) {
+    const scripts = await this.prisma.script.findMany({
+      where: {
+        batch: {
+          project: {
+            userId,
+          },
+        },
+        status: 'completed',
+        hook: { not: null },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      include: {
+        batch: {
+          include: {
+            project: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return scripts.map((script) => ({
+      id: script.id,
+      hook: script.hook || '',
+      angle: script.angle,
+      score: script.score,
+      createdAt: script.createdAt,
+      batchId: script.batchId,
+      projectId: script.batch.project.id,
+      projectName: script.batch.project.name,
+    }));
+  }
+
   async regenerateScript(
     userId: string,
     scriptId: string,
@@ -152,6 +216,19 @@ export class BatchesService {
       throw new ForbiddenException('Access denied');
     }
 
+    // Calculate credit cost based on batch quality
+    const quality = script.batch.quality as 'standard' | 'premium';
+    const creditCost = CREDIT_COSTS[quality] || CREDIT_COSTS.standard;
+
+    // Check if user has enough credits
+    const hasCredits = await this.creditsService.hasEnoughCredits(userId, creditCost);
+    if (!hasCredits) {
+      const available = await this.creditsService.getTotalAvailable(userId);
+      throw new BadRequestException(
+        `Insufficient credits. Need ${creditCost}, have ${available}.`,
+      );
+    }
+
     // Always link to the root original (1 level deep max)
     // If this script has a parent, use that parent as the root
     // Otherwise, this script IS the root
@@ -167,6 +244,14 @@ export class BatchesService {
         duration: script.duration,
       },
     });
+
+    // Consume credits
+    await this.creditsService.consume(
+      userId,
+      creditCost,
+      script.batchId,
+      `Regenerated ${quality} script`,
+    );
 
     // Queue the regeneration job
     // sourceScriptId is the script we're regenerating FROM (for content)
@@ -184,7 +269,7 @@ export class BatchesService {
       },
     );
 
-    this.logger.log(`Queued regeneration job ${job.id} for script ${newScript.id}`);
+    this.logger.log(`Queued regeneration job ${job.id} for script ${newScript.id}, consumed ${creditCost} credits`);
 
     return newScript;
   }

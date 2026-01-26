@@ -99,7 +99,7 @@ export default function LoginPage() {
             <Zap className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="font-semibold text-xl text-foreground tracking-tight">Script Factory</h1>
+            <h1 className="font-semibold text-xl text-foreground tracking-tight">Klippli</h1>
             <p className="text-xs text-muted-foreground">UGC Script Generator</p>
           </div>
         </div>

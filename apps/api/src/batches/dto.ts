@@ -180,3 +180,29 @@ export class ExportResultDto {
   @ApiProperty()
   csvUrl: string;
 }
+
+export class RecentScriptDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  hook: string;
+
+  @ApiProperty()
+  angle: string;
+
+  @ApiPropertyOptional()
+  score?: number;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  batchId: string;
+
+  @ApiProperty()
+  projectId: string;
+
+  @ApiProperty()
+  projectName: string;
+}

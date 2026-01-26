@@ -435,6 +435,31 @@
         ]
       }
     },
+    "/scripts/recent": {
+      "get": {
+        "operationId": "BatchesController_getRecentScripts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecentScriptDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get recent scripts across all projects",
+        "tags": [
+          "Batches"
+        ]
+      }
+    },
     "/projects/{projectId}/batches": {
       "post": {
         "operationId": "BatchesController_create",
@@ -611,6 +636,53 @@
         "summary": "Regenerate a script with new instructions",
         "tags": [
           "Batches"
+        ]
+      }
+    },
+    "/credits/balances": {
+      "get": {
+        "operationId": "CreditsController_getBalances",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditsBalancesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get current credit balances",
+        "tags": [
+          "Credits"
+        ]
+      }
+    },
+    "/credits/transactions": {
+      "get": {
+        "operationId": "CreditsController_getTransactions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditTransactionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get credit transaction history",
+        "tags": [
+          "Credits"
         ]
       }
     },
@@ -798,6 +870,35 @@
         "tags": [
           "Admin"
         ]
+      },
+      "get": {
+        "operationId": "AdminController_getUserDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUserDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get user details with credits",
+        "tags": [
+          "Admin"
+        ]
       }
     },
     "/admin/users/{id}/toggle-admin": {
@@ -864,6 +965,47 @@
             "description": ""
           }
         },
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/admin/users/{id}/credits": {
+      "post": {
+        "operationId": "AdminController_grantCredits",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantCreditsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantCreditsResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Grant credits to user",
         "tags": [
           "Admin"
         ]
@@ -1000,6 +1142,85 @@
         "summary": "Delete the current user account",
         "tags": [
           "Settings"
+        ]
+      }
+    },
+    "/billing/checkout": {
+      "post": {
+        "operationId": "BillingController_createCheckout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get checkout URL for Pro subscription",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/billing/portal": {
+      "get": {
+        "operationId": "BillingController_getPortalUrl",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutUrlDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get customer portal URL",
+        "tags": [
+          "Billing"
+        ]
+      }
+    },
+    "/billing/subscription": {
+      "get": {
+        "operationId": "BillingController_getSubscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionInfoDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get subscription info",
+        "tags": [
+          "Billing"
+        ]
+      },
+      "delete": {
+        "operationId": "BillingController_cancelSubscription",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Cancel subscription at end of billing period",
+        "tags": [
+          "Billing"
         ]
       }
     }
@@ -1438,6 +1659,45 @@
           }
         }
       },
+      "RecentScriptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "hook": {
+            "type": "string"
+          },
+          "angle": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "hook",
+          "angle",
+          "createdAt",
+          "batchId",
+          "projectId",
+          "projectName"
+        ]
+      },
       "CreateBatchDto": {
         "type": "object",
         "properties": {
@@ -1629,6 +1889,7 @@
             "type": "string",
             "enum": [
               "pending",
+              "generating",
               "completed",
               "failed"
             ]
@@ -1672,6 +1933,10 @@
           "errorMessage": {
             "type": "string"
           },
+          "parentScriptId": {
+            "type": "string",
+            "description": "ID of the parent script if this is a regenerated version"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -1704,6 +1969,110 @@
           "instruction"
         ]
       },
+      "CreditsBalanceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "free",
+              "subscription",
+              "pack"
+            ]
+          },
+          "balance": {
+            "type": "number"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "isExpired": {
+            "type": "boolean"
+          },
+          "effectiveBalance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "balance",
+          "isExpired",
+          "effectiveBalance"
+        ]
+      },
+      "CreditsBalancesResponseDto": {
+        "type": "object",
+        "properties": {
+          "balances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditsBalanceDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "balances",
+          "total"
+        ]
+      },
+      "CreditTransactionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "creditType": {
+            "type": "string",
+            "enum": [
+              "free",
+              "subscription",
+              "pack"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "balanceAfter": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "renewal",
+              "generation",
+              "purchase",
+              "admin",
+              "refund",
+              "expire"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "creditType",
+          "amount",
+          "balanceAfter",
+          "type",
+          "createdAt"
+        ]
+      },
       "ExportResultDto": {
         "type": "object",
         "properties": {
@@ -1717,6 +2086,97 @@
         "required": [
           "pdfUrl",
           "csvUrl"
+        ]
+      },
+      "AdminUserDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "plan": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "subscriptionStatus": {
+            "type": "string"
+          },
+          "subscriptionEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "_count": {
+            "type": "object"
+          },
+          "creditBalances": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recentTransactions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "isAdmin",
+          "plan",
+          "createdAt",
+          "_count",
+          "creditBalances",
+          "recentTransactions"
+        ]
+      },
+      "GrantCreditsDto": {
+        "type": "object",
+        "properties": {
+          "creditType": {
+            "type": "string",
+            "enum": [
+              "free",
+              "subscription",
+              "pack"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "creditType",
+          "amount"
+        ]
+      },
+      "GrantCreditsResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "newBalance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "success",
+          "newBalance"
         ]
       },
       "ProfileDto": {
@@ -1737,6 +2197,19 @@
               "free",
               "pro"
             ]
+          },
+          "subscriptionStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired",
+              "past_due"
+            ]
+          },
+          "subscriptionEndsAt": {
+            "format": "date-time",
+            "type": "string"
           },
           "createdAt": {
             "format": "date-time",
@@ -1768,6 +2241,49 @@
         },
         "required": [
           "success"
+        ]
+      },
+      "CheckoutUrlDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ]
+      },
+      "SubscriptionInfoDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "pro"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "cancelled",
+              "expired",
+              "past_due"
+            ]
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "hasSubscription": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "plan",
+          "hasSubscription"
         ]
       }
     }
