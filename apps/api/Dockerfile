@@ -1,6 +1,8 @@
 # ===============================
 # Build Stage
 # ===============================
+# NOTE: Build context should be the repo root, not apps/api
+# In EasyPanel: Build Path = /, Dockerfile = apps/api/Dockerfile
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -17,7 +19,6 @@ RUN npm ci
 
 # Copy source code
 COPY apps/api ./apps/api
-COPY tsconfig.json ./
 
 # Generate Prisma client
 RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
@@ -63,7 +64,7 @@ RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 COPY --from=builder /app/apps/api/dist ./dist
 
 # Copy entrypoint script
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
 # Create non-root user for security
