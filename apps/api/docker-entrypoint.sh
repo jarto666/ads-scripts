@@ -1,8 +1,17 @@
-#!/usr/bin/env bash
-set -Eeuo pipefail
+#!/bin/sh
+set -eu
 
-SERVICE="${1:-${SERVICE:-api}}"
-SERVICE="$(echo "$SERVICE" | tr '[:upper:]' '[:lower:]')"
+# Use first argument, or SERVICE env var, or default to "api"
+if [ -n "${1:-}" ]; then
+  SERVICE="$1"
+elif [ -n "${SERVICE:-}" ]; then
+  SERVICE="$SERVICE"
+else
+  SERVICE="api"
+fi
+
+# Convert to lowercase
+SERVICE=$(echo "$SERVICE" | tr 'A-Z' 'a-z')
 
 case "$SERVICE" in
   api)
