@@ -73,7 +73,7 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
 # Copy Prisma schema and generate client
 COPY apps/api/prisma ./apps/api/prisma
-RUN npm install -g prisma && prisma generate --schema=apps/api/prisma/schema.prisma
+RUN npm install -g prisma@6 && prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
