@@ -7,5 +7,5 @@
  */
 
 export type AdminControllerGetRequestsParams = {
-status: string;
+status?: string;
 };

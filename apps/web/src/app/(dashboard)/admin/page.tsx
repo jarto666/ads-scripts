@@ -141,7 +141,7 @@ export default function AdminPage() {
 
   const fetchRequests = async () => {
     try {
-      const result = await adminControllerGetRequests();
+      const result = await adminControllerGetRequests({});
       setRequests(result.data as unknown as AccessRequest[]);
     } catch (error) {
       console.error('Failed to fetch requests:', error);

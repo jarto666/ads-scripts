@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
@@ -28,6 +28,7 @@ export class AdminController {
 
   // Access Requests
   @Get('requests')
+  @ApiQuery({ name: 'status', required: false })
   async getRequests(@Query('status') status?: string) {
     return this.adminService.getAccessRequests(status);
   }

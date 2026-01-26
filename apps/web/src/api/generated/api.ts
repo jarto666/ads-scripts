@@ -2397,7 +2397,7 @@ export type adminControllerGetRequestsResponseSuccess = (adminControllerGetReque
 
 export type adminControllerGetRequestsResponse = (adminControllerGetRequestsResponseSuccess)
 
-export const getAdminControllerGetRequestsUrl = (params: AdminControllerGetRequestsParams,) => {
+export const getAdminControllerGetRequestsUrl = (params?: AdminControllerGetRequestsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -2412,7 +2412,7 @@ export const getAdminControllerGetRequestsUrl = (params: AdminControllerGetReque
   return stringifiedParams.length > 0 ? `/admin/requests?${stringifiedParams}` : `/admin/requests`
 }
 
-export const adminControllerGetRequests = async (params: AdminControllerGetRequestsParams, options?: RequestInit): Promise<adminControllerGetRequestsResponse> => {
+export const adminControllerGetRequests = async (params?: AdminControllerGetRequestsParams, options?: RequestInit): Promise<adminControllerGetRequestsResponse> => {
   
   return customInstance<adminControllerGetRequestsResponse>(getAdminControllerGetRequestsUrl(params),
   {      
@@ -2434,7 +2434,7 @@ export const getAdminControllerGetRequestsQueryKey = (params?: AdminControllerGe
     }
 
     
-export const getAdminControllerGetRequestsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getAdminControllerGetRequestsQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(params?: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -2457,7 +2457,7 @@ export type AdminControllerGetRequestsQueryError = unknown
 
 
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>> & Pick<
+ params: undefined |  AdminControllerGetRequestsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminControllerGetRequests>>,
           TError,
@@ -2467,7 +2467,7 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>> & Pick<
+ params?: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof adminControllerGetRequests>>,
           TError,
@@ -2477,12 +2477,12 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
 export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof adminControllerGetRequests>>, TError = unknown>(
- params: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ params?: AdminControllerGetRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetRequests>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
