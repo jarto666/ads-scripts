@@ -11,7 +11,7 @@ import { ScriptGenerationJobData } from '../queue/script-generation.processor';
 // Credit cost per script based on quality
 const CREDIT_COSTS = {
   standard: 1,
-  premium: 8,
+  premium: 5,
 } as const;
 
 @Injectable()
