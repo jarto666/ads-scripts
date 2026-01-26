@@ -65,8 +65,8 @@ COPY package.json ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/shared/package.json ./packages/shared/
 
-# Install production dependencies only
-RUN pnpm install --no-frozen-lockfile --prod
+# Install production dependencies only (shamefully-hoist to flatten node_modules like npm)
+RUN pnpm install --no-frozen-lockfile --prod --shamefully-hoist
 
 # Copy built shared package
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
