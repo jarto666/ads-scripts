@@ -71,12 +71,9 @@ RUN pnpm install --no-frozen-lockfile --prod
 # Copy built shared package
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 
-# Copy Prisma schema (needed for migrations)
+# Copy Prisma schema and generate client
 COPY apps/api/prisma ./apps/api/prisma
-
-# Copy generated Prisma client from builder
-COPY --from=builder /app/apps/api/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/apps/api/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN pnpm add -g prisma && prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
