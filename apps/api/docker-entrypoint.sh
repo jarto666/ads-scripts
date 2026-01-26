@@ -20,7 +20,7 @@ case "$SERVICE" in
     ;;
   migrations|migrate)
     echo "Running database migrations..."
-    exec npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
+    exec npx prisma migrate deploy --schema=/app/apps/api/prisma/schema.prisma
     ;;
   *)
     # Allow running arbitrary commands for debugging/one-off tasks
