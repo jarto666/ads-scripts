@@ -30,7 +30,7 @@ COPY packages/shared ./packages/shared
 RUN pnpm --filter @ugc/shared build
 
 # Generate Prisma client
-RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
+RUN cd apps/api && pnpm exec prisma generate
 
 # Build the application
 RUN pnpm --filter api build
