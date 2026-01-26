@@ -7,33 +7,24 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # Install dependencies needed for native modules
 RUN apk add --no-cache python3 make g++
 
-# Copy workspace config and package files
-COPY pnpm-workspace.yaml ./
-COPY package.json ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
+# Copy package files
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
 
 # Install all dependencies (including dev for building)
-RUN pnpm install --no-frozen-lockfile
+RUN npm ci
 
 # Copy source code
 COPY apps/api ./apps/api
-COPY packages/shared ./packages/shared
-
-# Build shared package first
-RUN pnpm --filter @ugc/shared build
 
 # Generate Prisma client
-RUN cd apps/api && pnpm exec prisma generate
+RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Build the application
-RUN pnpm --filter api build
+RUN npm run build -w apps/api
 
 # ===============================
 # Production Stage
@@ -41,9 +32,6 @@ RUN pnpm --filter api build
 FROM node:20-alpine AS production
 
 WORKDIR /app
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install Chromium for Puppeteer PDF generation
 RUN apk add --no-cache \
@@ -59,21 +47,18 @@ RUN apk add --no-cache \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Copy workspace config and package files for production install
-COPY pnpm-workspace.yaml ./
-COPY package.json ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/shared/package.json ./packages/shared/
+# Copy package files for production install
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
 
-# Install production dependencies only (shamefully-hoist to flatten node_modules like npm)
-RUN pnpm install --no-frozen-lockfile --prod --shamefully-hoist
+# Install production dependencies only
+RUN npm ci --omit=dev
 
-# Copy built shared package
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-
-# Copy Prisma schema and generate client
+# Copy Prisma schema (needed for migrations)
 COPY apps/api/prisma ./apps/api/prisma
-RUN npm install -g prisma@6 && prisma generate --schema=apps/api/prisma/schema.prisma
+
+# Generate Prisma client in production image
+RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
