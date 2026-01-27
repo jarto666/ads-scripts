@@ -42,6 +42,13 @@ RUN pnpm --filter api run build
 # This resolves all symlinks and copies only production dependencies
 RUN pnpm --filter api deploy --legacy --prod /app/deploy
 
+# Copy the generated Prisma client from builder into deploy
+# pnpm deploy doesn't copy the generated .prisma files
+RUN for src in /app/node_modules/.pnpm/@prisma+client*/node_modules/.prisma; do \
+      dest="${src/\/app\/node_modules/\/app\/deploy\/node_modules}"; \
+      cp -r "$src" "$(dirname "$dest")"; \
+    done
+
 # Copy the built dist folder into the deploy directory
 RUN cp -r /app/apps/api/dist /app/deploy/dist
 
