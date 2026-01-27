@@ -63,8 +63,8 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy Prisma schema (needed for migrations)
 COPY apps/api/prisma ./apps/api/prisma
 
-# Generate Prisma client in production image
-RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
+# Generate Prisma client (use npx since prisma is a devDep)
+RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
