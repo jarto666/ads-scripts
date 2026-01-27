@@ -32,6 +32,8 @@ import {
   useBillingControllerGetSubscription,
   useBillingControllerCancelSubscription,
 } from "@/api/generated/api";
+import { useMutation } from "@tanstack/react-query";
+import { customInstance } from "@/api/customInstance";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +46,25 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+
+// Format date as "1st Dec 2025"
+function formatDate(date: string | Date): string {
+  const d = new Date(date);
+  const day = d.getDate();
+  const month = d.toLocaleDateString("en-US", { month: "short" });
+  const year = d.getFullYear();
+
+  const suffix =
+    day === 1 || day === 21 || day === 31
+      ? "st"
+      : day === 2 || day === 22
+        ? "nd"
+        : day === 3 || day === 23
+          ? "rd"
+          : "th";
+
+  return `${day}${suffix} ${month} ${year}`;
+}
 
 const PLANS = [
   {
@@ -117,6 +138,25 @@ export default function PricingPage() {
 
   const checkoutMutation = useBillingControllerCreateCheckout();
   const cancelMutation = useBillingControllerCancelSubscription();
+  const resumeMutation = useMutation({
+    mutationFn: async () => {
+      return customInstance("/billing/subscription/resume", { method: "POST" });
+    },
+    onSuccess: () => {
+      refetchSubscription();
+      toast({
+        title: "Subscription resumed",
+        description: "Your subscription has been reactivated.",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to resume subscription",
+      });
+    },
+  });
 
   const balances = creditsData?.data?.balances ?? [];
   const totalCredits = creditsData?.data?.total ?? 0;
@@ -125,11 +165,14 @@ export default function PricingPage() {
   const subBalance = balances.find((b) => b.type === "subscription");
   const packBalance = balances.find((b) => b.type === "pack");
 
-  const subscription = subscriptionData?.data;
+  const subscription = subscriptionData?.data as
+    | (NonNullable<typeof subscriptionData>["data"] & { canResume?: boolean })
+    | undefined;
   const isPro = user?.plan === "pro";
   const isAdmin = user?.isAdmin;
   const showPacks = isPro || isAdmin;
   const isCancelled = subscription?.status === "cancelled";
+  const canResume = (subscription as { canResume?: boolean })?.canResume ?? false;
 
   const handleUpgrade = async () => {
     setIsLoading("pro");
@@ -169,13 +212,40 @@ export default function PricingPage() {
   };
 
   const handleBuyPack = async (packId: string) => {
+    // Map pack IDs to API size parameter
+    const packSizeMap: Record<string, string> = {
+      starter: "small",
+      growth: "medium",
+      agency: "large",
+    };
+    const size = packSizeMap[packId];
+    if (!size) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Invalid pack selected",
+      });
+      return;
+    }
+
     setIsLoading(packId);
-    // TODO: Implement pack purchase with LemonSqueezy
-    toast({
-      title: "Coming soon",
-      description: "Credit pack purchases will be available soon.",
-    });
-    setIsLoading(null);
+    try {
+      const result = await customInstance<{ data: { url: string } }>(
+        `/billing/checkout/pack/${size}`,
+        { method: "POST" }
+      );
+      if (result.data?.url) {
+        window.location.href = result.data.url;
+      }
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to create checkout session",
+      });
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   const renderPlans = () => (
@@ -422,7 +492,7 @@ export default function PricingPage() {
                 </div>
                 {freeBalance?.expiresAt ? (
                   <p className="text-xs text-muted-foreground">
-                    Resets {new Date(freeBalance.expiresAt).toLocaleDateString()}
+                    Resets {formatDate(freeBalance.expiresAt)}
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
@@ -439,21 +509,30 @@ export default function PricingPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <Badge
                     variant="outline"
-                    className="bg-primary/10 text-primary border-primary/20 backdrop-blur-sm"
+                    className={cn(
+                      "backdrop-blur-sm",
+                      isPro
+                        ? "bg-primary/10 text-primary border-primary/20"
+                        : "bg-background/50"
+                    )}
                   >
-                    Pro
+                    Subscription
                   </Badge>
                 </div>
                 <div className="text-2xl font-bold mb-1">
                   {subBalance?.effectiveBalance ?? 0}
                 </div>
-                {subBalance?.expiresAt ? (
+                {isPro && subBalance?.expiresAt ? (
                   <p className="text-xs text-muted-foreground">
-                    Renews {new Date(subBalance.expiresAt).toLocaleDateString()}
+                    Renews {formatDate(subBalance.expiresAt)}
+                  </p>
+                ) : isPro ? (
+                  <p className="text-xs text-muted-foreground">
+                    Pro subscription
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Subscription credits
+                    Upgrade to Pro and get 200 credits monthly
                   </p>
                 )}
               </div>
@@ -510,21 +589,31 @@ export default function PricingPage() {
               <div>
                 <h3 className="font-semibold text-lg">
                   {isCancelled
-                    ? "Subscription Cancelled"
+                    ? "Cancellation Pending"
                     : "Pro Subscription Active"}
                 </h3>
                 <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                   <Calendar className="h-3.5 w-3.5" />
                   {isCancelled ? "Access until" : "Next billing date:"}{" "}
                   <span className="font-medium text-foreground">
-                    {subscription.endsAt &&
-                      new Date(subscription.endsAt).toLocaleDateString()}
+                    {subscription.endsAt && formatDate(subscription.endsAt)}
                   </span>
                 </p>
               </div>
             </div>
 
-            {!isCancelled && (
+            {isCancelled && canResume ? (
+              <Button
+                onClick={() => resumeMutation.mutate()}
+                disabled={resumeMutation.isPending}
+                className="btn-glow"
+              >
+                {resumeMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                Resume Subscription
+              </Button>
+            ) : !isCancelled ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
@@ -558,7 +647,7 @@ export default function PricingPage() {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            )}
+            ) : null}
           </div>
         </div>
       )}

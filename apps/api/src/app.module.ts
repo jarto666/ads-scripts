@@ -11,6 +11,7 @@ import { AdminModule } from './admin/admin.module';
 import { SettingsModule } from './settings/settings.module';
 import { CreditsModule } from './credits/credits.module';
 import { BillingModule } from './billing/billing.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
@@ -30,6 +31,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     SettingsModule,
     CreditsModule,
     BillingModule,
+    WebhooksModule,
   ],
 })
 export class AppModule {}

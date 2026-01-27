@@ -4,6 +4,7 @@ import {
   Get,
   Delete,
   Body,
+  Param,
   Headers,
   RawBodyRequest,
   Req,
@@ -73,6 +74,21 @@ export class BillingController {
   }
 
   /**
+   * Get checkout URL for credit pack purchase
+   */
+  @Post('checkout/pack/:size')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get checkout URL for credit pack' })
+  @ApiResponse({ status: 200, type: CheckoutUrlDto })
+  async createPackCheckout(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('size') size: 'small' | 'medium' | 'large',
+  ) {
+    const url = await this.billingService.createPackCheckoutUrl(user.id, size);
+    return { url };
+  }
+
+  /**
    * Get customer portal URL for managing subscription
    */
   @Get('portal')
@@ -104,5 +120,16 @@ export class BillingController {
   async cancelSubscription(@CurrentUser() user: CurrentUserPayload) {
     await this.billingService.cancelSubscription(user.id);
     return { success: true, message: 'Subscription will be cancelled at end of billing period' };
+  }
+
+  /**
+   * Resume a cancelled subscription (undo cancellation)
+   */
+  @Post('subscription/resume')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Resume a cancelled subscription' })
+  async resumeSubscription(@CurrentUser() user: CurrentUserPayload) {
+    await this.billingService.resumeSubscription(user.id);
+    return { success: true, message: 'Subscription resumed successfully' };
   }
 }

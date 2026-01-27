@@ -248,7 +248,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
                     <Credits amount={totalCredits} size="sm" />
                   </div>
                   <p className="text-[11px] text-muted-foreground mb-3">
-                    Upgrade to Pro for 200 credits/month
+                    Upgrade to Pro and get 200 credits/month
                   </p>
                   <Link href="/pricing">
                     <Button size="sm" className="w-full h-8 text-xs">

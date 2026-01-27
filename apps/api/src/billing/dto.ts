@@ -9,7 +9,7 @@ export class SubscriptionInfoDto {
   @ApiProperty({ enum: ['free', 'pro'] })
   plan: 'free' | 'pro';
 
-  @ApiPropertyOptional({ enum: ['active', 'cancelled', 'expired', 'past_due'] })
+  @ApiPropertyOptional({ enum: ['active', 'cancelled', 'expired', 'past_due', 'paused'] })
   status?: string;
 
   @ApiPropertyOptional()
@@ -17,6 +17,9 @@ export class SubscriptionInfoDto {
 
   @ApiProperty()
   hasSubscription: boolean;
+
+  @ApiProperty({ description: 'Whether the cancelled subscription can be resumed (not yet expired)' })
+  canResume: boolean;
 }
 
 export class CancelSubscriptionResultDto {
