@@ -7,24 +7,27 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Install dependencies needed for native modules
 RUN apk add --no-cache python3 make g++
 
-# Copy package files
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
+# Copy package files and lockfile
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
 
 # Install all dependencies (including dev for building)
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY apps/api ./apps/api
 
 # Generate Prisma client
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Build the application
-RUN npm run build -w apps/api
+RUN pnpm run build --filter=api
 
 # ===============================
 # Production Stage
@@ -32,6 +35,9 @@ RUN npm run build -w apps/api
 FROM node:20-alpine AS production
 
 WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install Chromium for Puppeteer PDF generation
 RUN apk add --no-cache \
@@ -48,17 +54,17 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy package files for production install
-COPY package*.json ./
-COPY apps/api/package*.json ./apps/api/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json ./apps/api/
 
 # Install production dependencies only
-RUN npm ci --omit=dev
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy Prisma schema (needed for migrations)
 COPY apps/api/prisma ./apps/api/prisma
 
 # Generate Prisma client in production image
-RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
+RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
 
 # Copy built application from builder
 COPY --from=builder /app/apps/api/dist ./dist
