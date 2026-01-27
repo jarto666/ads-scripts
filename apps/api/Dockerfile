@@ -7,7 +7,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm
+# Install pnpm globally
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install dependencies needed for native modules (bcrypt)
@@ -23,7 +23,7 @@ RUN pnpm install --frozen-lockfile
 # Copy Prisma schema first (needed for prisma generate)
 COPY apps/api/prisma ./apps/api/prisma
 
-# Generate Prisma client - run from the api workspace directory
+# Generate Prisma client from the api workspace directory
 WORKDIR /app/apps/api
 RUN pnpm exec prisma generate
 
@@ -38,15 +38,22 @@ COPY apps/api/nest-cli.json ./apps/api/
 # Build the application
 RUN pnpm --filter api run build
 
+# Use pnpm deploy to create a production-ready folder
+# This resolves all symlinks and copies only production dependencies
+RUN pnpm --filter api deploy --prod /app/deploy
+
+# Copy the built dist folder into the deploy directory
+RUN cp -r /app/apps/api/dist /app/deploy/dist
+
+# Copy prisma schema to deploy (needed for migrations at runtime)
+RUN cp -r /app/apps/api/prisma /app/deploy/prisma
+
 # ===============================
 # Production Stage
 # ===============================
 FROM node:20-alpine AS production
 
 WORKDIR /app
-
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install Chromium for Puppeteer PDF generation
 RUN apk add --no-cache \
@@ -62,22 +69,9 @@ RUN apk add --no-cache \
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Copy package files for production install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy Prisma schema (needed for migrations at runtime)
-COPY apps/api/prisma ./apps/api/prisma
-
-# Copy generated Prisma client from builder
-# The generated client lives in node_modules/.prisma/client
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-
-# Copy built application from builder
-COPY --from=builder /app/apps/api/dist ./dist
+# Copy the deployed application from builder
+# pnpm deploy creates a standalone folder with resolved dependencies
+COPY --from=builder /app/deploy ./
 
 # Copy entrypoint script
 COPY apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
