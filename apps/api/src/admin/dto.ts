@@ -70,3 +70,9 @@ export class GrantCreditsResponseDto {
   @ApiProperty()
   newBalance: number;
 }
+
+export class UpdateUserPlanDto {
+  @ApiProperty({ enum: ['free', 'pro'] })
+  @IsEnum(['free', 'pro'])
+  plan: 'free' | 'pro';
+}

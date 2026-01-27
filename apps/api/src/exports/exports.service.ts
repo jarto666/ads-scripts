@@ -44,7 +44,7 @@ export class ExportsService {
 
     // Always regenerate exports (scripts may have been added via regeneration)
     const completedScripts = batch.scripts.filter(
-      (s) => s.status === 'completed',
+      (s: typeof batch.scripts[number]) => s.status === 'completed',
     );
 
     if (completedScripts.length === 0) {

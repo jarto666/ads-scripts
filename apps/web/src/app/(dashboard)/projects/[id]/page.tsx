@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, use, useMemo, useCallback } from "react";
+import { useState, useEffect, use, useMemo, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAtom } from "jotai";
+import { useBatchProgress, useNotifications, ScriptProgressEvent, BatchCompletedEvent } from "@/contexts/notifications-context";
 import {
   ArrowLeft,
   Plus,
@@ -36,6 +37,8 @@ import { InfoTip } from "@/components/ui/info-block";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
+import { LANGUAGES, REGIONS } from "@/lib/constants/locales";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -461,6 +464,54 @@ export default function ProjectDetailPage({
     selectedBatch?.status === "pending" ||
     selectedBatch?.status === "processing";
 
+  // Track which batch user is viewing (to suppress toast for current batch)
+  const { setViewingBatchId } = useNotifications();
+  useEffect(() => {
+    if (selectedBatchId) {
+      setViewingBatchId(selectedBatchId);
+    }
+    return () => setViewingBatchId(null);
+  }, [selectedBatchId, setViewingBatchId]);
+
+  // Ref for fetchScripts callback (defined below, used by WebSocket hook)
+  const fetchScriptsRef = useRef<(batchId: string) => Promise<void>>(undefined);
+
+  // WebSocket subscription for real-time batch progress (only when batch is generating)
+  const activeBatchIdForWs = isBatchGenerating ? selectedBatchId : null;
+
+  const handleProgress = useCallback((event: ScriptProgressEvent) => {
+    setBatchesList((prev) =>
+      prev.map((b) =>
+        b.id === event.batchId
+          ? {
+              ...b,
+              completedCount: event.completedCount,
+              generatingCount: event.generatingCount,
+              progress: event.progress,
+            }
+          : b
+      )
+    );
+  }, []);
+
+  const handleCompleted = useCallback((event: BatchCompletedEvent) => {
+    setBatchesList((prev) =>
+      prev.map((b) =>
+        b.id === event.batchId
+          ? {
+              ...b,
+              status: "completed",
+              completedCount: event.completedScripts,
+              progress: 100,
+            }
+          : b
+      )
+    );
+    fetchScriptsRef.current?.(event.batchId);
+  }, []);
+
+  useBatchProgress(activeBatchIdForWs, handleProgress, handleCompleted);
+
   // Update URL when tab changes
   const handleTabChange = useCallback(
     (tab: string) => {
@@ -477,12 +528,12 @@ export default function ProjectDetailPage({
     fetchBatches();
   }, [id]);
 
-  // Poll for updates when a batch is generating
+  // Poll for updates when a batch is generating (fallback for WebSocket)
   useEffect(() => {
     if (isBatchGenerating) {
       const interval = setInterval(() => {
         refreshSelectedBatch();
-      }, 3000);
+      }, 5000); // Poll every 5s as fallback (WebSocket handles real-time updates)
       return () => clearInterval(interval);
     }
   }, [isBatchGenerating, selectedBatchId]);
@@ -520,14 +571,37 @@ export default function ProjectDetailPage({
   }, [batchesList, initialTabSet, handleTabChange]);
 
   // Handle batch param from URL (e.g., from dashboard click)
+  const batchParamHandledRef = useRef(false);
+  const shouldScrollToScriptsRef = useRef(false);
+
   useEffect(() => {
-    if (batchParam && batchesList.length > 0) {
+    if (batchParam && batchesList.length > 0 && !batchParamHandledRef.current) {
       const batchExists = batchesList.some((b) => b.id === batchParam);
-      if (batchExists && selectedBatchId !== batchParam) {
+      if (batchExists) {
         setSelectedBatchId(batchParam);
+        batchParamHandledRef.current = true;
+        shouldScrollToScriptsRef.current = true;
+
+        // Clear batch param from URL
+        const url = new URL(window.location.href);
+        url.searchParams.delete("batch");
+        window.history.replaceState({}, "", url.pathname + url.search);
       }
     }
-  }, [batchParam, batchesList, selectedBatchId]);
+  }, [batchParam, batchesList]);
+
+  // Scroll to scripts section after scripts are loaded
+  useEffect(() => {
+    if (shouldScrollToScriptsRef.current && scriptsList.length > 0) {
+      shouldScrollToScriptsRef.current = false;
+      setTimeout(() => {
+        document.getElementById("generated-scripts")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 100);
+    }
+  }, [scriptsList]);
 
   // Scroll to and highlight script when specified in URL
   useEffect(() => {
@@ -623,6 +697,9 @@ export default function ProjectDetailPage({
       console.error("Failed to fetch scripts:", error);
     }
   };
+
+  // Update ref for WebSocket callback
+  fetchScriptsRef.current = fetchScripts;
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -1385,24 +1462,29 @@ export default function ProjectDetailPage({
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="language">Language</Label>
-                  <Input
-                    id="language"
-                    placeholder="en"
+                  <Combobox
+                    options={LANGUAGES}
                     value={formData.language}
-                    onChange={(e) =>
-                      setFormData({ ...formData, language: e.target.value })
+                    onChange={(value) =>
+                      setFormData({ ...formData, language: value || "en" })
                     }
+                    placeholder="Select language..."
+                    searchPlaceholder="Search languages..."
+                    emptyText="No language found."
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="region">Region (optional)</Label>
-                  <Input
-                    id="region"
-                    placeholder="e.g., US, UK, AU"
+                  <Combobox
+                    options={REGIONS}
                     value={formData.region}
-                    onChange={(e) =>
-                      setFormData({ ...formData, region: e.target.value })
+                    onChange={(value) =>
+                      setFormData({ ...formData, region: value })
                     }
+                    placeholder="Select region..."
+                    searchPlaceholder="Search regions..."
+                    emptyText="No region found."
+                    clearable
                   />
                 </div>
               </div>
@@ -1846,7 +1928,7 @@ export default function ProjectDetailPage({
           {scriptsList.length > 0 && (
             <>
               {/* Results Header */}
-              <div className="flex items-center justify-between">
+              <div id="generated-scripts" className="flex items-center justify-between scroll-mt-6">
                 <div>
                   <h3 className="text-lg font-semibold text-foreground">
                     Generated Scripts

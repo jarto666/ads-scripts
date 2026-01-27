@@ -285,7 +285,7 @@ export class AdminService {
 
     // Get new balance
     const balances = await this.creditsService.getBalances(userId);
-    const newBalance = balances.find((b) => b.type === dto.creditType)?.balance ?? 0;
+    const newBalance = balances.find((b: { type: string }) => b.type === dto.creditType)?.balance ?? 0;
 
     return {
       success: true,

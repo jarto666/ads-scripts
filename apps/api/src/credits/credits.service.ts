@@ -1,6 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { Prisma, CreditBalance } from '@prisma/client';
 
 const CREDIT_TYPES = ['free', 'subscription', 'pack'] as const;
 type CreditType = (typeof CREDIT_TYPES)[number];
@@ -25,7 +26,7 @@ export class CreditsService {
     });
 
     const now = new Date();
-    return balances.map((b) => ({
+    return balances.map((b: CreditBalance) => ({
       type: b.type as CreditType,
       balance: b.balance,
       expiresAt: b.expiresAt,
@@ -39,7 +40,7 @@ export class CreditsService {
    */
   async getTotalAvailable(userId: string): Promise<number> {
     const balances = await this.getBalances(userId);
-    return balances.reduce((sum, b) => sum + b.effectiveBalance, 0);
+    return balances.reduce((sum: number, b: { effectiveBalance: number }) => sum + b.effectiveBalance, 0);
   }
 
   /**
@@ -70,8 +71,8 @@ export class CreditsService {
 
     // Calculate total available
     const totalAvailable = balances
-      .filter((b) => !b.expiresAt || b.expiresAt > now)
-      .reduce((sum, b) => sum + b.balance, 0);
+      .filter((b: CreditBalance) => !b.expiresAt || b.expiresAt > now)
+      .reduce((sum: number, b: CreditBalance) => sum + b.balance, 0);
 
     if (totalAvailable < amount) {
       throw new BadRequestException(
@@ -80,11 +81,11 @@ export class CreditsService {
     }
 
     // Consume in priority order within a transaction
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       for (const type of CONSUMPTION_PRIORITY) {
         if (remaining <= 0) break;
 
-        const balance = balances.find((b) => b.type === type);
+        const balance = balances.find((b: CreditBalance) => b.type === type);
         if (!balance) continue;
 
         // Skip expired balances
@@ -133,7 +134,7 @@ export class CreditsService {
     description?: string,
     orderId?: string,
   ): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Upsert the balance
       const existing = await tx.creditBalance.findUnique({
         where: { userId_type: { userId, type: creditType } },
@@ -306,7 +307,7 @@ export class CreditsService {
     });
 
     if (existing && existing.balance > 0) {
-      await this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await tx.creditTransaction.create({
           data: {
             userId,

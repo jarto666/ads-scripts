@@ -259,7 +259,7 @@ export default function AdminPage() {
 
   const handleUpdatePlan = async (userId: string, plan: 'free' | 'pro') => {
     try {
-      const response = await adminControllerUpdateUserPlan(userId);
+      const response = await adminControllerUpdateUserPlan(userId, { plan });
       const updated = response.data as unknown as { email: string };
       toast({
         title: 'Plan updated',

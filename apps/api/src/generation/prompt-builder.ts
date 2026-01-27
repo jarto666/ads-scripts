@@ -4,6 +4,7 @@ import {
   getBeatCountGuidance,
   getBeatRange,
 } from './platform-profiles';
+import { getLanguageInstruction } from './language-utils';
 
 interface ScriptPlan {
   angle: string;
@@ -39,6 +40,8 @@ export function buildPass1Prompt(
     })
     .join('\n');
 
+  const languageBlock = getLanguageInstruction(project.language, project.region);
+
   return `You are an expert UGC video ad script planner specializing in short-form vertical content.
 
 ${platformBlock}
@@ -47,7 +50,7 @@ ${platformBlock}
 ${project.productDescription}
 ${project.offer ? `\nOffer: ${project.offer}` : ''}
 
-## Target Audiences
+${languageBlock}## Target Audiences
 ${personaDescriptions || 'General audience'}
 
 ${project.brandVoice ? `## Brand Voice\n${project.brandVoice}\n` : ''}
@@ -98,6 +101,7 @@ export function buildPass2Prompt(
 
   const platformBlock = getPlatformPromptBlock(platform);
   const beatRange = getBeatRange(plan.duration);
+  const languageBlock = getLanguageInstruction(project.language, project.region);
 
   return `You are an expert UGC video ad script writer specializing in short-form vertical content.
 
@@ -107,7 +111,7 @@ ${platformBlock}
 ${project.productDescription}
 ${project.offer ? `\nOffer: ${project.offer}` : ''}
 
-## Target Audience
+${languageBlock}## Target Audience
 ${personaContext || 'General audience'}
 
 ${project.brandVoice ? `## Brand Voice\n${project.brandVoice}\n` : ''}

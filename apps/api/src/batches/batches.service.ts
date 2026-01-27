@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ScriptGeneratorService } from '../generation/script-generator.service';
 import { CreditsService } from '../credits/credits.service';
 import { CreateBatchDto, RegenerateDto } from './dto';
-import { SCRIPT_GENERATION_QUEUE } from '../queue/constants';
+import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from '../queue/constants';
 import { ScriptGenerationJobData } from '../queue/script-generation.processor';
 
 // Credit cost per script based on quality
@@ -23,7 +23,25 @@ export class BatchesService {
     private scriptGenerator: ScriptGeneratorService,
     private creditsService: CreditsService,
     @InjectQueue(SCRIPT_GENERATION_QUEUE) private scriptQueue: Queue<ScriptGenerationJobData>,
+    @InjectQueue(SCRIPT_GENERATION_PRO_QUEUE) private scriptProQueue: Queue<ScriptGenerationJobData>,
   ) {}
+
+  /**
+   * Get the appropriate queue based on user's plan
+   */
+  private async getQueueForUser(userId: string): Promise<Queue<ScriptGenerationJobData>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+
+    if (user?.plan === 'pro') {
+      this.logger.log(`User ${userId} is Pro, using dedicated queue`);
+      return this.scriptProQueue;
+    }
+
+    return this.scriptQueue;
+  }
 
   private async verifyProjectAccess(userId: string, projectId: string) {
     const project = await this.prisma.project.findUnique({
@@ -96,8 +114,9 @@ export class BatchesService {
       `Generated ${dto.requestedCount} ${quality} scripts`,
     );
 
-    // Add job to queue for processing
-    const job = await this.scriptQueue.add(
+    // Add job to appropriate queue based on user plan
+    const queue = await this.getQueueForUser(userId);
+    const job = await queue.add(
       'generate-batch',
       { type: 'generate-batch', batchId: batch.id },
       {
@@ -121,10 +140,15 @@ export class BatchesService {
       where: { batchId, status: 'completed' },
     });
 
+    const generatingCount = await this.prisma.script.count({
+      where: { batchId, status: 'generating' },
+    });
+
     return {
       ...batch,
       scriptsCount,
       completedCount,
+      generatingCount,
       progress:
         batch.requestedCount > 0
           ? Math.round((completedCount / batch.requestedCount) * 100)
@@ -182,7 +206,7 @@ export class BatchesService {
       },
     });
 
-    return scripts.map((script) => ({
+    return scripts.map((script: typeof scripts[number]) => ({
       id: script.id,
       hook: script.hook || '',
       angle: script.angle,
@@ -253,10 +277,11 @@ export class BatchesService {
       `Regenerated ${quality} script`,
     );
 
-    // Queue the regeneration job
+    // Queue the regeneration job to appropriate queue based on user plan
     // sourceScriptId is the script we're regenerating FROM (for content)
     // scriptId is the new script being created
-    const job = await this.scriptQueue.add(
+    const queue = await this.getQueueForUser(userId);
+    const job = await queue.add(
       'regenerate-script',
       {
         type: 'regenerate-script',

@@ -16,7 +16,7 @@ export class CreditsController {
   @ApiResponse({ status: 200, type: CreditsBalancesResponseDto })
   async getBalances(@CurrentUser() user: CurrentUserPayload) {
     const balances = await this.creditsService.getBalances(user.id);
-    const total = balances.reduce((sum, b) => sum + b.effectiveBalance, 0);
+    const total = balances.reduce((sum: number, b: { effectiveBalance: number }) => sum + b.effectiveBalance, 0);
     return { balances, total };
   }
 

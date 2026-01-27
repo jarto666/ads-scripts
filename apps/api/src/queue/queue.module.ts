@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ScriptGenerationProcessor } from './script-generation.processor';
+import { ScriptGenerationProcessor, ScriptGenerationProProcessor } from './script-generation.processor';
 import { GenerationModule } from '../generation/generation.module';
-import { SCRIPT_GENERATION_QUEUE } from './constants';
+import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from './constants';
 
 @Module({
   imports: [
@@ -18,6 +18,7 @@ import { SCRIPT_GENERATION_QUEUE } from './constants';
       }),
       inject: [ConfigService],
     }),
+    // Free/standard users queue
     BullModule.registerQueue({
       name: SCRIPT_GENERATION_QUEUE,
       defaultJobOptions: {
@@ -35,9 +36,27 @@ import { SCRIPT_GENERATION_QUEUE } from './constants';
         },
       },
     }),
+    // Pro users dedicated queue (higher throughput)
+    BullModule.registerQueue({
+      name: SCRIPT_GENERATION_PRO_QUEUE,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+        removeOnComplete: {
+          age: 24 * 3600,
+          count: 100,
+        },
+        removeOnFail: {
+          age: 7 * 24 * 3600,
+        },
+      },
+    }),
     GenerationModule,
   ],
-  providers: [ScriptGenerationProcessor],
+  providers: [ScriptGenerationProcessor, ScriptGenerationProProcessor],
   exports: [BullModule],
 })
 export class QueueModule {}

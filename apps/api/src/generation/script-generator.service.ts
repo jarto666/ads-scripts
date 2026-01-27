@@ -6,8 +6,10 @@ import {
   buildPass2Prompt,
   buildRepairPrompt,
 } from './prompt-builder';
+import { getLanguageInstruction } from './language-utils';
 import { validateBeatCount } from './platform-profiles';
 import { ScoringService } from './scoring.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { Project, Persona, Batch, Script } from '@prisma/client';
 
 // Model configuration by quality tier
@@ -15,6 +17,10 @@ const QUALITY_MODELS = {
   standard: 'anthropic/claude-3.5-haiku',
   premium: 'anthropic/claude-3.5-sonnet',
 } as const;
+
+// Concurrency limit for parallel script generation
+// Keep moderate to avoid rate limiting from LLM providers
+const SCRIPT_GENERATION_CONCURRENCY = 4;
 
 interface ScriptPlan {
   angle: string;
@@ -48,6 +54,7 @@ export class ScriptGeneratorService {
     private prisma: PrismaService,
     private openRouter: OpenRouterClient,
     private scoringService: ScoringService,
+    private notifications: NotificationsGateway,
   ) {}
 
   async generateBatch(batchId: string): Promise<void> {
@@ -119,60 +126,39 @@ export class ScriptGeneratorService {
       this.logger.log(`Starting Pass 1 for batch ${batchId} with ${filteredPersonas.length} personas`);
       const plans = await this.generatePlans(batchWithFilteredProject);
 
-      // Pass 2: Generate full scripts for each plan
-      this.logger.log(`Starting Pass 2 for batch ${batchId}: ${plans.length} scripts`);
+      // Pass 2: Generate full scripts for each plan (in parallel with controlled concurrency)
+      this.logger.log(`Starting Pass 2 for batch ${batchId}: ${plans.length} scripts (concurrency: ${SCRIPT_GENERATION_CONCURRENCY})`);
 
-      for (const plan of plans) {
-        try {
-          const script = await this.generateScript(batchWithFilteredProject, plan);
-
-          // Score the script
-          const { score, warnings } = this.scoringService.scoreScript(
-            script,
-            batch.project.forbiddenClaims,
-          );
-
-          // Validate beat count
-          const beatWarning = validateBeatCount(script.storyboard, script.duration);
-          if (beatWarning) {
-            warnings.push(beatWarning);
-          }
-
-          // Save to database
-          await this.prisma.script.create({
-            data: {
-              batchId,
-              status: 'completed',
-              angle: script.angle,
-              duration: script.duration,
-              hook: script.hook,
-              storyboard: script.storyboard,
-              ctaVariants: script.ctaVariants,
-              filmingChecklist: script.filmingChecklist,
-              warnings: [...(script.warnings || []), ...warnings],
-              score,
-            },
-          });
-        } catch (error) {
-          this.logger.error(`Failed to generate script for plan: ${error}`);
-
-          // Save failed script
-          await this.prisma.script.create({
-            data: {
-              batchId,
-              status: 'failed',
-              angle: plan.angle,
-              duration: plan.duration,
-              errorMessage: error instanceof Error ? error.message : 'Unknown error',
-            },
-          });
-        }
-      }
+      // Process scripts in parallel with controlled concurrency
+      await this.processPlansInParallel(
+        plans,
+        batchWithFilteredProject,
+        batchId,
+        batch.project.forbiddenClaims,
+      );
 
       // Update batch status
       await this.prisma.batch.update({
         where: { id: batchId },
         data: { status: 'completed' },
+      });
+
+      // Emit batch completed event
+      const finalCounts = await this.prisma.script.groupBy({
+        by: ['status'],
+        where: { batchId },
+        _count: true,
+      });
+
+      const completedScripts = finalCounts.find(c => c.status === 'completed')?._count || 0;
+      const failedScripts = finalCounts.find(c => c.status === 'failed')?._count || 0;
+
+      this.notifications.emitBatchCompleted({
+        batchId,
+        projectId: batch.projectId,
+        totalScripts: plans.length,
+        completedScripts,
+        failedScripts,
       });
 
       this.logger.log(`Batch ${batchId} completed`);
@@ -253,6 +239,154 @@ export class ScriptGeneratorService {
     }
   }
 
+  /**
+   * Process multiple script plans in parallel with controlled concurrency.
+   * Uses a semaphore pattern to limit concurrent LLM requests.
+   */
+  private async processPlansInParallel(
+    plans: ScriptPlan[],
+    batch: Batch & { project: Project & { personas: Persona[] } },
+    batchId: string,
+    forbiddenClaims: string[],
+  ): Promise<void> {
+    // Create a simple semaphore for concurrency control
+    let activeCount = 0;
+    const waiting: Array<() => void> = [];
+
+    const acquireSemaphore = (): Promise<void> => {
+      return new Promise((resolve) => {
+        if (activeCount < SCRIPT_GENERATION_CONCURRENCY) {
+          activeCount++;
+          resolve();
+        } else {
+          waiting.push(resolve);
+        }
+      });
+    };
+
+    const releaseSemaphore = (): void => {
+      activeCount--;
+      const next = waiting.shift();
+      if (next) {
+        activeCount++;
+        next();
+      }
+    };
+
+    // Process a single plan with semaphore control
+    const processPlan = async (plan: ScriptPlan, index: number): Promise<void> => {
+      await acquireSemaphore();
+
+      // Create script record with 'generating' status first (for progress tracking)
+      const scriptRecord = await this.prisma.script.create({
+        data: {
+          batchId,
+          status: 'generating',
+          angle: plan.angle,
+          duration: plan.duration,
+        },
+      });
+
+      // Emit progress event for script starting
+      const counts = await this.getScriptCounts(batchId, plans.length);
+      this.notifications.emitScriptProgress({
+        batchId,
+        scriptId: scriptRecord.id,
+        status: 'generating',
+        ...counts,
+      });
+
+      try {
+        this.logger.log(`Generating script ${index + 1}/${plans.length} (angle: ${plan.angle}, duration: ${plan.duration}s)`);
+
+        const script = await this.generateScript(batch, plan);
+
+        // Score the script
+        const { score, warnings } = this.scoringService.scoreScript(
+          script,
+          forbiddenClaims,
+        );
+
+        // Validate beat count
+        const beatWarning = validateBeatCount(script.storyboard, script.duration);
+        if (beatWarning) {
+          warnings.push(beatWarning);
+        }
+
+        // Update script with generated content
+        await this.prisma.script.update({
+          where: { id: scriptRecord.id },
+          data: {
+            status: 'completed',
+            hook: script.hook,
+            storyboard: script.storyboard,
+            ctaVariants: script.ctaVariants,
+            filmingChecklist: script.filmingChecklist,
+            warnings: [...(script.warnings || []), ...warnings],
+            score,
+          },
+        });
+
+        this.logger.log(`Script ${index + 1}/${plans.length} completed (score: ${score})`);
+
+        // Emit progress event for script completion
+        const completedCounts = await this.getScriptCounts(batchId, plans.length);
+        this.notifications.emitScriptProgress({
+          batchId,
+          scriptId: scriptRecord.id,
+          status: 'completed',
+          ...completedCounts,
+        });
+      } catch (error) {
+        this.logger.error(`Failed to generate script ${index + 1}/${plans.length}: ${error}`);
+
+        // Update script to failed status
+        await this.prisma.script.update({
+          where: { id: scriptRecord.id },
+          data: {
+            status: 'failed',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
+
+        // Emit progress event for script failure
+        const failedCounts = await this.getScriptCounts(batchId, plans.length);
+        this.notifications.emitScriptProgress({
+          batchId,
+          scriptId: scriptRecord.id,
+          status: 'failed',
+          ...failedCounts,
+        });
+      } finally {
+        releaseSemaphore();
+      }
+    };
+
+    // Launch all plan processing in parallel (semaphore controls actual concurrency)
+    await Promise.all(plans.map((plan, index) => processPlan(plan, index)));
+  }
+
+  /**
+   * Get current script counts for progress tracking
+   */
+  private async getScriptCounts(batchId: string, totalCount: number) {
+    const [completedCount, generatingCount] = await Promise.all([
+      this.prisma.script.count({
+        where: { batchId, status: 'completed' },
+      }),
+      this.prisma.script.count({
+        where: { batchId, status: 'generating' },
+      }),
+    ]);
+
+    return {
+      completedCount,
+      generatingCount,
+      totalCount,
+      progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+    };
+  }
+
   private async repairJson(rawOutput: string, error: string): Promise<string> {
     const prompt = buildRepairPrompt(rawOutput, error);
 
@@ -306,6 +440,11 @@ export class ScriptGeneratorService {
         data: { status: 'generating' },
       });
 
+      const languageBlock = getLanguageInstruction(
+        script.batch.project.language,
+        script.batch.project.region,
+      );
+
       const prompt = `You are a UGC script writer. Modify the following script based on the instruction.
 
 ## Original Script
@@ -320,7 +459,7 @@ ${instruction}
 ## Product Context
 ${script.batch.project.productDescription}
 
-Return the modified script in the same JSON format:
+${languageBlock}Return the modified script in the same JSON format:
 {
   "angle": "${sourceScript.angle}",
   "duration": ${sourceScript.duration},

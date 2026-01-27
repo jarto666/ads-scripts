@@ -11,6 +11,7 @@ import { AdminModule } from './admin/admin.module';
 import { SettingsModule } from './settings/settings.module';
 import { CreditsModule } from './credits/credits.module';
 import { BillingModule } from './billing/billing.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BillingModule } from './billing/billing.module';
     }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    NotificationsModule,
     AuthModule,
     ProjectsModule,
     PersonasModule,

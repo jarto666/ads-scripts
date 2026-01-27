@@ -6,6 +6,16 @@
     "apps/*",
     "packages/*"
   ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "esbuild",
+      "sharp",
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma"
+    ]
+  },
   "scripts": {
     "dev:api": "npm run dev -w apps/api",
     "dev:web": "npm run dev -w apps/web",

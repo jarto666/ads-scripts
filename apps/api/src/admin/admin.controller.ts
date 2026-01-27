@@ -9,11 +9,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
-import { AdminUserDetailDto, GrantCreditsDto, GrantCreditsResponseDto } from './dto';
+import { AdminUserDetailDto, GrantCreditsDto, GrantCreditsResponseDto, UpdateUserPlanDto } from './dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -76,11 +76,13 @@ export class AdminController {
   }
 
   @Patch('users/:id/plan')
+  @ApiOperation({ summary: 'Update user plan' })
+  @ApiBody({ type: UpdateUserPlanDto })
   async updateUserPlan(
     @Param('id') id: string,
-    @Body() body: { plan: 'free' | 'pro' },
+    @Body() dto: UpdateUserPlanDto,
   ) {
-    return this.adminService.updateUserPlan(id, body.plan);
+    return this.adminService.updateUserPlan(id, dto.plan);
   }
 
   @Get('users/:id')

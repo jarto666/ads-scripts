@@ -960,11 +960,22 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserPlanDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
           }
         },
+        "summary": "Update user plan",
         "tags": [
           "Admin"
         ]
@@ -2086,6 +2097,21 @@
         "required": [
           "pdfUrl",
           "csvUrl"
+        ]
+      },
+      "UpdateUserPlanDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "pro"
+            ]
+          }
+        },
+        "required": [
+          "plan"
         ]
       },
       "AdminUserDetailDto": {
