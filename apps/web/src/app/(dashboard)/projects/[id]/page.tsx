@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use, useMemo, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import { useBatchProgress, useNotifications, ScriptProgressEvent, BatchCompletedEvent } from "@/contexts/notifications-context";
 import {
@@ -78,6 +79,7 @@ import {
   exportsControllerExportBatch,
   personasControllerCreate,
   personasControllerDelete,
+  getCreditsControllerGetBalancesQueryKey,
 } from "@/api/generated/api";
 import type { PersonaDto, BatchDto, ScriptDto } from "@/api/generated/models";
 
@@ -392,6 +394,7 @@ export default function ProjectDetailPage({
   const scriptParam = searchParams.get("script");
   const { user } = useAuth();
   const isAdmin = user?.isAdmin ?? false;
+  const queryClient = useQueryClient();
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -816,10 +819,10 @@ export default function ProjectDetailPage({
       return;
     }
 
-    if (genSettings.durations.length === 0) {
+    if (!genSettings.duration) {
       toast({
-        title: "Select durations",
-        description: "Please select at least one duration",
+        title: "Select duration",
+        description: "Please select a duration",
         variant: "destructive",
       });
       return;
@@ -835,7 +838,7 @@ export default function ProjectDetailPage({
           | "shorts"
           | "universal",
         angles: genSettings.angles,
-        durations: genSettings.durations,
+        durations: [genSettings.duration],
         personaIds:
           genSettings.personaIds.length > 0
             ? genSettings.personaIds
@@ -847,6 +850,10 @@ export default function ProjectDetailPage({
       setBatchesList((prev) => [batch, ...prev]);
       setSelectedBatchId(batch.id);
       setScriptsList([]);
+
+      // Refetch credits balance (credits were deducted)
+      queryClient.invalidateQueries({ queryKey: getCreditsControllerGetBalancesQueryKey() });
+
       toast({
         title: "Generation started",
         description: `Generating ${totalScripts} scripts (${genSettings.scriptsPerAngle} per angle)...`,
@@ -878,6 +885,10 @@ export default function ProjectDetailPage({
       setScriptsList((prev) => [result.data, ...prev]);
       setRegenerateDialogOpen(false);
       setRegenerateInstruction("");
+
+      // Refetch credits balance (credits were deducted)
+      queryClient.invalidateQueries({ queryKey: getCreditsControllerGetBalancesQueryKey() });
+
       toast({
         title: "Regeneration started",
         description: "A new version is being generated",
@@ -951,12 +962,10 @@ export default function ProjectDetailPage({
     }));
   };
 
-  const toggleDuration = (duration: number) => {
+  const selectDuration = (duration: number) => {
     setGenSettings((prev) => ({
       ...prev,
-      durations: prev.durations.includes(duration)
-        ? prev.durations.filter((d) => d !== duration)
-        : [...prev.durations, duration],
+      duration,
     }));
   };
 
@@ -1663,11 +1672,10 @@ export default function ProjectDetailPage({
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center">
-                    Durations
+                    Duration
                     <InfoTip>
-                      Target video lengths. Shorter = punchier hooks and faster
-                      cuts. Longer = more storytelling. Select multiple for
-                      variety.
+                      Target video length. Shorter = punchier hooks and faster
+                      cuts. Longer = more storytelling.
                     </InfoTip>
                   </Label>
                   <div className="grid grid-cols-3 gap-1.5">
@@ -1676,12 +1684,12 @@ export default function ProjectDetailPage({
                         key={d.value}
                         type="button"
                         variant={
-                          genSettings.durations.includes(d.value)
+                          genSettings.duration === d.value
                             ? "default"
                             : "outline"
                         }
                         size="sm"
-                        onClick={() => toggleDuration(d.value)}
+                        onClick={() => selectDuration(d.value)}
                         className="h-9"
                       >
                         {d.label}

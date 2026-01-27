@@ -328,6 +328,107 @@ export class CreditsService {
   }
 
   /**
+   * Refund credits to a user (e.g., when generation fails)
+   * Credits are refunded in reverse priority order: pack -> subscription -> free
+   */
+  async refund(
+    userId: string,
+    amount: number,
+    batchId: string,
+    reason: string,
+  ): Promise<void> {
+    if (amount <= 0) return;
+
+    // Find the original transactions for this batch to determine which credit types to refund to
+    const originalTransactions = await this.prisma.creditTransaction.findMany({
+      where: {
+        userId,
+        batchId,
+        type: 'generation',
+        amount: { lt: 0 }, // Only deductions
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (originalTransactions.length === 0) {
+      // No original transactions found, refund to free credits
+      this.logger.warn(`No original transactions found for batch ${batchId}, refunding to free credits`);
+      await this.grant(userId, 'free', amount, null, 'refund', reason, undefined);
+      return;
+    }
+
+    // Refund proportionally based on original consumption
+    // For simplicity, refund in reverse order (most recently used first)
+    let remaining = amount;
+
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      for (const transaction of originalTransactions) {
+        if (remaining <= 0) break;
+
+        const originalAmount = Math.abs(transaction.amount);
+        const refundAmount = Math.min(remaining, originalAmount);
+
+        // Get current balance for this credit type
+        const balance = await tx.creditBalance.findUnique({
+          where: { userId_type: { userId, type: transaction.creditType } },
+        });
+
+        if (balance) {
+          const newBalance = balance.balance + refundAmount;
+
+          await tx.creditBalance.update({
+            where: { id: balance.id },
+            data: { balance: newBalance },
+          });
+
+          await tx.creditTransaction.create({
+            data: {
+              userId,
+              creditType: transaction.creditType,
+              amount: refundAmount,
+              balanceAfter: newBalance,
+              type: 'refund',
+              description: reason,
+              batchId,
+            },
+          });
+
+          remaining -= refundAmount;
+        }
+      }
+
+      // If still remaining (edge case), add to free credits
+      if (remaining > 0) {
+        const freeBalance = await tx.creditBalance.findUnique({
+          where: { userId_type: { userId, type: 'free' } },
+        });
+
+        const newBalance = (freeBalance?.balance || 0) + remaining;
+
+        await tx.creditBalance.upsert({
+          where: { userId_type: { userId, type: 'free' } },
+          update: { balance: newBalance },
+          create: { userId, type: 'free', balance: remaining, expiresAt: null },
+        });
+
+        await tx.creditTransaction.create({
+          data: {
+            userId,
+            creditType: 'free',
+            amount: remaining,
+            balanceAfter: newBalance,
+            type: 'refund',
+            description: reason,
+            batchId,
+          },
+        });
+      }
+    });
+
+    this.logger.log(`Refunded ${amount} credits to user ${userId} for batch ${batchId}: ${reason}`);
+  }
+
+  /**
    * Get transaction history for a user
    */
   async getTransactionHistory(userId: string, limit = 50) {

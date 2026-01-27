@@ -65,8 +65,13 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = React.useState(false);
 
-  // Fetch credits from API
-  const { data: creditsData } = useCreditsControllerGetBalances();
+  // Fetch credits from API - always refetch on window focus for accurate balance
+  const { data: creditsData } = useCreditsControllerGetBalances({
+    query: {
+      staleTime: 0, // Always consider stale, so refetchOnWindowFocus always works
+      refetchOnWindowFocus: true,
+    },
+  });
   const totalCredits = creditsData?.data?.total ?? 0;
 
   const isActive = (href: string) => {

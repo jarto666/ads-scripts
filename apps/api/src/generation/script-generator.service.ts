@@ -9,6 +9,7 @@ import {
 import { getLanguageInstruction } from './language-utils';
 import { validateBeatCount } from './platform-profiles';
 import { ScoringService } from './scoring.service';
+import { CreditsService } from '../credits/credits.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { Project, Persona, Batch, Script } from '@prisma/client';
 
@@ -16,6 +17,12 @@ import { Project, Persona, Batch, Script } from '@prisma/client';
 const QUALITY_MODELS = {
   standard: 'anthropic/claude-3.5-haiku',
   premium: 'anthropic/claude-3.5-sonnet',
+} as const;
+
+// Credit cost per script based on quality
+const CREDIT_COSTS = {
+  standard: 1,
+  premium: 5,
 } as const;
 
 // Concurrency limit for parallel script generation
@@ -54,6 +61,7 @@ export class ScriptGeneratorService {
     private prisma: PrismaService,
     private openRouter: OpenRouterClient,
     private scoringService: ScoringService,
+    private creditsService: CreditsService,
     private notifications: NotificationsGateway,
   ) {}
 
@@ -152,6 +160,22 @@ export class ScriptGeneratorService {
 
       const completedScripts = finalCounts.find(c => c.status === 'completed')?._count || 0;
       const failedScripts = finalCounts.find(c => c.status === 'failed')?._count || 0;
+
+      // Refund credits for failed scripts
+      if (failedScripts > 0) {
+        const quality = (batch.quality as keyof typeof CREDIT_COSTS) || 'standard';
+        const creditCostPerScript = CREDIT_COSTS[quality];
+        const refundAmount = creditCostPerScript * failedScripts;
+
+        await this.creditsService.refund(
+          batch.project.userId,
+          refundAmount,
+          batchId,
+          `Refund for ${failedScripts} failed script(s)`,
+        );
+
+        this.logger.log(`Refunded ${refundAmount} credits for ${failedScripts} failed scripts in batch ${batchId}`);
+      }
 
       this.notifications.emitBatchCompleted({
         batchId,

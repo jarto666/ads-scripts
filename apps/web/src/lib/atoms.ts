@@ -4,7 +4,7 @@ export interface ProjectGenSettings {
   scriptsPerAngle: number;
   platform: string;
   angles: string[];
-  durations: number[];
+  duration: number;
   personaIds: string[];
   quality: "standard" | "premium";
 }
@@ -13,7 +13,7 @@ const DEFAULT_GEN_SETTINGS: ProjectGenSettings = {
   scriptsPerAngle: 3,
   platform: "universal",
   angles: ["pain_agitation", "objection_reversal", "problem_solution"],
-  durations: [15, 30],
+  duration: 15,
   personaIds: [],
   quality: "standard",
 };
