@@ -20,8 +20,9 @@ COPY apps/api/package.json ./apps/api/
 # Install ALL dependencies (including dev, needed for build and prisma)
 RUN pnpm install --frozen-lockfile
 
-# Copy Prisma schema first (needed for prisma generate)
+# Copy Prisma schema and config first (needed for prisma generate)
 COPY apps/api/prisma ./apps/api/prisma
+COPY apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 
 # Generate Prisma client from the api workspace directory
 WORKDIR /app/apps/api
@@ -52,8 +53,9 @@ RUN for src in /app/node_modules/.pnpm/@prisma+client*/node_modules/.prisma; do 
 # Copy the built dist folder into the deploy directory
 RUN cp -r /app/apps/api/dist /app/deploy/dist
 
-# Copy prisma schema to deploy (needed for migrations at runtime)
+# Copy prisma schema and config to deploy (needed for migrations at runtime)
 RUN cp -r /app/apps/api/prisma /app/deploy/prisma
+RUN cp /app/apps/api/prisma.config.ts /app/deploy/prisma.config.ts
 
 # ===============================
 # Production Stage
@@ -61,6 +63,9 @@ RUN cp -r /app/apps/api/prisma /app/deploy/prisma
 FROM node:20-alpine AS production
 
 WORKDIR /app
+
+# Install prisma CLI globally for running migrations
+RUN npm install -g prisma@7.3.0
 
 # Install Chromium for Puppeteer PDF generation
 RUN apk add --no-cache \
