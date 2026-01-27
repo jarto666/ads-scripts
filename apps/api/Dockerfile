@@ -14,7 +14,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN apk add --no-cache python3 make g++
 
 # Copy all package files and workspace config
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 
 # Install ALL dependencies (including dev, needed for build and prisma)
@@ -40,7 +40,7 @@ RUN pnpm --filter api run build
 
 # Use pnpm deploy to create a production-ready folder
 # This resolves all symlinks and copies only production dependencies
-RUN pnpm --filter api deploy --prod /app/deploy
+RUN pnpm --filter api deploy --legacy --prod /app/deploy
 
 # Copy the built dist folder into the deploy directory
 RUN cp -r /app/apps/api/dist /app/deploy/dist
