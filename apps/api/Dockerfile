@@ -10,24 +10,33 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install dependencies needed for native modules
+# Install dependencies needed for native modules (bcrypt)
 RUN apk add --no-cache python3 make g++
 
-# Copy package files and lockfile
+# Copy all package files and workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 
-# Install all dependencies (including dev for building)
+# Install ALL dependencies (including dev, needed for build and prisma)
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY apps/api ./apps/api
+# Copy Prisma schema first (needed for prisma generate)
+COPY apps/api/prisma ./apps/api/prisma
 
-# Generate Prisma client
-RUN pnpm exec prisma generate --schema=apps/api/prisma/schema.prisma
+# Generate Prisma client - run from the api workspace directory
+WORKDIR /app/apps/api
+RUN pnpm exec prisma generate
+
+# Go back to app root
+WORKDIR /app
+
+# Copy the rest of the API source code
+COPY apps/api/src ./apps/api/src
+COPY apps/api/tsconfig*.json ./apps/api/
+COPY apps/api/nest-cli.json ./apps/api/
 
 # Build the application
-RUN pnpm run build --filter=api
+RUN pnpm --filter api run build
 
 # ===============================
 # Production Stage
@@ -63,7 +72,8 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy Prisma schema (needed for migrations at runtime)
 COPY apps/api/prisma ./apps/api/prisma
 
-# Copy generated Prisma client from builder stage (the .prisma folder contains the generated client)
+# Copy generated Prisma client from builder
+# The generated client lives in node_modules/.prisma/client
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy built application from builder
