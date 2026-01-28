@@ -81,13 +81,18 @@ Return your response as a JSON array:
     "angle": "pain_agitation",
     "duration": 30,
     "hookIdea": "Stop scrolling if you're tired of...",
-    "beats": ["Hook with pain point", "Show the struggle", "Introduce solution", ...],
+    "beats": ["Hook with pain point", "Show the struggle", "Introduce solution"],
     "complianceNotes": ["Avoid medical claims"]
-  },
-  ...
+  }
 ]
 
-IMPORTANT: Return ONLY valid JSON, no markdown, no explanation.`;
+OUTPUT CONTRACT (must follow exactly):
+- Output must be valid JSON.
+- Output must start with '[' and end with ']'.
+- Do NOT wrap in markdown fences.
+- Do NOT include any explanation, comments, or extra text.
+- Do NOT include trailing commas.
+If you include any characters before the first '[' or after the final ']', the output will be rejected.`;
 }
 
 export function buildPass2Prompt(
@@ -129,30 +134,22 @@ Write a complete PAID AD script following this EXACT JSON structure:
 {
   "angle": "${plan.angle}",
   "duration": ${plan.duration},
-  "hook": "The opening hook line (must be attention-grabbing, specific, and under 3 seconds)",
+  "hook": "The opening hook line",
   "storyboard": [
     {
       "t": "0-3s",
-      "shot": "Description of what's in frame and the action",
-      "onScreen": "Text overlay for this segment (match platform caption density)",
-      "spoken": "Exact words the creator says (match platform tone)",
-      "broll": ["Optional b-roll idea 1", "Optional b-roll idea 2"]
-    },
-    // Continue for each segment...
+      "shot": "What is in frame and the action",
+      "onScreen": "Text overlay for this segment",
+      "spoken": "Exact words the creator says",
+      "broll": ["B-roll idea 1", "B-roll idea 2"]
+    }
   ],
-  "ctaVariants": [
-    "CTA option 1 (match platform CTA style)",
-    "CTA option 2",
-    "CTA option 3"
-  ],
-  "filmingChecklist": [
-    "Specific filming instruction 1",
-    "Props needed",
-    "Lighting note (match platform edit notes)",
-    "etc."
-  ],
-  "warnings": ["Any compliance warnings or notes"]
+  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3"],
+  "filmingChecklist": ["Filming instruction 1", "Props needed", "Lighting note"],
+  "warnings": ["Any compliance warnings"]
 }
+
+Note: storyboard array should have ${beatRange.min}-${beatRange.max} segments for ${plan.duration}s duration.
 
 REQUIREMENTS:
 - The hook MUST grab attention in the first 2 seconds, matching the platform's hook style
@@ -164,7 +161,13 @@ REQUIREMENTS:
 - If any forbidden phrases appear, add a warning
 - Time segments should add up to ~${plan.duration}s
 
-Return ONLY valid JSON, no markdown, no explanation.`;
+OUTPUT CONTRACT (must follow exactly):
+- Output must be valid JSON.
+- Output must start with '{' and end with '}'.
+- Do NOT wrap in markdown fences.
+- Do NOT include any explanation, comments, or extra text.
+- Do NOT include trailing commas.
+If you include any characters before the first '{' or after the final '}', the output will be rejected.`;
 }
 
 export function buildRepairPrompt(rawOutput: string, error: string): string {
@@ -175,5 +178,13 @@ Error: ${error}
 Raw output:
 ${rawOutput}
 
-Please fix the JSON and return ONLY the corrected, valid JSON object. Do not include any explanation or markdown.`;
+Fix the JSON and return the corrected output.
+
+OUTPUT CONTRACT (must follow exactly):
+- Output must be valid JSON.
+- Output must start with '{' or '[' and end with '}' or ']'.
+- Do NOT wrap in markdown fences.
+- Do NOT include any explanation, comments, or extra text.
+- Do NOT include trailing commas.
+If you include any characters before the first '{'/']' or after the final '}'/']', the output will be rejected.`;
 }

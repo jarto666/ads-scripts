@@ -254,9 +254,9 @@ export class ScriptGeneratorService {
     );
 
     try {
-      return JSON.parse(response) as ScriptOutput;
+      const cleaned = this.stripMarkdown(response);
+      return JSON.parse(cleaned) as ScriptOutput;
     } catch (error) {
-      // Try to repair
       this.logger.warn('Pass 2 JSON parse failed, attempting repair');
       const repaired = await this.repairJson(response, error instanceof Error ? error.message : 'Unknown error');
       return JSON.parse(repaired) as ScriptOutput;
@@ -422,7 +422,19 @@ export class ScriptGeneratorService {
       { temperature: 0, jsonMode: true },
     );
 
-    return response;
+    return this.stripMarkdown(response);
+  }
+
+  /**
+   * Strip markdown code fences from LLM response.
+   * Sonnet 4.5 tends to wrap JSON in ```json ... ``` blocks.
+   */
+  private stripMarkdown(content: string): string {
+    let cleaned = content.trim();
+    if (cleaned.startsWith('```')) {
+      cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    return cleaned.trim();
   }
 
   /**
