@@ -13,4 +13,6 @@ export interface SubscriptionInfoDto {
   status?: SubscriptionInfoDtoStatus;
   endsAt?: string;
   hasSubscription: boolean;
+  /** Whether the cancelled subscription can be resumed (not yet expired) */
+  canResume: boolean;
 }

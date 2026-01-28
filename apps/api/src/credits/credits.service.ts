@@ -9,7 +9,7 @@ type CreditType = (typeof CREDIT_TYPES)[number];
 const CONSUMPTION_PRIORITY: CreditType[] = ['free', 'subscription', 'pack'];
 
 const FREE_MONTHLY_CREDITS = 20;
-const SUBSCRIPTION_MONTHLY_CREDITS = 200;
+const SUBSCRIPTION_MONTHLY_CREDITS = 500;
 
 @Injectable()
 export class CreditsService {

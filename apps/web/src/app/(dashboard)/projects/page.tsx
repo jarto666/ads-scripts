@@ -24,73 +24,39 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import {
   useProjectsControllerFindAll,
-  useProjectsControllerCreate,
   useProjectsControllerDelete,
   getProjectsControllerFindAllQueryKey,
+  useProjectDraftsControllerGetDraft,
+  useProjectDraftsControllerDeleteDraft,
+  getProjectDraftsControllerGetDraftQueryKey,
 } from '@/api/generated/api';
 
 export default function ProjectsPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [newProject, setNewProject] = useState({
-    name: '',
-    productDescription: '',
-  });
+  const [showDraftDialog, setShowDraftDialog] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useProjectsControllerFindAll();
-  const createMutation = useProjectsControllerCreate();
+  const { data: draftData } = useProjectDraftsControllerGetDraft({
+    query: { retry: false },
+  });
   const deleteMutation = useProjectsControllerDelete();
+  const deleteDraftMutation = useProjectDraftsControllerDeleteDraft();
 
   const projectsList = data?.data ?? [];
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!newProject.name || !newProject.productDescription) {
-      toast({
-        title: 'Missing fields',
-        description: 'Please fill in all required fields',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      const result = await createMutation.mutateAsync({
-        data: {
-          name: newProject.name,
-          productDescription: newProject.productDescription,
-        },
-      });
-      toast({
-        title: 'Project created',
-        description: 'Your new project has been created.',
-      });
-      setDialogOpen(false);
-      setNewProject({ name: '', productDescription: '' });
-      router.push(`/projects/${result.data.id}`);
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to create project',
-        variant: 'destructive',
-      });
-    }
-  };
+  // Check for valid draft with id (API returns null when no draft exists)
+  const draft = draftData?.data?.id ? draftData.data : null;
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
     if (!confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
@@ -108,6 +74,36 @@ export default function ProjectsPage() {
       toast({
         title: 'Error',
         description: 'Failed to delete project',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleNewProjectClick = () => {
+    if (draft) {
+      setShowDraftDialog(true);
+    } else {
+      router.push('/projects/new');
+    }
+  };
+
+  const handleContinueDraft = () => {
+    setShowDraftDialog(false);
+    router.push('/projects/new');
+  };
+
+  const handleStartFresh = async () => {
+    try {
+      await deleteDraftMutation.mutateAsync();
+      queryClient.invalidateQueries({
+        queryKey: getProjectDraftsControllerGetDraftQueryKey(),
+      });
+      setShowDraftDialog(false);
+      router.push('/projects/new');
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Failed to discard draft',
         variant: 'destructive',
       });
     }
@@ -155,72 +151,10 @@ export default function ProjectsPage() {
             Manage your UGC script generation projects
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              New Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Start by adding your product details. You can configure more settings later.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-6 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Project Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Summer Skincare Launch"
-                  value={newProject.name}
-                  onChange={(e) =>
-                    setNewProject({ ...newProject, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Product Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe your product, its key features, benefits, and what makes it unique..."
-                  rows={5}
-                  value={newProject.productDescription}
-                  onChange={(e) =>
-                    setNewProject({
-                      ...newProject,
-                      productDescription: e.target.value,
-                    })
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  The more detail you provide, the better your scripts will be.
-                </p>
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? (
-                    <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Creating...
-                    </span>
-                  ) : (
-                    'Create Project'
-                  )}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleNewProjectClick} className="gap-2">
+          <Plus className="h-4 w-4" />
+          New Project
+        </Button>
       </div>
 
       {/* Search */}
@@ -250,7 +184,7 @@ export default function ProjectsPage() {
                 : 'Create your first project to start generating UGC scripts'}
             </p>
             {!searchQuery && (
-              <Button onClick={() => setDialogOpen(true)} className="gap-2">
+              <Button onClick={handleNewProjectClick} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Create your first project
               </Button>
@@ -266,21 +200,19 @@ export default function ProjectsPage() {
               onClick={() => router.push(`/projects/${project.id}`)}
             >
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary shrink-0">
-                      <FolderKanban className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <CardTitle className="text-base font-semibold truncate group-hover:text-primary transition-colors">
-                        {project.name}
-                      </CardTitle>
-                    </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary shrink-0">
+                    <FolderKanban className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-base font-semibold truncate group-hover:text-primary transition-colors">
+                      {project.name}
+                    </CardTitle>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteProject(project.id, project.name);
@@ -315,6 +247,34 @@ export default function ProjectsPage() {
           ))}
         </div>
       )}
+
+      {/* Draft Dialog */}
+      <Dialog open={showDraftDialog} onOpenChange={setShowDraftDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>You have an unfinished draft</DialogTitle>
+            <DialogDescription>
+              {draft?.formData?.name ? (
+                <>Would you like to continue working on &quot;{draft.formData.name}&quot;?</>
+              ) : (
+                <>Would you like to continue with your previous draft?</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={handleStartFresh}
+              disabled={deleteDraftMutation.isPending}
+            >
+              {deleteDraftMutation.isPending ? 'Discarding...' : 'Start fresh'}
+            </Button>
+            <Button onClick={handleContinueDraft}>
+              Continue draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

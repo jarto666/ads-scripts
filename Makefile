@@ -16,6 +16,12 @@ install:
 dev:
 	pnpm run dev
 
+dev-api:
+	pnpm run dev:api
+
+dev-web:
+	pnpm run dev:web
+
 build:
 	pnpm run build
 

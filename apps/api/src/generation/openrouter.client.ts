@@ -37,7 +37,7 @@ export class OpenRouterClient {
       'https://openrouter.ai/api/v1';
     this.defaultModel =
       this.configService.get<string>('OPENROUTER_MODEL') ||
-      'anthropic/claude-3.5-sonnet';
+      'anthropic/claude-sonnet-4.5';
   }
 
   async chatCompletion(

@@ -1,10 +1,12 @@
 # Pricing Model
 
+Last updated: January 28, 2026
+
 ## Credit System
 
 All script generation uses credits:
-- **Standard Quality** (Claude Haiku): 1 credit per script
-- **Premium Quality** (Claude Sonnet): 5 credits per script
+- **Standard Quality** (Claude 3.5 Haiku): 1 credit per script
+- **Premium Quality** (Claude Sonnet 4.5): 5 credits per script
 
 ---
 
@@ -21,9 +23,11 @@ All script generation uses credits:
 
 ### Pro Plan
 - **Price**: $12/month
-- **Credits**: 200 credits/month (refreshed on billing date)
+- **Credits**: 500 credits/month (refreshed on billing date)
 - **Features**:
   - Everything in Free
+  - URL import with AI analysis
+  - AI-generated persona suggestions
   - Priority generation queue
   - Credit pack purchases
   - CSV export
@@ -37,33 +41,84 @@ One-time purchases for additional credits:
 
 | Pack | Credits | Price | $/Credit |
 |------|---------|-------|----------|
-| Starter | 100 | $8 | $0.080 |
-| Growth | 250 | $18 | $0.072 |
-| Agency | 500 | $30 | $0.060 |
+| Boost | 500 | $18 | $0.036 |
+| Campaign | 1,000 | $30 | $0.030 |
+| Agency | 2,500 | $60 | $0.024 |
+
+---
+
+## Model Configuration
+
+| Tier | Model | OpenRouter ID |
+|------|-------|---------------|
+| Standard | Claude 3.5 Haiku | `anthropic/claude-3.5-haiku` |
+| Premium | Claude Sonnet 4.5 | `anthropic/claude-sonnet-4.5` |
+| URL Analysis | Claude 3.5 Haiku | `anthropic/claude-3.5-haiku` |
+
+### OpenRouter Pricing (per 1M tokens)
+
+| Model | Input | Output |
+|-------|-------|--------|
+| Claude 3.5 Haiku | $0.80 | $4.00 |
+| Claude Sonnet 4.5 | $3.00 | $15.00 |
 
 ---
 
 ## Cost Analysis
 
-### Our Costs (OpenRouter)
-- Standard (Haiku): ~$0.01/script
-- Premium (Sonnet): ~$0.08/script
+### Per Script Costs (Actual Test Data - Jan 2026)
 
-### Margin Analysis
+| Tier | Tokens (in/out) | Cost/Script |
+|------|-----------------|-------------|
+| Standard | ~1,500 / ~1,150 | **$0.0045** |
+| Premium | ~1,500 / ~1,650 | **$0.025** |
 
-**Free Tier (20 credits/month)**
-- Worst case (4 premium): $0.32/user/month
-- Typical (all standard): $0.20/user/month
+### URL Analysis Cost
 
-**Pro Tier (200 credits/month @ $12)**
-- Worst case (40 premium): $3.20 cost → 73% margin
-- Typical (80/20 mix): $2.24 cost → 81% margin
-- Light (all standard): $2.00 cost → 83% margin
+| Step | Model | Cost |
+|------|-------|------|
+| Extraction | Haiku 3.5 | ~$0.007 |
+| AI Analysis | Haiku 3.5 | ~$0.006 |
+| **Total** | | **~$0.013** |
 
-**Credit Packs**
-- 100 for $8: 75-87% margin
-- 250 for $18: 78-86% margin
-- 500 for $30: 73-83% margin
+---
+
+## Margin Analysis
+
+### Pro Tier (500 credits/month @ $12)
+
+| Usage Pattern | Scripts | Our Cost | Margin |
+|---------------|---------|----------|--------|
+| All Standard | 500 | $2.25 | **81%** |
+| All Premium | 100 | $2.50 | **79%** |
+| Mixed (300 std + 40 prem) | 340 | $2.35 | **80%** |
+
+### Free Tier (20 credits/month)
+
+| Usage | Scripts | Our Cost |
+|-------|---------|----------|
+| All Standard | 20 | $0.09 |
+| All Premium | 4 | $0.10 |
+
+### Credit Pack Margins
+
+| Pack | Revenue | Max Cost | Min Margin |
+|------|---------|----------|------------|
+| Boost (500) | $18 | $2.50 | **86%** |
+| Campaign (1,000) | $30 | $5.00 | **83%** |
+| Agency (2,500) | $60 | $12.50 | **79%** |
+
+---
+
+## Usage Capacity
+
+### With 500 Pro Credits
+
+| Quality | Scripts/Month | Scripts/Week |
+|---------|---------------|--------------|
+| Standard only | 500 | 125 |
+| Premium only | 100 | 25 |
+| Mixed (equal spend) | 166 std + 33 prem | ~50 |
 
 ---
 
@@ -71,7 +126,7 @@ One-time purchases for additional credits:
 
 ### Monthly Credit Refresh
 - Free users: Credits reset to 20 on 1st of each month
-- Pro users: Credits reset to 200 on billing anniversary date
+- Pro users: Credits reset to 500 on billing anniversary date
 - Unused credits do NOT roll over
 
 ### Credit Pack Behavior
@@ -83,3 +138,24 @@ One-time purchases for additional credits:
 - Upgrade: Immediate access, prorated billing
 - Downgrade: Access until end of billing period
 - Cancel: Reverts to Free plan with 20 credits/month
+
+---
+
+## Model Selection Rationale
+
+### Standard Tier: Claude 3.5 Haiku
+- Cheapest option at $0.0045/script
+- Fast generation (~40s total)
+- Punchy, TikTok-appropriate tone
+- Sufficient quality for most use cases
+
+### Premium Tier: Claude Sonnet 4.5
+- 50% cheaper than Sonnet 3.5 ($0.025 vs $0.05)
+- Better quality output (more detailed storyboards)
+- More natural, polished tone
+- Worth the 5x credit premium for important campaigns
+
+### URL Analysis: Claude 3.5 Haiku
+- Extraction doesn't require frontier reasoning
+- Cost-effective at ~$0.013/import
+- Good enough for structured data extraction

@@ -10,7 +10,9 @@
       "Bash(npm run build:web:*)",
       "Bash(pnpm type-check:*)",
       "Bash(npx tsc:*)",
-      "Bash(pnpm exec tsc:*)"
+      "Bash(pnpm exec tsc:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.browserless.io)"
     ]
   }
 }

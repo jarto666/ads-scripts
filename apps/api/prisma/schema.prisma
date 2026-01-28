@@ -25,6 +25,7 @@ model User {
   projects            Project[]
   creditBalances      CreditBalance[]
   creditTransactions  CreditTransaction[]
+  projectDraft        ProjectDraft?
 }
 
 model CreditBalance {
@@ -181,4 +182,26 @@ model Script {
   @@index([batchId])
   @@index([status])
   @@index([parentScriptId])
+}
+
+model ProjectDraft {
+  id             String    @id @default(cuid())
+  userId         String    @unique // One active draft per user
+  currentStep    Int       @default(0)
+  completedSteps Int[]     @default([])
+  sourceUrl      String?
+  importMethod   String    @default("scratch") // "scratch" | "url"
+  importStatus   String?   // "pending" | "importing" | "completed" | "failed"
+  importError    String?
+  formData       Json      @default("{}")
+  extractedAt    DateTime?
+  extractionData Json?
+  analyzedAt     DateTime?
+  analysisData   Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

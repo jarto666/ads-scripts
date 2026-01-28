@@ -13,6 +13,9 @@ import { CreditsModule } from './credits/credits.module';
 import { BillingModule } from './billing/billing.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ProjectDraftsModule } from './project-drafts/project-drafts.module';
+import { UrlExtractionModule } from './url-extraction/url-extraction.module';
+import { ProjectAnalysisModule } from './project-analysis/project-analysis.module';
 
 @Module({
   imports: [
@@ -32,6 +35,9 @@ import { NotificationsModule } from './notifications/notifications.module';
     CreditsModule,
     BillingModule,
     WebhooksModule,
+    ProjectDraftsModule,
+    UrlExtractionModule,
+    ProjectAnalysisModule,
   ],
 })
 export class AppModule {}

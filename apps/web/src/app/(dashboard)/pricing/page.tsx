@@ -86,12 +86,13 @@ const PLANS = [
     id: "pro",
     name: "Pro",
     price: 12,
-    credits: 200,
+    credits: 500,
     period: "month",
     description: "For serious content creators",
     features: [
       "Everything in Free, plus:",
-      "200 credits/month",
+      "500 credits/month",
+      "URL import with AI analysis",
       "PDF & CSV export",
       "Priority generation",
       "Credit pack purchases",
@@ -102,25 +103,25 @@ const PLANS = [
 
 const CREDIT_PACKS = [
   {
-    id: "starter",
-    name: "Starter Pack",
-    credits: 100,
-    price: 8,
-    pricePerCredit: 0.08,
+    id: "boost",
+    name: "Boost Pack",
+    credits: 500,
+    price: 18,
+    pricePerCredit: 0.036,
   },
   {
-    id: "growth",
-    name: "Growth Pack",
-    credits: 250,
-    price: 18,
-    pricePerCredit: 0.072,
+    id: "campaign",
+    name: "Campaign Pack",
+    credits: 1000,
+    price: 30,
+    pricePerCredit: 0.03,
   },
   {
     id: "agency",
     name: "Agency Pack",
-    credits: 500,
-    price: 30,
-    pricePerCredit: 0.06,
+    credits: 2500,
+    price: 60,
+    pricePerCredit: 0.024,
     popular: true,
   },
 ];
@@ -214,8 +215,8 @@ export default function PricingPage() {
   const handleBuyPack = async (packId: string) => {
     // Map pack IDs to API size parameter
     const packSizeMap: Record<string, string> = {
-      starter: "small",
-      growth: "medium",
+      boost: "small",
+      campaign: "medium",
       agency: "large",
     };
     const size = packSizeMap[packId];
@@ -532,7 +533,7 @@ export default function PricingPage() {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Upgrade to Pro and get 200 credits monthly
+                    Upgrade to Pro and get 500 credits monthly
                   </p>
                 )}
               </div>

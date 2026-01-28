@@ -49,11 +49,12 @@ interface LemonSqueezyWebhookEvent {
 
 // Credit pack variant IDs from LemonSqueezy
 // Test environment IDs - update for production
+// TODO: Create new products in LemonSqueezy with these credit amounts
 const CREDIT_PACK_VARIANTS: Record<string, { name: string; credits: number }> = {
-  // Test environment
-  '1254961': { name: 'Starter Pack', credits: 100 },
-  '1254965': { name: 'Growth Pack', credits: 250 },
-  '1254972': { name: 'Agency Pack', credits: 500 },
+  // Test environment (update variant IDs after creating new products)
+  '1254961': { name: 'Boost Pack', credits: 500 },
+  '1254965': { name: 'Campaign Pack', credits: 1000 },
+  '1254972': { name: 'Agency Pack', credits: 2500 },
   // Production environment (add when available)
 };
 
@@ -549,7 +550,7 @@ export class BillingService {
       throw new BadRequestException('LemonSqueezy not configured');
     }
 
-    const redirectUrl = `${webBaseUrl.replace(/\/$/, '')}${redirectPath || '/settings'}`;
+    const redirectUrl = `${webBaseUrl.replace(/\/$/, '')}${redirectPath || '/pricing'}`;
 
     const payload = {
       data: {

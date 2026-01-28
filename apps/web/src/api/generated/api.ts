@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminControllerApproveRequest201,
   AdminControllerGetQueueJobsParams,
   AdminControllerGetRequestsParams,
   AdminUserDetailDto,
@@ -33,14 +34,20 @@ import type {
   CheckoutUrlDto,
   ConsumeMagicLinkDto,
   CreateBatchDto,
+  CreateDraftDto,
   CreatePersonaDto,
   CreateProjectDto,
   CreditTransactionDto,
   CreditsBalancesResponseDto,
   DeleteAccountResultDto,
+  DraftDto,
   ExportResultDto,
+  FinalizeDraftDto,
+  FinalizeResultDto,
   GrantCreditsDto,
   GrantCreditsResponseDto,
+  ImportResultDto,
+  ImportUrlDto,
   MessageDto,
   PersonaResponseDto,
   ProfileDto,
@@ -51,6 +58,7 @@ import type {
   RequestMagicLinkDto,
   ScriptDto,
   SubscriptionInfoDto,
+  UpdateDraftDto,
   UpdatePersonaDto,
   UpdateProfileDto,
   UpdateProjectDto,
@@ -2499,7 +2507,7 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
 
 
 export type adminControllerApproveRequestResponse201 = {
-  data: void
+  data: AdminControllerApproveRequest201
   status: 201
 }
     
@@ -3990,8 +3998,13 @@ export type billingControllerCreateCheckoutResponse200 = {
   data: CheckoutUrlDto
   status: 200
 }
+
+export type billingControllerCreateCheckoutResponse201 = {
+  data: void
+  status: 201
+}
     
-export type billingControllerCreateCheckoutResponseSuccess = (billingControllerCreateCheckoutResponse200) & {
+export type billingControllerCreateCheckoutResponseSuccess = (billingControllerCreateCheckoutResponse200 | billingControllerCreateCheckoutResponse201) & {
   headers: Headers;
 };
 ;
@@ -4063,6 +4076,93 @@ export const useBillingControllerCreateCheckout = <TError = unknown,
         TContext
       > => {
       return useMutation(getBillingControllerCreateCheckoutMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Get checkout URL for credit pack
+ */
+export type billingControllerCreatePackCheckoutResponse200 = {
+  data: CheckoutUrlDto
+  status: 200
+}
+
+export type billingControllerCreatePackCheckoutResponse201 = {
+  data: void
+  status: 201
+}
+    
+export type billingControllerCreatePackCheckoutResponseSuccess = (billingControllerCreatePackCheckoutResponse200 | billingControllerCreatePackCheckoutResponse201) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerCreatePackCheckoutResponse = (billingControllerCreatePackCheckoutResponseSuccess)
+
+export const getBillingControllerCreatePackCheckoutUrl = (size: string,) => {
+
+
+  
+
+  return `/billing/checkout/pack/${size}`
+}
+
+export const billingControllerCreatePackCheckout = async (size: string, options?: RequestInit): Promise<billingControllerCreatePackCheckoutResponse> => {
+  
+  return customInstance<billingControllerCreatePackCheckoutResponse>(getBillingControllerCreatePackCheckoutUrl(size),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getBillingControllerCreatePackCheckoutMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>, TError,{size: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>, TError,{size: string}, TContext> => {
+
+const mutationKey = ['billingControllerCreatePackCheckout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>, {size: string}> = (props) => {
+          const {size} = props ?? {};
+
+          return  billingControllerCreatePackCheckout(size,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BillingControllerCreatePackCheckoutMutationResult = NonNullable<Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>>
+    
+    export type BillingControllerCreatePackCheckoutMutationError = unknown
+
+    /**
+ * @summary Get checkout URL for credit pack
+ */
+export const useBillingControllerCreatePackCheckout = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>, TError,{size: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof billingControllerCreatePackCheckout>>,
+        TError,
+        {size: string},
+        TContext
+      > => {
+      return useMutation(getBillingControllerCreatePackCheckoutMutationOptions(options), queryClient);
     }
     
 /**
@@ -4367,4 +4467,611 @@ export const useBillingControllerCancelSubscription = <TError = unknown,
         TContext
       > => {
       return useMutation(getBillingControllerCancelSubscriptionMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Resume a cancelled subscription
+ */
+export type billingControllerResumeSubscriptionResponse201 = {
+  data: void
+  status: 201
+}
+    
+export type billingControllerResumeSubscriptionResponseSuccess = (billingControllerResumeSubscriptionResponse201) & {
+  headers: Headers;
+};
+;
+
+export type billingControllerResumeSubscriptionResponse = (billingControllerResumeSubscriptionResponseSuccess)
+
+export const getBillingControllerResumeSubscriptionUrl = () => {
+
+
+  
+
+  return `/billing/subscription/resume`
+}
+
+export const billingControllerResumeSubscription = async ( options?: RequestInit): Promise<billingControllerResumeSubscriptionResponse> => {
+  
+  return customInstance<billingControllerResumeSubscriptionResponse>(getBillingControllerResumeSubscriptionUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getBillingControllerResumeSubscriptionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerResumeSubscription>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof billingControllerResumeSubscription>>, TError,void, TContext> => {
+
+const mutationKey = ['billingControllerResumeSubscription'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof billingControllerResumeSubscription>>, void> = () => {
+          
+
+          return  billingControllerResumeSubscription(requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BillingControllerResumeSubscriptionMutationResult = NonNullable<Awaited<ReturnType<typeof billingControllerResumeSubscription>>>
+    
+    export type BillingControllerResumeSubscriptionMutationError = unknown
+
+    /**
+ * @summary Resume a cancelled subscription
+ */
+export const useBillingControllerResumeSubscription = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof billingControllerResumeSubscription>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof billingControllerResumeSubscription>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getBillingControllerResumeSubscriptionMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Get current user draft
+ */
+export type projectDraftsControllerGetDraftResponse200 = {
+  data: DraftDto
+  status: 200
+}
+    
+export type projectDraftsControllerGetDraftResponseSuccess = (projectDraftsControllerGetDraftResponse200) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerGetDraftResponse = (projectDraftsControllerGetDraftResponseSuccess)
+
+export const getProjectDraftsControllerGetDraftUrl = () => {
+
+
+  
+
+  return `/project-drafts`
+}
+
+export const projectDraftsControllerGetDraft = async ( options?: RequestInit): Promise<projectDraftsControllerGetDraftResponse> => {
+  
+  return customInstance<projectDraftsControllerGetDraftResponse>(getProjectDraftsControllerGetDraftUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getProjectDraftsControllerGetDraftQueryKey = () => {
+    return [
+    `/project-drafts`
+    ] as const;
+    }
+
+    
+export const getProjectDraftsControllerGetDraftQueryOptions = <TData = Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getProjectDraftsControllerGetDraftQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>> = ({ signal }) => projectDraftsControllerGetDraft({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ProjectDraftsControllerGetDraftQueryResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>>
+export type ProjectDraftsControllerGetDraftQueryError = unknown
+
+
+export function useProjectDraftsControllerGetDraft<TData = Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>,
+          TError,
+          Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProjectDraftsControllerGetDraft<TData = Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>,
+          TError,
+          Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useProjectDraftsControllerGetDraft<TData = Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get current user draft
+ */
+
+export function useProjectDraftsControllerGetDraft<TData = Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof projectDraftsControllerGetDraft>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getProjectDraftsControllerGetDraftQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Create or reset draft
+ */
+export type projectDraftsControllerCreateDraftResponse201 = {
+  data: DraftDto
+  status: 201
+}
+    
+export type projectDraftsControllerCreateDraftResponseSuccess = (projectDraftsControllerCreateDraftResponse201) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerCreateDraftResponse = (projectDraftsControllerCreateDraftResponseSuccess)
+
+export const getProjectDraftsControllerCreateDraftUrl = () => {
+
+
+  
+
+  return `/project-drafts`
+}
+
+export const projectDraftsControllerCreateDraft = async (createDraftDto: CreateDraftDto, options?: RequestInit): Promise<projectDraftsControllerCreateDraftResponse> => {
+  
+  return customInstance<projectDraftsControllerCreateDraftResponse>(getProjectDraftsControllerCreateDraftUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      createDraftDto,)
+  }
+);}
+
+
+
+
+export const getProjectDraftsControllerCreateDraftMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>, TError,{data: CreateDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>, TError,{data: CreateDraftDto}, TContext> => {
+
+const mutationKey = ['projectDraftsControllerCreateDraft'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>, {data: CreateDraftDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  projectDraftsControllerCreateDraft(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProjectDraftsControllerCreateDraftMutationResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>>
+    export type ProjectDraftsControllerCreateDraftMutationBody = CreateDraftDto
+    export type ProjectDraftsControllerCreateDraftMutationError = unknown
+
+    /**
+ * @summary Create or reset draft
+ */
+export const useProjectDraftsControllerCreateDraft = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>, TError,{data: CreateDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof projectDraftsControllerCreateDraft>>,
+        TError,
+        {data: CreateDraftDto},
+        TContext
+      > => {
+      return useMutation(getProjectDraftsControllerCreateDraftMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Update draft state
+ */
+export type projectDraftsControllerUpdateDraftResponse200 = {
+  data: DraftDto
+  status: 200
+}
+    
+export type projectDraftsControllerUpdateDraftResponseSuccess = (projectDraftsControllerUpdateDraftResponse200) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerUpdateDraftResponse = (projectDraftsControllerUpdateDraftResponseSuccess)
+
+export const getProjectDraftsControllerUpdateDraftUrl = () => {
+
+
+  
+
+  return `/project-drafts`
+}
+
+export const projectDraftsControllerUpdateDraft = async (updateDraftDto: UpdateDraftDto, options?: RequestInit): Promise<projectDraftsControllerUpdateDraftResponse> => {
+  
+  return customInstance<projectDraftsControllerUpdateDraftResponse>(getProjectDraftsControllerUpdateDraftUrl(),
+  {      
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      updateDraftDto,)
+  }
+);}
+
+
+
+
+export const getProjectDraftsControllerUpdateDraftMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>, TError,{data: UpdateDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>, TError,{data: UpdateDraftDto}, TContext> => {
+
+const mutationKey = ['projectDraftsControllerUpdateDraft'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>, {data: UpdateDraftDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  projectDraftsControllerUpdateDraft(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProjectDraftsControllerUpdateDraftMutationResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>>
+    export type ProjectDraftsControllerUpdateDraftMutationBody = UpdateDraftDto
+    export type ProjectDraftsControllerUpdateDraftMutationError = unknown
+
+    /**
+ * @summary Update draft state
+ */
+export const useProjectDraftsControllerUpdateDraft = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>, TError,{data: UpdateDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof projectDraftsControllerUpdateDraft>>,
+        TError,
+        {data: UpdateDraftDto},
+        TContext
+      > => {
+      return useMutation(getProjectDraftsControllerUpdateDraftMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Delete draft
+ */
+export type projectDraftsControllerDeleteDraftResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type projectDraftsControllerDeleteDraftResponseSuccess = (projectDraftsControllerDeleteDraftResponse200) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerDeleteDraftResponse = (projectDraftsControllerDeleteDraftResponseSuccess)
+
+export const getProjectDraftsControllerDeleteDraftUrl = () => {
+
+
+  
+
+  return `/project-drafts`
+}
+
+export const projectDraftsControllerDeleteDraft = async ( options?: RequestInit): Promise<projectDraftsControllerDeleteDraftResponse> => {
+  
+  return customInstance<projectDraftsControllerDeleteDraftResponse>(getProjectDraftsControllerDeleteDraftUrl(),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getProjectDraftsControllerDeleteDraftMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>, TError,void, TContext> => {
+
+const mutationKey = ['projectDraftsControllerDeleteDraft'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>, void> = () => {
+          
+
+          return  projectDraftsControllerDeleteDraft(requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProjectDraftsControllerDeleteDraftMutationResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>>
+    
+    export type ProjectDraftsControllerDeleteDraftMutationError = unknown
+
+    /**
+ * @summary Delete draft
+ */
+export const useProjectDraftsControllerDeleteDraft = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof projectDraftsControllerDeleteDraft>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getProjectDraftsControllerDeleteDraftMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Import project from URL (Pro only)
+ */
+export type projectDraftsControllerImportFromUrlResponse201 = {
+  data: ImportResultDto
+  status: 201
+}
+    
+export type projectDraftsControllerImportFromUrlResponseSuccess = (projectDraftsControllerImportFromUrlResponse201) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerImportFromUrlResponse = (projectDraftsControllerImportFromUrlResponseSuccess)
+
+export const getProjectDraftsControllerImportFromUrlUrl = () => {
+
+
+  
+
+  return `/project-drafts/import-url`
+}
+
+export const projectDraftsControllerImportFromUrl = async (importUrlDto: ImportUrlDto, options?: RequestInit): Promise<projectDraftsControllerImportFromUrlResponse> => {
+  
+  return customInstance<projectDraftsControllerImportFromUrlResponse>(getProjectDraftsControllerImportFromUrlUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      importUrlDto,)
+  }
+);}
+
+
+
+
+export const getProjectDraftsControllerImportFromUrlMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>, TError,{data: ImportUrlDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>, TError,{data: ImportUrlDto}, TContext> => {
+
+const mutationKey = ['projectDraftsControllerImportFromUrl'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>, {data: ImportUrlDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  projectDraftsControllerImportFromUrl(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProjectDraftsControllerImportFromUrlMutationResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>>
+    export type ProjectDraftsControllerImportFromUrlMutationBody = ImportUrlDto
+    export type ProjectDraftsControllerImportFromUrlMutationError = unknown
+
+    /**
+ * @summary Import project from URL (Pro only)
+ */
+export const useProjectDraftsControllerImportFromUrl = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>, TError,{data: ImportUrlDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof projectDraftsControllerImportFromUrl>>,
+        TError,
+        {data: ImportUrlDto},
+        TContext
+      > => {
+      return useMutation(getProjectDraftsControllerImportFromUrlMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Convert draft to project
+ */
+export type projectDraftsControllerFinalizeDraftResponse201 = {
+  data: FinalizeResultDto
+  status: 201
+}
+    
+export type projectDraftsControllerFinalizeDraftResponseSuccess = (projectDraftsControllerFinalizeDraftResponse201) & {
+  headers: Headers;
+};
+;
+
+export type projectDraftsControllerFinalizeDraftResponse = (projectDraftsControllerFinalizeDraftResponseSuccess)
+
+export const getProjectDraftsControllerFinalizeDraftUrl = () => {
+
+
+  
+
+  return `/project-drafts/finalize`
+}
+
+export const projectDraftsControllerFinalizeDraft = async (finalizeDraftDto: FinalizeDraftDto, options?: RequestInit): Promise<projectDraftsControllerFinalizeDraftResponse> => {
+  
+  return customInstance<projectDraftsControllerFinalizeDraftResponse>(getProjectDraftsControllerFinalizeDraftUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      finalizeDraftDto,)
+  }
+);}
+
+
+
+
+export const getProjectDraftsControllerFinalizeDraftMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>, TError,{data: FinalizeDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>, TError,{data: FinalizeDraftDto}, TContext> => {
+
+const mutationKey = ['projectDraftsControllerFinalizeDraft'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>, {data: FinalizeDraftDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  projectDraftsControllerFinalizeDraft(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProjectDraftsControllerFinalizeDraftMutationResult = NonNullable<Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>>
+    export type ProjectDraftsControllerFinalizeDraftMutationBody = FinalizeDraftDto
+    export type ProjectDraftsControllerFinalizeDraftMutationError = unknown
+
+    /**
+ * @summary Convert draft to project
+ */
+export const useProjectDraftsControllerFinalizeDraft = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>, TError,{data: FinalizeDraftDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof projectDraftsControllerFinalizeDraft>>,
+        TError,
+        {data: FinalizeDraftDto},
+        TContext
+      > => {
+      return useMutation(getProjectDraftsControllerFinalizeDraftMutationOptions(options), queryClient);
     }

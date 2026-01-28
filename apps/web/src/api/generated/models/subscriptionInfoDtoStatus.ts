@@ -14,4 +14,5 @@ export const SubscriptionInfoDtoStatus = {
   cancelled: 'cancelled',
   expired: 'expired',
   past_due: 'past_due',
+  paused: 'paused',
 } as const;

@@ -16,7 +16,7 @@ import { Project, Persona, Batch, Script } from '@prisma/client';
 // Model configuration by quality tier
 const QUALITY_MODELS = {
   standard: 'anthropic/claude-3.5-haiku',
-  premium: 'anthropic/claude-3.5-sonnet',
+  premium: 'anthropic/claude-sonnet-4.5',
 } as const;
 
 // Credit cost per script based on quality
