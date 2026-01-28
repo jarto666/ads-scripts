@@ -48,6 +48,11 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -439,6 +444,7 @@ export default function ProjectDetailPage({
   const [regenerateInstruction, setRegenerateInstruction] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isExportingCsv, setIsExportingCsv] = useState(false);
 
   // Per-project generation settings stored in localStorage via jotai
   const genSettingsAtom = useMemo(() => getProjectGenSettingsAtom(id), [id]);
@@ -928,10 +934,7 @@ export default function ProjectDetailPage({
       if (urls.pdfUrl) {
         window.open(urls.pdfUrl, "_blank");
       }
-      toast({
-        title: "Export ready",
-        description: "Your files are ready to download",
-      });
+      toast({ title: "Export ready", description: "PDF is ready" });
     } catch (error) {
       toast({
         title: "Export failed",
@@ -940,6 +943,36 @@ export default function ProjectDetailPage({
       });
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    if (!selectedBatchId) return;
+    setIsExportingCsv(true);
+    try {
+      const result = await exportsControllerExportBatch(selectedBatchId);
+      const urls = result.data;
+      if (urls.csvUrl) {
+        const a = document.createElement("a");
+        a.href = urls.csvUrl;
+        a.download = "producer-sheet.csv";
+        a.click();
+        toast({ title: "Export ready", description: "CSV is ready" });
+      } else {
+        toast({
+          title: "CSV unavailable",
+          description: "CSV export is available on the Pro plan",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Could not generate CSV",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingCsv(false);
     }
   };
 
@@ -1946,16 +1979,50 @@ export default function ProjectDetailPage({
                   </p>
                 </div>
                 {selectedBatch && selectedBatch.status === "completed" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExport}
-                    disabled={isExporting}
-                    className="gap-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    {isExporting ? "Exporting..." : "Export"}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExport}
+                      disabled={isExporting}
+                      className="gap-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      {isExporting ? "Exporting..." : "PDF"}
+                    </Button>
+                    {user?.plan !== "pro" ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span tabIndex={0} className="inline-flex">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="gap-2 pointer-events-none"
+                            >
+                              <Download className="h-4 w-4" />
+                              CSV
+                              <Crown className="h-3 w-3 text-yellow-500" />
+                            </Button>
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                          Upgrade to Pro to export CSV
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportCsv}
+                        disabled={isExportingCsv}
+                        className="gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        {isExportingCsv ? "Exporting..." : "CSV"}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
 

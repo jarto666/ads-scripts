@@ -13,51 +13,77 @@ interface StoryboardStep {
 export class CsvExportService {
   generateCsv(scripts: Script[]): string {
     const headers = [
-      'scriptId',
-      'angle',
-      'duration',
-      'hook',
-      'firstLine',
-      'cta1',
-      'cta2',
-      'cta3',
-      'warnings',
+      '#',
+      'Angle',
+      'Duration (s)',
+      'Hook',
+      'Full Script',
+      'Storyboard',
+      'CTA Variants',
+      'Filming Checklist',
+      'Warnings',
     ];
 
     const rows = scripts
       .filter((s) => s.status === 'completed')
-      .map((script) => {
+      .map((script, index) => {
         const storyboard = script.storyboard as StoryboardStep[] | null;
-        const firstLine = storyboard?.[0]?.spoken || '';
-        const ctaVariants = script.ctaVariants || [];
+
+        // Full spoken script — all spoken lines concatenated
+        const fullScript = storyboard
+          ? storyboard.map((step) => step.spoken).filter(Boolean).join('\n')
+          : '';
+
+        // Storyboard — readable beat breakdown
+        const storyboardText = storyboard
+          ? storyboard
+              .map((step) => {
+                const parts = [`[${step.t}]`];
+                if (step.shot) parts.push(`Shot: ${step.shot}`);
+                if (step.spoken) parts.push(`Spoken: "${step.spoken}"`);
+                if (step.onScreen) parts.push(`On-screen: ${step.onScreen}`);
+                if (step.broll?.length)
+                  parts.push(`B-roll: ${step.broll.join(', ')}`);
+                return parts.join('\n');
+              })
+              .join('\n---\n')
+          : '';
+
+        const ctaVariants = (script.ctaVariants || []).join('\n');
+        const filmingChecklist = (script.filmingChecklist || []).join('\n');
+        const warnings = (script.warnings || []).join('\n');
 
         return [
-          script.id,
+          (index + 1).toString(),
           script.angle,
           script.duration.toString(),
-          this.escapeCsv(script.hook || ''),
-          this.escapeCsv(firstLine),
-          this.escapeCsv(ctaVariants[0] || ''),
-          this.escapeCsv(ctaVariants[1] || ''),
-          this.escapeCsv(ctaVariants[2] || ''),
-          this.escapeCsv(script.warnings.join('; ')),
-        ];
+          script.hook || '',
+          fullScript,
+          storyboardText,
+          ctaVariants,
+          filmingChecklist,
+          warnings,
+        ].map((v) => this.escapeCsv(v));
       });
 
     const csvContent = [
-      headers.join(','),
+      headers.map((h) => this.escapeCsv(h)).join(','),
       ...rows.map((row) => row.join(',')),
     ].join('\n');
 
-    return csvContent;
+    return '\uFEFF' + csvContent; // BOM for Excel UTF-8 compatibility
   }
 
   private escapeCsv(value: string): string {
     if (!value) return '';
 
-    // Escape double quotes and wrap in quotes if contains special characters
     const escaped = value.replace(/"/g, '""');
-    if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+    if (
+      escaped.includes(',') ||
+      escaped.includes('"') ||
+      escaped.includes('\n') ||
+      escaped.includes('\r')
+    ) {
       return `"${escaped}"`;
     }
     return escaped;

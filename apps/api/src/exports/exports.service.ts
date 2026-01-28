@@ -16,7 +16,7 @@ export class ExportsService {
   async exportBatch(
     userId: string,
     batchId: string,
-  ): Promise<{ pdfUrl: string; csvUrl: string }> {
+  ): Promise<{ pdfUrl: string; csvUrl?: string }> {
     // Verify access
     const batch = await this.prisma.batch.findUnique({
       where: { id: batchId },
@@ -42,6 +42,13 @@ export class ExportsService {
       throw new Error('Batch is not completed yet');
     }
 
+    // Check if user is Pro (for CSV export)
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+    const isPro = user?.plan === 'pro';
+
     // Always regenerate exports (scripts may have been added via regeneration)
     const completedScripts = batch.scripts.filter(
       (s: typeof batch.scripts[number]) => s.status === 'completed',
@@ -55,10 +62,13 @@ export class ExportsService {
     const timestamp = Date.now();
     const basePath = `exports/${batch.projectId}/${batchId}/${timestamp}`;
 
-    // Generate and upload CSV
-    const csvContent = this.csvExport.generateCsv(completedScripts);
-    const csvKey = `${basePath}/producer-sheet.csv`;
-    const csvUrl = await this.storage.uploadFile(csvKey, csvContent, 'text/csv');
+    // Generate and upload CSV (Pro only)
+    let csvUrl: string | undefined;
+    if (isPro) {
+      const csvContent = this.csvExport.generateCsv(completedScripts);
+      const csvKey = `${basePath}/producer-sheet.csv`;
+      csvUrl = await this.storage.uploadFile(csvKey, csvContent, 'text/csv');
+    }
 
     // Generate and upload PDF
     const pdfBuffer = await this.pdfExport.generatePdf(
@@ -76,7 +86,7 @@ export class ExportsService {
     // Update batch with URLs
     await this.prisma.batch.update({
       where: { id: batchId },
-      data: { pdfUrl, csvUrl },
+      data: { pdfUrl, ...(csvUrl && { csvUrl }) },
     });
 
     return { pdfUrl, csvUrl };
