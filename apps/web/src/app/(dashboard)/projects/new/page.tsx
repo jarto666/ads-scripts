@@ -34,6 +34,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { PersonaDialog } from '@/components/persona-dialog';
+import { PersonaCard } from '@/components/persona-card';
 import { useAuth } from '@/lib/auth';
 import {
   useProjectDraftsControllerGetDraft,
@@ -425,15 +427,6 @@ export default function NewProjectPage() {
     }
   };
 
-  const togglePersona = (personaId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedPersonaIds: prev.selectedPersonaIds.includes(personaId)
-        ? prev.selectedPersonaIds.filter(id => id !== personaId)
-        : [...prev.selectedPersonaIds, personaId],
-    }));
-  };
-
   const addForbiddenClaim = (claim: string) => {
     if (claim.trim() && !formData.forbiddenClaims.includes(claim.trim())) {
       setFormData(prev => ({
@@ -547,7 +540,6 @@ export default function NewProjectPage() {
           <StepPersonas
             formData={formData}
             onChange={setFormData}
-            onTogglePersona={togglePersona}
           />
         )}
 
@@ -1090,50 +1082,76 @@ function StepBrand({
 function StepPersonas({
   formData,
   onChange,
-  onTogglePersona,
 }: {
   formData: FormData;
   onChange: (data: FormData) => void;
-  onTogglePersona: (id: string) => void;
 }) {
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newPersona, setNewPersona] = useState({
-    name: '',
-    description: '',
-    demographics: '',
-    painPoints: '',
-    desires: '',
-    objections: '',
-  });
+  const [editingPersona, setEditingPersona] = useState<PersonaSuggestionDto | null>(null);
 
-  const handleAddPersona = () => {
-    if (!newPersona.name.trim() || !newPersona.description.trim()) return;
+  const handleSavePersona = async (personaData: {
+    name: string;
+    description: string;
+    demographics: string;
+    painPoints: string;
+    desires: string;
+    objections: string;
+  }) => {
+    if (editingPersona) {
+      // Update existing persona
+      const updatedPersona: PersonaSuggestionDto = {
+        ...editingPersona,
+        name: personaData.name,
+        description: personaData.description,
+        demographics: personaData.demographics || undefined,
+        painPoints: personaData.painPoints.split('\n').map(s => s.trim()).filter(Boolean),
+        desires: personaData.desires.split('\n').map(s => s.trim()).filter(Boolean),
+        objections: personaData.objections.split('\n').map(s => s.trim()).filter(Boolean),
+      };
+      onChange({
+        ...formData,
+        suggestedPersonas: formData.suggestedPersonas.map(p =>
+          p.id === editingPersona.id ? updatedPersona : p
+        ),
+      });
+      setEditingPersona(null);
+    } else {
+      // Create new persona
+      const persona: PersonaSuggestionDto = {
+        id: `custom-${Date.now()}`,
+        name: personaData.name,
+        description: personaData.description,
+        demographics: personaData.demographics || undefined,
+        painPoints: personaData.painPoints.split('\n').map(s => s.trim()).filter(Boolean),
+        desires: personaData.desires.split('\n').map(s => s.trim()).filter(Boolean),
+        objections: personaData.objections.split('\n').map(s => s.trim()).filter(Boolean),
+      };
+      onChange({
+        ...formData,
+        suggestedPersonas: [...formData.suggestedPersonas, persona],
+        selectedPersonaIds: [...formData.selectedPersonaIds, persona.id],
+      });
+    }
+  };
 
-    const persona: PersonaSuggestionDto = {
-      id: `custom-${Date.now()}`,
-      name: newPersona.name,
-      description: newPersona.description,
-      demographics: newPersona.demographics || undefined,
-      painPoints: newPersona.painPoints.split('\n').filter(Boolean),
-      desires: newPersona.desires.split('\n').filter(Boolean),
-      objections: newPersona.objections.split('\n').filter(Boolean),
-    };
+  const handleEditPersona = (persona: PersonaSuggestionDto) => {
+    setEditingPersona(persona);
+    setShowAddDialog(true);
+  };
 
+  const handleDeletePersona = (id: string) => {
     onChange({
       ...formData,
-      suggestedPersonas: [...formData.suggestedPersonas, persona],
-      selectedPersonaIds: [...formData.selectedPersonaIds, persona.id],
+      suggestedPersonas: formData.suggestedPersonas.filter(p => p.id !== id),
+      selectedPersonaIds: formData.selectedPersonaIds.filter(pid => pid !== id),
     });
+  };
 
-    setNewPersona({
-      name: '',
-      description: '',
-      demographics: '',
-      painPoints: '',
-      desires: '',
-      objections: '',
-    });
-    setShowAddDialog(false);
+  const handleDialogClose = (open: boolean) => {
+    setShowAddDialog(open);
+    if (!open) {
+      setEditingPersona(null);
+    }
   };
 
   return (
@@ -1144,9 +1162,7 @@ function StepPersonas({
             <div>
               <CardTitle>Target Audience</CardTitle>
               <CardDescription>
-                {formData.suggestedPersonas.length > 0
-                  ? 'Select the personas that best match your target audience'
-                  : 'Add personas to define your target audience segments'}
+                Define your target audience segments for personalized scripts
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => setShowAddDialog(true)}>
@@ -1167,8 +1183,8 @@ function StepPersonas({
                 <PersonaCard
                   key={persona.id}
                   persona={persona}
-                  selected={formData.selectedPersonaIds.includes(persona.id)}
-                  onToggle={() => onTogglePersona(persona.id)}
+                  onEdit={handleEditPersona}
+                  onDelete={handleDeletePersona}
                 />
               ))}
             </div>
@@ -1176,196 +1192,19 @@ function StepPersonas({
         </CardContent>
       </Card>
 
-      {/* Add Persona Dialog */}
-      {showAddDialog && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Add Custom Persona</CardTitle>
-              <CardDescription>
-                Define a target audience segment for your ad scripts
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="personaName">Name *</Label>
-                <Input
-                  id="personaName"
-                  placeholder="e.g., Busy Professional Mom"
-                  value={newPersona.name}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, name: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="personaDesc">Description *</Label>
-                <Textarea
-                  id="personaDesc"
-                  placeholder="Describe this persona's situation and why they need your product..."
-                  rows={3}
-                  value={newPersona.description}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, description: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="personaDemographics">Demographics</Label>
-                <Input
-                  id="personaDemographics"
-                  placeholder="e.g., Women 25-40, working professionals"
-                  value={newPersona.demographics}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, demographics: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="personaPainPoints">Pain Points (one per line)</Label>
-                <Textarea
-                  id="personaPainPoints"
-                  placeholder="Struggles with time management&#10;Feels overwhelmed by choices&#10;..."
-                  rows={3}
-                  value={newPersona.painPoints}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, painPoints: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="personaDesires">Desires (one per line)</Label>
-                <Textarea
-                  id="personaDesires"
-                  placeholder="Wants to look professional&#10;Seeks convenience&#10;..."
-                  rows={3}
-                  value={newPersona.desires}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, desires: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="personaObjections">Objections (one per line)</Label>
-                <Textarea
-                  id="personaObjections"
-                  placeholder="Worried about price&#10;Skeptical of new brands&#10;..."
-                  rows={2}
-                  value={newPersona.objections}
-                  onChange={(e) =>
-                    setNewPersona({ ...newPersona, objections: e.target.value })
-                  }
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAddPersona}
-                  disabled={!newPersona.name.trim() || !newPersona.description.trim()}
-                >
-                  Add Persona
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Persona Dialog */}
+      <PersonaDialog
+        open={showAddDialog}
+        onOpenChange={handleDialogClose}
+        onSave={handleSavePersona}
+        editingPersona={editingPersona}
+        projectId="draft"
+        productContext={{
+          name: formData.name,
+          description: formData.productDescription,
+        }}
+      />
     </div>
-  );
-}
-
-// Persona Card Component
-function PersonaCard({
-  persona,
-  selected,
-  onToggle,
-}: {
-  persona: PersonaSuggestionDto;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <Card
-      className={`
-        cursor-pointer transition-all
-        ${selected ? 'border-primary bg-primary/5' : 'hover:border-primary/30'}
-      `}
-      onClick={onToggle}
-    >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`
-                w-10 h-10 rounded-lg flex items-center justify-center
-                ${selected ? 'bg-primary text-primary-foreground' : 'bg-secondary'}
-              `}
-            >
-              {selected ? (
-                <Check className="h-5 w-5" />
-              ) : (
-                <Users className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
-            <div>
-              <CardTitle className="text-base">{persona.name}</CardTitle>
-              {persona.demographics && (
-                <p className="text-xs text-muted-foreground">{persona.demographics}</p>
-              )}
-            </div>
-          </div>
-          {persona.confidence !== undefined && (
-            <Badge variant="outline" className="text-xs">
-              {Math.round(persona.confidence * 100)}% match
-            </Badge>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground line-clamp-2">
-          {persona.description}
-        </p>
-
-        {expanded && (
-          <div className="space-y-3 pt-2 border-t border-border">
-            {persona.painPoints.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-foreground mb-1">Pain Points</p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {persona.painPoints.slice(0, 3).map((point, i) => (
-                    <li key={i}>• {point}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {persona.desires.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-foreground mb-1">Desires</p>
-                <ul className="text-xs text-muted-foreground space-y-0.5">
-                  {persona.desires.slice(0, 3).map((desire, i) => (
-                    <li key={i}>• {desire}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-
-        <button
-          className="text-xs text-primary hover:underline"
-          onClick={(e) => {
-            e.stopPropagation();
-            setExpanded(!expanded);
-          }}
-        >
-          {expanded ? 'Show less' : 'Show more'}
-        </button>
-      </CardContent>
-    </Card>
   );
 }
 

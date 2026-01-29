@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,7 +14,15 @@ export function useAuth() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useAuthControllerMe();
+  const { data, isLoading, error, refetch } = useAuthControllerMe({
+    query: {
+      staleTime: 0, // Always consider stale so refetchOnWindowFocus works
+      refetchOnWindowFocus: true, // Refetch when tab regains focus
+      refetchOnMount: true, // Refetch when component mounts
+      retry: false, // Don't retry on auth errors
+    },
+  });
+
   const logoutMutation = useAuthControllerLogout();
 
   const user: UserDto | null = data?.data ?? null;
@@ -29,11 +37,17 @@ export function useAuth() {
     router.push('/');
   };
 
-  return { user, isLoading, logout };
+  // Function to manually refresh user data
+  // Call this after plan changes, profile updates, etc.
+  const refreshUser = useCallback(() => {
+    return queryClient.invalidateQueries({ queryKey: getAuthControllerMeQueryKey() });
+  }, [queryClient]);
+
+  return { user, isLoading, logout, refreshUser, refetch };
 }
 
 export function useRequireAuth() {
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, logout, refreshUser, refetch } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -42,5 +56,10 @@ export function useRequireAuth() {
     }
   }, [user, isLoading, router]);
 
-  return { user, isLoading, logout };
+  return { user, isLoading, logout, refreshUser, refetch };
+}
+
+// Standalone function to refresh user from anywhere (e.g., after webhook processing)
+export function getRefreshUserFn(queryClient: ReturnType<typeof useQueryClient>) {
+  return () => queryClient.invalidateQueries({ queryKey: getAuthControllerMeQueryKey() });
 }

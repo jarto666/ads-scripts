@@ -12,7 +12,8 @@
       "Bash(npx tsc:*)",
       "Bash(pnpm exec tsc:*)",
       "WebSearch",
-      "WebFetch(domain:docs.browserless.io)"
+      "WebFetch(domain:docs.browserless.io)",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

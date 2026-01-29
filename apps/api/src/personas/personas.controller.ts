@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { PersonasService } from './personas.service';
-import { CreatePersonaDto, UpdatePersonaDto, PersonaResponseDto } from './dto';
+import { CreatePersonaDto, UpdatePersonaDto, PersonaResponseDto, GeneratePersonaDto, GeneratedPersonaDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator';
 
@@ -29,6 +29,17 @@ export class PersonasController {
     @Body() dto: CreatePersonaDto,
   ) {
     return this.personasService.create(user.id, projectId, dto);
+  }
+
+  @Post('projects/:projectId/personas/generate')
+  @ApiOperation({ summary: 'Generate a persona suggestion using AI' })
+  @ApiResponse({ status: 201, type: GeneratedPersonaDto })
+  async generate(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('projectId') projectId: string,
+    @Body() dto: GeneratePersonaDto,
+  ) {
+    return this.personasService.generate(user.id, projectId, dto);
   }
 
   @Get('projects/:projectId/personas')

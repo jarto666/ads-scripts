@@ -8,7 +8,6 @@ import { useBatchProgress, useNotifications, ScriptProgressEvent, BatchCompleted
 import {
   ArrowLeft,
   Plus,
-  Trash2,
   Save,
   Sparkles,
   User,
@@ -30,6 +29,8 @@ import {
   Loader2,
   Users,
   Crown,
+  Copy,
+  Volume2,
 } from "lucide-react";
 import { getProjectGenSettingsAtom } from "@/lib/atoms";
 import { useAuth } from "@/lib/auth";
@@ -73,6 +74,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
+import { PersonaDialog } from "@/components/persona-dialog";
+import { PersonaCard } from "@/components/persona-card";
 import {
   projectsControllerFindOne,
   projectsControllerUpdate,
@@ -84,6 +87,7 @@ import {
   exportsControllerExportBatch,
   personasControllerCreate,
   personasControllerDelete,
+  personasControllerUpdate,
   getCreditsControllerGetBalancesQueryKey,
 } from "@/api/generated/api";
 import type { PersonaDto, BatchDto, ScriptDto } from "@/api/generated/models";
@@ -148,6 +152,67 @@ const DURATIONS = [
   { value: 30, label: "30s", description: "Standard" },
   { value: 45, label: "45s", description: "Detailed" },
 ];
+
+// Voiceover Modal Component
+function VoiceoverModal({ storyboard }: { storyboard: Array<{ spoken?: string }> }) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const voiceoverText = storyboard
+    .map((step) => step.spoken)
+    .filter(Boolean)
+    .join("\n");
+
+  if (!voiceoverText) return null;
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(voiceoverText);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <Volume2 className="h-4 w-4" />
+          Voiceover Script
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Volume2 className="h-5 w-5 text-primary" />
+            Voiceover Script
+          </DialogTitle>
+          <DialogDescription>
+            Copy the full voiceover text for TTS or editing
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4 p-4 rounded-lg bg-secondary/30 max-h-[300px] overflow-y-auto">
+          <p className="text-sm whitespace-pre-line leading-relaxed">
+            {voiceoverText}
+          </p>
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleCopy} className="gap-2">
+            {copied ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                Copied!
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" />
+                Copy to Clipboard
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 // Script Card Component
 function ScriptCard({
@@ -278,9 +343,12 @@ function ScriptCard({
           <div className="mt-6 pt-6 border-t border-border space-y-6">
             {/* Storyboard */}
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Camera className="h-4 w-4 text-primary" />
-                <h4 className="font-semibold text-foreground">Storyboard</h4>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-primary" />
+                  <h4 className="font-semibold text-foreground">Storyboard</h4>
+                </div>
+                <VoiceoverModal storyboard={script.storyboard} />
               </div>
               <div className="space-y-3">
                 {script.storyboard.map((step, i) => (
@@ -410,14 +478,7 @@ export default function ProjectDetailPage({
     scriptParam
   );
   const [personaDialogOpen, setPersonaDialogOpen] = useState(false);
-  const [newPersona, setNewPersona] = useState({
-    name: "",
-    description: "",
-    demographics: "",
-    painPoints: "",
-    desires: "",
-    objections: "",
-  });
+  const [editingPersona, setEditingPersona] = useState<PersonaDto | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -433,6 +494,7 @@ export default function ProjectDetailPage({
 
   // Scripts tab state
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateCooldown, setGenerateCooldown] = useState(false);
   const [batchesList, setBatchesList] = useState<BatchDto[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [scriptsList, setScriptsList] = useState<ScriptDto[]>([]);
@@ -741,51 +803,43 @@ export default function ProjectDetailPage({
     }
   };
 
-  const handleCreatePersona = async () => {
-    if (!newPersona.name || !newPersona.description) {
-      toast({
-        title: "Missing fields",
-        description: "Name and description are required",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSavePersona = async (formData: {
+    name: string;
+    description: string;
+    demographics: string;
+    painPoints: string;
+    desires: string;
+    objections: string;
+  }) => {
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      demographics: formData.demographics || undefined,
+      painPoints: formData.painPoints.split("\n").map((s: string) => s.trim()).filter(Boolean),
+      desires: formData.desires.split("\n").map((s: string) => s.trim()).filter(Boolean),
+      objections: formData.objections.split("\n").map((s: string) => s.trim()).filter(Boolean),
+    };
 
-    try {
-      await personasControllerCreate(id, {
-        name: newPersona.name,
-        description: newPersona.description,
-        demographics: newPersona.demographics || undefined,
-        painPoints: newPersona.painPoints
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        desires: newPersona.desires
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-        objections: newPersona.objections
-          .split("\n")
-          .map((s) => s.trim())
-          .filter(Boolean),
-      });
+    if (editingPersona) {
+      await personasControllerUpdate(editingPersona.id, payload);
+      toast({ title: "Persona updated" });
+    } else {
+      await personasControllerCreate(id, payload);
       toast({ title: "Persona created" });
-      setPersonaDialogOpen(false);
-      setNewPersona({
-        name: "",
-        description: "",
-        demographics: "",
-        painPoints: "",
-        desires: "",
-        objections: "",
-      });
-      fetchProject();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create persona",
-        variant: "destructive",
-      });
+    }
+    setEditingPersona(null);
+    fetchProject();
+  };
+
+  const handleEditPersona = (persona: PersonaDto) => {
+    setEditingPersona(persona);
+    setPersonaDialogOpen(true);
+  };
+
+  const handlePersonaDialogClose = (open: boolean) => {
+    setPersonaDialogOpen(open);
+    if (!open) {
+      setEditingPersona(null);
     }
   };
 
@@ -835,6 +889,7 @@ export default function ProjectDetailPage({
     }
 
     setIsGenerating(true);
+    setGenerateCooldown(true);
     try {
       const result = await batchesControllerCreate(id, {
         requestedCount: totalScripts,
@@ -868,6 +923,8 @@ export default function ProjectDetailPage({
       if (batch.status !== "pending" && batch.status !== "processing") {
         setIsGenerating(false);
       }
+      // Short cooldown to prevent accidental double-clicks, then re-enable button
+      setTimeout(() => setGenerateCooldown(false), 1500);
     } catch (error) {
       toast({
         title: "Error",
@@ -875,6 +932,7 @@ export default function ProjectDetailPage({
         variant: "destructive",
       });
       setIsGenerating(false);
+      setGenerateCooldown(false);
     }
   };
 
@@ -1208,129 +1266,10 @@ export default function ProjectDetailPage({
                   scripts.
                 </CardDescription>
               </div>
-              <Dialog
-                open={personaDialogOpen}
-                onOpenChange={setPersonaDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Add Persona
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create Persona</DialogTitle>
-                    <DialogDescription>
-                      Define a target audience persona for your scripts
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="personaName">Name</Label>
-                      <Input
-                        id="personaName"
-                        placeholder="e.g., Busy Professional Mom"
-                        value={newPersona.name}
-                        onChange={(e) =>
-                          setNewPersona({ ...newPersona, name: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="personaDescription">Description</Label>
-                      <Textarea
-                        id="personaDescription"
-                        rows={2}
-                        placeholder="Brief description of this persona..."
-                        value={newPersona.description}
-                        onChange={(e) =>
-                          setNewPersona({
-                            ...newPersona,
-                            description: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="demographics">
-                        Demographics (optional)
-                      </Label>
-                      <Input
-                        id="demographics"
-                        placeholder="e.g., Women 25-40, urban, $60-100k income"
-                        value={newPersona.demographics}
-                        onChange={(e) =>
-                          setNewPersona({
-                            ...newPersona,
-                            demographics: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="painPoints">
-                        Pain Points (one per line)
-                      </Label>
-                      <Textarea
-                        id="painPoints"
-                        rows={3}
-                        placeholder="Not enough time&#10;Too tired after work&#10;Current solutions don't work"
-                        value={newPersona.painPoints}
-                        onChange={(e) =>
-                          setNewPersona({
-                            ...newPersona,
-                            painPoints: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="desires">Desires (one per line)</Label>
-                      <Textarea
-                        id="desires"
-                        rows={3}
-                        placeholder="Quick results&#10;Easy to use&#10;Affordable solution"
-                        value={newPersona.desires}
-                        onChange={(e) =>
-                          setNewPersona({
-                            ...newPersona,
-                            desires: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="objections">
-                        Objections (one per line)
-                      </Label>
-                      <Textarea
-                        id="objections"
-                        rows={3}
-                        placeholder="Too expensive&#10;Won't work for me&#10;I've tried similar products"
-                        value={newPersona.objections}
-                        onChange={(e) =>
-                          setNewPersona({
-                            ...newPersona,
-                            objections: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setPersonaDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreatePersona}>
-                      Create Persona
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" className="gap-2" onClick={() => setPersonaDialogOpen(true)}>
+                <Plus className="h-4 w-4" />
+                Add Persona
+              </Button>
             </CardHeader>
             <CardContent>
               {project.personas.length === 0 ? (
@@ -1353,74 +1292,12 @@ export default function ProjectDetailPage({
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   {project.personas.map((persona) => (
-                    <Card
+                    <PersonaCard
                       key={persona.id}
-                      className="bg-secondary/30 border-border/50"
-                    >
-                      <CardContent className="pt-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h4 className="font-semibold text-foreground">
-                              {persona.name}
-                            </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {persona.description}
-                            </p>
-                            {persona.demographics && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {persona.demographics}
-                              </p>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                            onClick={() => handleDeletePersona(persona.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="space-y-3 text-sm">
-                          {persona.painPoints.length > 0 && (
-                            <div>
-                              <p className="font-medium text-foreground mb-1">
-                                Pain Points
-                              </p>
-                              <div className="flex flex-wrap gap-1">
-                                {persona.painPoints.slice(0, 3).map((p, i) => (
-                                  <Badge
-                                    key={i}
-                                    variant="outline"
-                                    className="text-xs"
-                                  >
-                                    {p}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {persona.desires.length > 0 && (
-                            <div>
-                              <p className="font-medium text-foreground mb-1">
-                                Desires
-                              </p>
-                              <div className="flex flex-wrap gap-1">
-                                {persona.desires.slice(0, 3).map((d, i) => (
-                                  <Badge
-                                    key={i}
-                                    variant="success"
-                                    className="text-xs"
-                                  >
-                                    {d}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                      persona={persona}
+                      onEdit={handleEditPersona}
+                      onDelete={handleDeletePersona}
+                    />
                   ))}
                 </div>
               )}
@@ -1776,17 +1653,16 @@ export default function ProjectDetailPage({
               <Button
                 onClick={handleGenerate}
                 disabled={
-                  isGenerating ||
-                  isBatchGenerating ||
+                  generateCooldown ||
                   genSettings.angles.length === 0
                 }
                 className="w-full h-12 text-base gap-2"
                 variant="glow"
               >
-                {isGenerating || isBatchGenerating ? (
+                {generateCooldown ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Generating... ({selectedBatch?.progress || 0}%)
+                    <CheckCircle2 className="h-5 w-5" />
+                    Started!
                   </>
                 ) : (
                   <>
@@ -2245,6 +2121,15 @@ export default function ProjectDetailPage({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Persona Dialog */}
+      <PersonaDialog
+        open={personaDialogOpen}
+        onOpenChange={handlePersonaDialogClose}
+        onSave={handleSavePersona}
+        editingPersona={editingPersona}
+        projectId={id}
+      />
     </div>
   );
 }

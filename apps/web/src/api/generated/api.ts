@@ -1372,7 +1372,56 @@ export const usePersonasControllerDelete = <TError = unknown,
       > => {
       return useMutation(getPersonasControllerDeleteMutationOptions(options), queryClient);
     }
-    
+
+/**
+ * @summary Generate a persona suggestion using AI
+ */
+export interface GeneratePersonaDto {
+  prompt: string;
+  productName?: string;
+  productDescription?: string;
+}
+
+export interface GeneratedPersonaDto {
+  name: string;
+  description: string;
+  demographics?: string;
+  painPoints: string[];
+  desires: string[];
+  objections: string[];
+}
+
+export type personasControllerGenerateResponse201 = {
+  data: GeneratedPersonaDto;
+  status: 201;
+};
+
+export type personasControllerGenerateResponseSuccess = personasControllerGenerateResponse201 & {
+  headers: Headers;
+};
+
+export type personasControllerGenerateResponse = personasControllerGenerateResponseSuccess;
+
+export const getPersonasControllerGenerateUrl = (projectId: string) => {
+  return `/projects/${projectId}/personas/generate`;
+};
+
+export const personasControllerGenerate = async (
+  projectId: string,
+  generatePersonaDto: GeneratePersonaDto,
+  options?: RequestInit
+): Promise<personasControllerGenerateResponse> => {
+  return customInstance<personasControllerGenerateResponse>(
+    getPersonasControllerGenerateUrl(projectId),
+    {
+      ...options,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options?.headers },
+      body: JSON.stringify(generatePersonaDto),
+    }
+  );
+};
+
 /**
  * @summary Get recent scripts across all projects
  */

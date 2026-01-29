@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Check,
   Crown,
@@ -129,6 +130,7 @@ const CREDIT_PACKS = [
 export default function PricingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   // Fetch credits and subscription data
@@ -136,6 +138,28 @@ export default function PricingPage() {
     useCreditsControllerGetBalances();
   const { data: subscriptionData, refetch: refetchSubscription } =
     useBillingControllerGetSubscription();
+
+  // Handle return from payment provider (success/cancelled)
+  // Note: Window focus will auto-refetch stale queries when returning from external payment page
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const cancelled = searchParams.get("cancelled");
+
+    if (success === "true") {
+      toast({
+        title: "Payment successful!",
+        description: "Your account has been upgraded. Welcome to Pro!",
+      });
+      window.history.replaceState({}, "", "/pricing");
+    } else if (cancelled === "true") {
+      toast({
+        variant: "destructive",
+        title: "Payment cancelled",
+        description: "Your payment was cancelled. No charges were made.",
+      });
+      window.history.replaceState({}, "", "/pricing");
+    }
+  }, [searchParams, toast]);
 
   const checkoutMutation = useBillingControllerCreateCheckout();
   const cancelMutation = useBillingControllerCancelSubscription();

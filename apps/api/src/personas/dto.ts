@@ -45,6 +45,44 @@ export class CreatePersonaDto {
   objections?: string[];
 }
 
+export class GeneratePersonaDto {
+  @ApiProperty({ description: 'Natural language description of the target audience' })
+  @IsString()
+  @MinLength(10)
+  @MaxLength(500)
+  prompt: string;
+
+  @ApiPropertyOptional({ description: 'Product name (for draft mode when no project exists)' })
+  @IsString()
+  @IsOptional()
+  productName?: string;
+
+  @ApiPropertyOptional({ description: 'Product description (for draft mode when no project exists)' })
+  @IsString()
+  @IsOptional()
+  productDescription?: string;
+}
+
+export class GeneratedPersonaDto {
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty()
+  description: string;
+
+  @ApiPropertyOptional()
+  demographics?: string;
+
+  @ApiProperty({ type: [String] })
+  painPoints: string[];
+
+  @ApiProperty({ type: [String] })
+  desires: string[];
+
+  @ApiProperty({ type: [String] })
+  objections: string[];
+}
+
 export class UpdatePersonaDto {
   @ApiPropertyOptional({ maxLength: 100 })
   @IsString()
