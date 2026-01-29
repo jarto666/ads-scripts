@@ -85,12 +85,12 @@ const features = [
   {
     icon: FileText,
     title: 'Export & Share',
-    description: 'Download as PDF or CSV. Share with your team or hand directly to creators.',
+    description: 'Download PDF creator packs or CSV producer sheets. Hand scripts directly to your team.',
   },
 ];
 
 const stats = [
-  { value: '200+', label: 'Scripts per month', sublabel: 'On pro plan' },
+  { value: '500+', label: 'Scripts per month', sublabel: 'On pro plan' },
   { value: '8', label: 'Script angles', sublabel: 'Proven frameworks' },
   { value: '<20s', label: 'Generation time', sublabel: 'Per script' },
 ];
@@ -120,7 +120,7 @@ const faqs = [
   },
   {
     q: 'How many scripts can I generate?',
-    a: 'Free accounts get 20 credits/month (standard quality costs 1 credit). Pro accounts get 200 credits/month plus the ability to buy additional credit packs.',
+    a: 'Free accounts get 20 credits/month (standard quality costs 1 credit, premium costs 5). Pro accounts get 500 credits/month plus the ability to buy additional credit packs.',
   },
   {
     q: 'What\'s included in each script?',
@@ -503,7 +503,7 @@ export default function LandingPage() {
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="space-y-4 mb-8">
-                {['Everything in Free, plus:', '200 credits/month', 'Priority generation', 'PDF & CSV export', 'Credit pack purchases'].map((feature, i) => (
+                {['Everything in Free, plus:', '500 credits/month', 'URL import with AI analysis', 'PDF & CSV producer sheets', 'Priority generation', 'Credit pack purchases'].map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
                     <span>{feature}</span>
@@ -525,7 +525,7 @@ export default function LandingPage() {
 
           <div className="text-center mt-8 text-sm text-muted-foreground space-y-1">
             <p>Free: 20 standard scripts or 4 premium scripts/month</p>
-            <p>Pro: 200 standard scripts or 40 premium scripts/month</p>
+            <p>Pro: 500 standard scripts or 100 premium scripts/month</p>
           </div>
         </div>
       </section>
