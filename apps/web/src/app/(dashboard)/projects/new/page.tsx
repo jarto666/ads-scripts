@@ -170,36 +170,40 @@ export default function NewProjectPage() {
     setIsInitialized(true);
   }, [draft, isDraftLoading, isInitialized, importStatus]);
 
-  // When import completes, update local state
+  // When import completes, update local state (only reacts to importStatus change, not navigation)
   useEffect(() => {
     if (!draft || !isInitialized) return;
+    if (importStatus !== 'completed' || importMethod !== 'url') return;
 
-    if (importStatus === 'completed' && currentStep === 0 && importMethod === 'url') {
-      // Import just completed - update local state from draft
-      setCurrentStep(draft.currentStep ?? 1);
-      setCompletedSteps(draft.completedSteps || [0]);
+    // Only proceed if we were importing (currentStep would be 0 during import)
+    // This prevents re-triggering when user navigates back to step 0
+    if (currentStep !== 0) return;
 
-      const fd = draft.formData as DraftFormDataDto;
-      if (fd) {
-        setFormData({
-          name: fd.name || '',
-          productDescription: fd.productDescription || '',
-          offer: fd.offer || '',
-          brandVoice: fd.brandVoice || '',
-          forbiddenClaims: fd.forbiddenClaims || [],
-          language: fd.language || 'en',
-          region: fd.region || '',
-          suggestedPersonas: fd.suggestedPersonas || [],
-          selectedPersonaIds: fd.selectedPersonaIds || [],
-        });
-      }
+    // Import just completed - update local state from draft
+    setCurrentStep(draft.currentStep ?? 1);
+    setCompletedSteps(draft.completedSteps || [0]);
 
-      toast({
-        title: 'Import successful',
-        description: 'Product information has been extracted.',
+    const fd = draft.formData as DraftFormDataDto;
+    if (fd) {
+      setFormData({
+        name: fd.name || '',
+        productDescription: fd.productDescription || '',
+        offer: fd.offer || '',
+        brandVoice: fd.brandVoice || '',
+        forbiddenClaims: fd.forbiddenClaims || [],
+        language: fd.language || 'en',
+        region: fd.region || '',
+        suggestedPersonas: fd.suggestedPersonas || [],
+        selectedPersonaIds: fd.selectedPersonaIds || [],
       });
     }
-  }, [importStatus, draft, isInitialized, currentStep, importMethod, toast]);
+
+    toast({
+      title: 'Import successful',
+      description: 'Product information has been extracted.',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [importStatus]);
 
   // Save draft on changes (debounced)
   const saveDraft = useCallback(async () => {
@@ -242,6 +246,19 @@ export default function NewProjectPage() {
       return;
     }
 
+    // If there's an existing draft (user went back to step 0), delete it first
+    if (draft) {
+      try {
+        await deleteDraftMutation.mutateAsync();
+      } catch {
+        // Continue anyway - create will handle it
+      }
+    }
+
+    // Reset local state
+    setFormData(initialFormData);
+    setCompletedSteps([]);
+
     if (method === 'url') {
       // Create draft with url method but stay on step 0 for URL input
       try {
@@ -249,6 +266,7 @@ export default function NewProjectPage() {
           data: { importMethod: 'url' },
         });
         setImportMethod('url');
+        setImportUrl('');
         queryClient.invalidateQueries({ queryKey: getProjectDraftsControllerGetDraftQueryKey() });
       } catch {
         toast({
@@ -382,6 +400,7 @@ export default function NewProjectPage() {
       });
 
       queryClient.invalidateQueries({ queryKey: getProjectsControllerFindAllQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getProjectDraftsControllerGetDraftQueryKey() });
       router.push(`/projects/${result.data.projectId}`);
     } catch {
       toast({
@@ -439,11 +458,11 @@ export default function NewProjectPage() {
     );
   }
 
-  // Determine what to show on step 0
-  const showMethodSelection = !importMethod;
-  const showUrlInput = importMethod === 'url' && (importStatus === 'pending' || !importStatus);
-  const showImporting = importStatus === 'importing';
-  const showImportError = importStatus === 'failed';
+  // Determine what to show on step 0 (all gated by currentStep === 0)
+  const showUrlInput = currentStep === 0 && importMethod === 'url' && (importStatus === 'pending' || !importStatus);
+  const showImporting = currentStep === 0 && importStatus === 'importing';
+  const showImportError = currentStep === 0 && importStatus === 'failed';
+  const showMethodSelection = currentStep === 0 && !showUrlInput && !showImporting && !showImportError;
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -465,7 +484,7 @@ export default function NewProjectPage() {
       {/* Step Indicator */}
       <StepIndicator
         steps={STEPS}
-        currentStep={importMethod && !showUrlInput && !showImporting && !showImportError ? currentStep : 0}
+        currentStep={currentStep}
         completedSteps={completedSteps}
         onStepClick={handleStepClick}
       />
@@ -508,7 +527,7 @@ export default function NewProjectPage() {
           />
         )}
 
-        {currentStep === 1 && !showUrlInput && !showImporting && !showImportError && (
+        {currentStep === 1 && (
           <StepBasicInfo
             formData={formData}
             onChange={setFormData}
@@ -541,7 +560,7 @@ export default function NewProjectPage() {
       </div>
 
       {/* Navigation */}
-      {currentStep > 0 && !showUrlInput && !showImporting && !showImportError && (
+      {currentStep > 0 && (
         <div className="flex items-center justify-between pt-6 border-t border-border">
           <Button variant="outline" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
