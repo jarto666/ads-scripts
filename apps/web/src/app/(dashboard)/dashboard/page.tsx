@@ -183,14 +183,14 @@ export default function DashboardPage() {
                         </Badge>
                       )} */}
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="text-xs">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Badge variant="outline" className="text-xs shrink-0">
                         {script.angle.replace(/_/g, " ")}
                       </Badge>
-                      <span className="text-xs text-muted-foreground truncate">
+                      <span className="text-xs text-muted-foreground truncate min-w-0 flex-1">
                         {script.projectName}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Clock className="h-3 w-3" />
                         {formatRelativeTime(script.createdAt)}
                       </span>

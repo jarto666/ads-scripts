@@ -391,6 +391,15 @@ export default function NewProjectPage() {
     }
 
     try {
+      // Save draft first to ensure latest form data is persisted
+      await updateDraftMutation.mutateAsync({
+        data: {
+          currentStep,
+          completedSteps,
+          formData: formData as unknown as Record<string, unknown>,
+        },
+      });
+
       const result = await finalizeMutation.mutateAsync({
         data: {
           selectedPersonaIds: formData.selectedPersonaIds,

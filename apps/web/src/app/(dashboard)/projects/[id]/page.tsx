@@ -1104,9 +1104,9 @@ export default function ProjectDetailPage({
   if (!project) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 max-w-full">
         <Button
           variant="ghost"
           size="icon"
@@ -1115,8 +1115,10 @@ export default function ProjectDetailPage({
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{project.name}</h1>
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <h1 className="text-2xl font-bold text-foreground truncate" title={project.name}>
+            {project.name}
+          </h1>
           <p className="text-muted-foreground text-sm">
             Manage your project and generate scripts
           </p>

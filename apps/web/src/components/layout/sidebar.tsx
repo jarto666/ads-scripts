@@ -34,6 +34,8 @@ interface SidebarProps {
     plan?: string;
   };
   onLogout: () => void;
+  collapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
 }
 
 interface NavItem {
@@ -52,7 +54,6 @@ const mainNavItems: NavItem[] = [
 
 const futureNavItems: NavItem[] = [
   { label: "Script to Video", href: "/video", icon: Video, soon: true },
-  { label: "Templates", href: "/templates", icon: FileText, soon: true },
   { label: "Team", href: "/team", icon: Users, soon: true },
 ];
 
@@ -61,9 +62,8 @@ const bottomNavItems: NavItem[] = [
   { label: "Help & Support", href: "/help", icon: HelpCircle },
 ];
 
-export function Sidebar({ user, onLogout }: SidebarProps) {
+export function Sidebar({ user, onLogout, collapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = React.useState(false);
 
   // Fetch credits from API - always refetch on window focus for accurate balance
   const { data: creditsData } = useCreditsControllerGetBalances({
@@ -308,7 +308,7 @@ export function Sidebar({ user, onLogout }: SidebarProps) {
 
       {/* Collapse Toggle */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => onCollapsedChange(!collapsed)}
         className="absolute -right-3 top-20 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-md hover:bg-secondary transition-colors"
       >
         {collapsed ? (

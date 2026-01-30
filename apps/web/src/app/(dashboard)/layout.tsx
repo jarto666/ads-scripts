@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRequireAuth } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 export default function DashboardLayout({
   children,
@@ -10,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoading, logout } = useRequireAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (isLoading) {
     return (
@@ -48,9 +51,17 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen flex">
-      <Sidebar user={sidebarUser} onLogout={logout} />
-      <main className="flex-1 ml-[260px] min-h-screen flex flex-col">
-        <div className="p-8 flex-1">{children}</div>
+      <Sidebar
+        user={sidebarUser}
+        onLogout={logout}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
+      <main className={cn(
+        "flex-1 min-h-screen flex flex-col overflow-x-hidden transition-all duration-300",
+        sidebarCollapsed ? "ml-[72px]" : "ml-[260px]"
+      )}>
+        <div className="p-8 flex-1 overflow-auto">{children}</div>
       </main>
     </div>
   );
