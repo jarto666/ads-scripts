@@ -93,6 +93,7 @@ const PLANS = [
     features: [
       "Everything in Free, plus:",
       "500 credits/month",
+      "AI persona research",
       "URL import with AI analysis",
       "PDF & CSV export",
       "Priority generation",

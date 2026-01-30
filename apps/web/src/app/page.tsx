@@ -503,7 +503,7 @@ export default function LandingPage() {
                 <span className="text-muted-foreground">/month</span>
               </div>
               <ul className="space-y-4 mb-8">
-                {['Everything in Free, plus:', '500 credits/month', 'URL import with AI analysis', 'PDF & CSV producer sheets', 'Priority generation', 'Credit pack purchases'].map((feature, i) => (
+                {['Everything in Free, plus:', '500 credits/month', 'AI persona research', 'URL import with AI analysis', 'PDF & CSV producer sheets', 'Priority generation', 'Credit pack purchases'].map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
                     <span>{feature}</span>
