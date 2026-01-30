@@ -17,7 +17,7 @@ export class ProjectsService {
 
   async findAll(userId: string) {
     return this.prisma.project.findMany({
-      where: { userId },
+      where: { userId, deletedAt: null },
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
@@ -37,7 +37,7 @@ export class ProjectsService {
       },
     });
 
-    if (!project) {
+    if (!project || project.deletedAt) {
       throw new NotFoundException('Project not found');
     }
 
@@ -53,7 +53,7 @@ export class ProjectsService {
       where: { id: projectId },
     });
 
-    if (!project) {
+    if (!project || project.deletedAt) {
       throw new NotFoundException('Project not found');
     }
 
@@ -72,7 +72,7 @@ export class ProjectsService {
       where: { id: projectId },
     });
 
-    if (!project) {
+    if (!project || project.deletedAt) {
       throw new NotFoundException('Project not found');
     }
 
@@ -80,8 +80,9 @@ export class ProjectsService {
       throw new ForbiddenException('Access denied');
     }
 
-    return this.prisma.project.delete({
+    return this.prisma.project.update({
       where: { id: projectId },
+      data: { deletedAt: new Date() },
     });
   }
 }

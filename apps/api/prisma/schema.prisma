@@ -99,16 +99,17 @@ model MagicLinkToken {
 }
 
 model Project {
-  id                 String   @id @default(cuid())
+  id                 String    @id @default(cuid())
   name               String
-  productDescription String   @db.Text
-  offer              String?  @db.Text
-  brandVoice         String?  @db.Text
-  forbiddenClaims    String[] @default([])
-  language           String   @default("en")
+  productDescription String    @db.Text
+  offer              String?   @db.Text
+  brandVoice         String?   @db.Text
+  forbiddenClaims    String[]  @default([])
+  language           String    @default("en")
   region             String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
 
   userId   String
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -116,6 +117,7 @@ model Project {
   batches  Batch[]
 
   @@index([userId])
+  @@index([deletedAt])
 }
 
 model Persona {

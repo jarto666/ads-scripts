@@ -59,7 +59,7 @@ export default function ProjectsPage() {
   const draft = draftData?.data?.id ? draftData.data : null;
 
   const handleDeleteProject = async (projectId: string, projectName: string) => {
-    if (!confirm(`Are you sure you want to delete "${projectName}"? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${projectName}"?`)) {
       return;
     }
 
@@ -67,7 +67,7 @@ export default function ProjectsPage() {
       await deleteMutation.mutateAsync({ id: projectId });
       toast({
         title: 'Project deleted',
-        description: 'The project has been permanently deleted.',
+        description: 'The project has been removed.',
       });
       queryClient.invalidateQueries({ queryKey: getProjectsControllerFindAllQueryKey() });
     } catch {
