@@ -4,7 +4,7 @@ import { OpenRouterClient } from './openrouter.client';
 import { StyleFilterService } from './style-filter.service';
 import { RerankService } from './rerank.service';
 import { buildHookGenerationPrompt } from './prompt-builder';
-import { MODEL_CONFIG, calculateHooksPerAngle } from '../config';
+import { MODEL_CONFIG, calculateHooksPerAngle, QUALITY_THRESHOLDS } from '../config';
 
 /**
  * Hook with score for selection
@@ -185,20 +185,37 @@ export class HookGeneratorService {
     );
 
     // Step 3: Stratified selection - top scriptsPerAngle from each angle
+    // Only select hooks that meet minimum quality threshold
     const selectedHooks: SelectedHook[] = [];
 
     for (const angle of settings.angles) {
       const scored = scoredByAngle[angle] || [];
 
-      // Get hooks that passed filter, sorted by score
-      const passedHooks = scored
-        .filter((h) => !h.filtered)
+      // Get hooks that passed filter AND meet minimum score threshold, sorted by score
+      const qualifiedHooks = scored
+        .filter((h) => !h.filtered && h.score >= QUALITY_THRESHOLDS.minHookStrength)
         .sort((a, b) => b.score - a.score);
 
       // Select top N (scriptsPerAngle) from this angle
-      const topN = passedHooks.slice(0, settings.scriptsPerAngle);
+      const topN = qualifiedHooks.slice(0, settings.scriptsPerAngle);
 
-      // If not enough passed filter, include some filtered ones as fallback
+      // If not enough qualified hooks, try hooks that passed filter but are below threshold
+      if (topN.length < settings.scriptsPerAngle) {
+        const needed = settings.scriptsPerAngle - topN.length;
+        const belowThresholdHooks = scored
+          .filter((h) => !h.filtered && h.score < QUALITY_THRESHOLDS.minHookStrength)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, needed);
+
+        if (belowThresholdHooks.length > 0) {
+          this.logger.warn(
+            `Angle ${angle}: Only ${qualifiedHooks.length} hooks meet quality threshold (>=${QUALITY_THRESHOLDS.minHookStrength}), using ${belowThresholdHooks.length} below-threshold hooks`,
+          );
+          topN.push(...belowThresholdHooks);
+        }
+      }
+
+      // Last resort: include filtered hooks as fallback
       if (topN.length < settings.scriptsPerAngle) {
         const needed = settings.scriptsPerAngle - topN.length;
         const fallbackHooks = scored
@@ -208,7 +225,7 @@ export class HookGeneratorService {
 
         if (fallbackHooks.length > 0) {
           this.logger.warn(
-            `Angle ${angle}: Not enough hooks passed filter (${passedHooks.length}/${settings.scriptsPerAngle}), using ${fallbackHooks.length} filtered hooks as fallback`,
+            `Angle ${angle}: Not enough hooks passed filter (${topN.length}/${settings.scriptsPerAngle}), using ${fallbackHooks.length} filtered hooks as fallback`,
           );
           topN.push(...fallbackHooks);
         }

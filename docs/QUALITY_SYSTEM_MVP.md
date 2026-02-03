@@ -1131,16 +1131,16 @@ Move language from "beta" to "stable" when (over 4 consecutive weeks):
 ### Phase 1: Model Migration + StylePolicy + Hard Filters (Week 1)
 
 **Deliverables:**
-- [ ] **Model migration:**
-  - [ ] Update script generation to use Gemini 3 Flash (standard) / Gemini 3 Pro (premium)
-  - [ ] Update persona generation to use Gemini 3 Flash
-  - [ ] Update URL analysis to use Gemini 3 Flash
-  - [ ] Create centralized model config (`config/models.ts`)
-- [ ] Database migration: `StylePolicy` model
-- [ ] Seed English policy with patterns
-- [ ] Filter service with hard rules
-- [ ] Integration into generation pipeline (post-generation filter)
-- [ ] Logging for filtered scripts (for debugging)
+- [x] **Model migration:**
+  - [x] Update script generation to use Gemini 3 Flash (standard) / Gemini 3 Pro (premium)
+  - [x] Update persona generation to use Gemini 3 Flash
+  - [x] Update URL analysis to use Gemini 3 Flash
+  - [x] Create centralized model config (`config/models.ts`)
+- [x] Database migration: `StylePolicy` model
+- [x] Seed English policy with patterns
+- [x] Filter service with hard rules
+- [x] Integration into generation pipeline (post-generation filter)
+- [x] Logging for filtered scripts (for debugging)
 
 **Validation:**
 - Run benchmark test again with new models to confirm quality
@@ -1150,15 +1150,28 @@ Move language from "beta" to "stable" when (over 4 consecutive weeks):
 ### Phase 2: Overgenerate + Rerank (Week 2)
 
 **Deliverables:**
-- [ ] Hook generation prompt (20 hooks)
-- [ ] Hook scoring + selection (top 8)
-- [ ] Parallel script generation
-- [ ] Rerank scoring implementation
-- [ ] Pipeline orchestration
+- [x] Hook generation prompt (20 hooks)
+- [x] Hook scoring + selection (top 8)
+- [x] Parallel script generation
+- [x] Rerank scoring implementation
+- [x] Pipeline orchestration
 
 **Validation:**
 - A/B test: old pipeline vs new pipeline (internal)
 - Measure score distributions
+
+### Implementation Reference (Completed)
+
+| Component | File Path |
+|-----------|-----------|
+| Model Config | `apps/api/src/config/models.config.ts` |
+| StylePolicy Schema | `apps/api/prisma/schema.prisma:212-241` |
+| English Policy Seed | `apps/api/prisma/seed.ts` |
+| Style Filter Service | `apps/api/src/generation/style-filter.service.ts` |
+| Hook Generator | `apps/api/src/generation/hook-generator.service.ts` |
+| Rerank Service | `apps/api/src/generation/rerank.service.ts` |
+| Scoring Service | `apps/api/src/generation/scoring.service.ts` |
+| Script Generator | `apps/api/src/generation/script-generator.service.ts` |
 
 ### Phase 3: ProjectFacts + Anti-Hallucination (Week 3)
 
@@ -1219,7 +1232,40 @@ Move language from "beta" to "stable" when (over 4 consecutive weeks):
   - At least 3 different product features mentioned across batch
   - No two hooks start with the same 3 words
 
-### Phase 6: Iteration + Polish (Week 6+)
+### Phase 6: Hallucination + Structure Variety (Week 6)
+
+**Issues Identified (2026-02-03, Whitening Strips batch review):**
+- "Get 50% Off Today" appearing in CTAs/on-screen text when no offer defined - hallucination filter not catching
+- Repetitive script structure: every script follows Hook → show problem → apply product → reveal result → CTA
+- Same warning ("Benefits not clearly communicated early") on 14/16 scripts - either too strict or prompts need fixing
+- Hook patterns repeating: multiple "I used to...", "I honestly thought...", "Struggling with...?"
+
+**Deliverables:**
+- [ ] **Hallucination filter for offers:**
+  - [ ] Detect "X% off", "discount", "sale", "free shipping" in output
+  - [ ] Cross-check against project.offer field
+  - [ ] Hard reject if offer mentioned but not defined in project
+- [ ] **Script structure variety:**
+  - [ ] Track beat patterns across batch (problem→solution→reveal is overused)
+  - [ ] Add structure templates: testimonial, demonstration, comparison, story arc, listicle
+  - [ ] Prompt should specify different structures for different scripts in batch
+- [ ] **Fix "benefits not early" warning spam:**
+  - [ ] Either tune the threshold (too sensitive)
+  - [ ] Or fix generation prompts to front-load benefits in hook/first beat
+  - [ ] Consider: if >50% of batch has same warning, it's a prompt issue not a script issue
+- [ ] **Hook opener diversity:**
+  - [ ] Detect repeated opener patterns ("I used to...", "Struggling with...?")
+  - [ ] Penalize hooks that start with same 2-3 words as others in batch
+  - [ ] Ensure mix of: question, statement, command, shock, curiosity openers
+
+**Validation:**
+- Generate batch of 10+ scripts
+- No hallucinated offers (unless offer is defined)
+- At least 3 different script structures used
+- No two hooks start with same pattern
+- "Benefits not early" warning on <30% of scripts
+
+### Phase 7: Iteration + Polish (Week 7+)
 
 **Deliverables:**
 - [ ] Tune regex patterns based on feedback
@@ -1286,4 +1332,4 @@ Workflow (CORRECT ORDER):
 ---
 
 *Document created: 2025-01-30*
-*Last updated: 2025-01-30*
+*Last updated: 2026-02-03*

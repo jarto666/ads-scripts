@@ -86,6 +86,7 @@ import {
   batchesControllerCreate,
   batchesControllerRegenerateScript,
   exportsControllerExportBatch,
+  exportsControllerExportAnalytics,
   personasControllerCreate,
   personasControllerDelete,
   personasControllerUpdate,
@@ -476,6 +477,62 @@ function ScriptCard({
                 </ul>
               </div>
             )}
+
+            {/* Admin Analytics Panel */}
+            {isAdmin && script.analyticsData && (() => {
+              const analytics = script.analyticsData as {
+                specificity?: number;
+                novelty?: number;
+                audienceFit?: number;
+                hookStrength?: number;
+                finalScore?: number;
+                batchPosition?: number;
+                totalFiltered?: number;
+                penalties?: { diversityPenalty?: number };
+              };
+              return (
+                <div className="p-4 rounded-xl bg-muted/50 border border-border">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <h4 className="font-semibold text-foreground">Quality Analytics</h4>
+                    <Badge variant="outline" className="text-xs">Admin</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                    <div className="p-2 rounded-lg bg-background">
+                      <p className="text-xs text-muted-foreground">Specificity</p>
+                      <p className="font-mono font-medium">{analytics.specificity ?? '-'}/100</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background">
+                      <p className="text-xs text-muted-foreground">Novelty</p>
+                      <p className="font-mono font-medium">{analytics.novelty ?? '-'}/100</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background">
+                      <p className="text-xs text-muted-foreground">Audience Fit</p>
+                      <p className="font-mono font-medium">{analytics.audienceFit ?? '-'}/100</p>
+                    </div>
+                    <div className="p-2 rounded-lg bg-background">
+                      <p className="text-xs text-muted-foreground">Hook Strength</p>
+                      <p className="font-mono font-medium">{analytics.hookStrength ?? '-'}/100</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+                    <div>
+                      <span className="text-sm text-muted-foreground">Final Score: </span>
+                      <span className="font-mono font-bold text-lg">{analytics.finalScore ?? '-'}</span>
+                      <span className="text-sm text-muted-foreground">/100</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Rank #{analytics.batchPosition ?? '-'} of {analytics.totalFiltered ?? '-'} qualified
+                    </div>
+                  </div>
+                  {analytics.penalties?.diversityPenalty !== undefined && analytics.penalties.diversityPenalty !== 0 && (
+                    <div className="mt-2 text-xs text-orange-500">
+                      Diversity penalty: -{analytics.penalties.diversityPenalty}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         )}
       </CardContent>
@@ -535,6 +592,7 @@ export default function ProjectDetailPage({
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isExportingCsv, setIsExportingCsv] = useState(false);
+  const [isExportingAnalytics, setIsExportingAnalytics] = useState(false);
 
   // Per-project generation settings stored in localStorage via jotai
   const genSettingsAtom = useMemo(() => getProjectGenSettingsAtom(id), [id]);
@@ -1059,6 +1117,28 @@ export default function ProjectDetailPage({
       });
     } finally {
       setIsExportingCsv(false);
+    }
+  };
+
+  const handleExportAnalytics = async () => {
+    if (!selectedBatchId) return;
+    setIsExportingAnalytics(true);
+    try {
+      const result = await exportsControllerExportAnalytics(selectedBatchId);
+      const { jsonUrl } = result.data;
+      const a = document.createElement("a");
+      a.href = jsonUrl;
+      a.download = "analytics-report.json";
+      a.click();
+      toast({ title: "Analytics exported", description: "JSON report is ready" });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: "Could not generate analytics report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingAnalytics(false);
     }
   };
 
@@ -1885,6 +1965,18 @@ export default function ProjectDetailPage({
                       >
                         <Download className="h-4 w-4" />
                         {isExportingCsv ? "Exporting..." : "CSV"}
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportAnalytics}
+                        disabled={isExportingAnalytics}
+                        className="gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        {isExportingAnalytics ? "Exporting..." : "Analytics"}
                       </Button>
                     )}
                   </div>

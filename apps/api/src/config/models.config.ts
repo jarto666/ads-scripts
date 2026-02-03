@@ -21,6 +21,17 @@ export const BATCH_LIMITS = {
 } as const;
 
 /**
+ * Minimum quality thresholds
+ * Hooks/scripts below these scores are rejected from selection
+ */
+export const QUALITY_THRESHOLDS = {
+  /** Minimum hook strength score (0-100) to be selected for script generation */
+  minHookStrength: 30,
+  /** Minimum final score (0-100) for script to be included in results */
+  minFinalScore: 40,
+} as const;
+
+/**
  * Overgeneration ratios by quality tier
  * - scripts: how many scripts to generate vs requested
  * - hooks: how many hooks to generate vs scripts

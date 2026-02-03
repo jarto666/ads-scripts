@@ -15,7 +15,8 @@
       "WebFetch(domain:docs.browserless.io)",
       "mcp__ide__getDiagnostics",
       "Bash(xargs -I {} bash -c \"echo ''=== {} ==='' && head -40 {}\")",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "Bash(cat:*)"
     ]
   }
 }

@@ -5,6 +5,7 @@
  * API for UGC Script Factory
  * OpenAPI spec version: 1.0
  */
+import type { ScriptDtoAnalyticsData } from './scriptDtoAnalyticsData';
 import type { ScriptDtoStatus } from './scriptDtoStatus';
 import type { StoryboardStepDto } from './storyboardStepDto';
 
@@ -19,6 +20,8 @@ export interface ScriptDto {
   filmingChecklist: string[];
   warnings: string[];
   score?: number;
+  /** Quality analytics data (admin-only) */
+  analyticsData?: ScriptDtoAnalyticsData;
   errorMessage?: string;
   /** ID of the parent script if this is a regenerated version */
   parentScriptId?: string;

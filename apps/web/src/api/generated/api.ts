@@ -28,6 +28,7 @@ import type {
   AdminControllerGetQueueJobsParams,
   AdminControllerGetRequestsParams,
   AdminUserDetailDto,
+  AnalyticsExportResultDto,
   AuthResponseDto,
   BatchDto,
   CheckoutUrlDto,
@@ -2372,6 +2373,88 @@ export const useExportsControllerExportBatch = <TError = unknown,
         TContext
       > => {
       return useMutation(getExportsControllerExportBatchMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Export analytics report (admin only)
+ */
+export type exportsControllerExportAnalyticsResponse201 = {
+  data: AnalyticsExportResultDto
+  status: 201
+}
+    
+export type exportsControllerExportAnalyticsResponseSuccess = (exportsControllerExportAnalyticsResponse201) & {
+  headers: Headers;
+};
+;
+
+export type exportsControllerExportAnalyticsResponse = (exportsControllerExportAnalyticsResponseSuccess)
+
+export const getExportsControllerExportAnalyticsUrl = (id: string,) => {
+
+
+  
+
+  return `/batches/${id}/export-analytics`
+}
+
+export const exportsControllerExportAnalytics = async (id: string, options?: RequestInit): Promise<exportsControllerExportAnalyticsResponse> => {
+  
+  return customInstance<exportsControllerExportAnalyticsResponse>(getExportsControllerExportAnalyticsUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getExportsControllerExportAnalyticsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportAnalytics>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportAnalytics>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['exportsControllerExportAnalytics'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof exportsControllerExportAnalytics>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  exportsControllerExportAnalytics(id,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExportsControllerExportAnalyticsMutationResult = NonNullable<Awaited<ReturnType<typeof exportsControllerExportAnalytics>>>
+    
+    export type ExportsControllerExportAnalyticsMutationError = unknown
+
+    /**
+ * @summary Export analytics report (admin only)
+ */
+export const useExportsControllerExportAnalytics = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof exportsControllerExportAnalytics>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof exportsControllerExportAnalytics>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getExportsControllerExportAnalyticsMutationOptions(options), queryClient);
     }
     
 export type adminControllerGetStatsResponse200 = {

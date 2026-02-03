@@ -11,11 +11,11 @@ import { validateBeatCount, getBeatRange } from './platform-profiles';
 import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
 import { HookGeneratorService, SelectedHook } from './hook-generator.service';
-import { RerankService } from './rerank.service';
+import { RerankService, RerankScores } from './rerank.service';
 import { CreditsService } from '../credits/credits.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { Project, Persona, Batch } from '@prisma/client';
-import { getScriptModel, validateBatchRequest } from '../config';
+import { Project, Persona, Batch, Prisma } from '@prisma/client';
+import { getScriptModel, validateBatchRequest, QUALITY_THRESHOLDS } from '../config';
 
 // Legacy mapping for backward compatibility - now uses config
 const getModelForQuality = (quality: string) => {
@@ -55,6 +55,8 @@ interface ScriptOutput {
   ctaVariants: string[];
   filmingChecklist: string[];
   warnings?: string[];
+  // Soft filter violations (script is kept but penalized in ranking)
+  filterViolations?: string[];
 }
 
 @Injectable()
@@ -795,19 +797,18 @@ Return ONLY valid JSON.`;
 
       this.logger.log(`[Overgen] Generated ${generatedScripts.length} scripts`);
 
-      // Step 3: Hard filter - reject scripts that fail StylePolicy
-      const filteredScripts = await this.hardFilterScripts(
+      // Step 3: Soft filter - check StylePolicy but keep ALL scripts
+      // Scripts with violations get penalized in ranking but are never discarded
+      const filterResult = await this.softFilterScripts(
         generatedScripts,
         projectWithFilteredPersonas.language || 'en',
       );
 
       this.logger.log(
-        `[Overgen] ${filteredScripts.length}/${generatedScripts.length} scripts passed hard filter`,
+        `[Overgen] Style filter: ${filterResult.passedCount} clean, ${filterResult.failedCount} with violations (all kept)`,
       );
 
-      if (filteredScripts.length === 0) {
-        throw new Error('No scripts passed hard filter');
-      }
+      const filteredScripts = filterResult.scripts;
 
       // Step 4: Rerank by quality scores
       const rankedScripts = this.rerankService.rerankScripts(
@@ -819,9 +820,27 @@ Return ONLY valid JSON.`;
         filteredPersonas,
       );
 
-      // Step 5: Select top N and save to database
+      // Step 5: Log quality statistics (no filtering - users paid for all scripts)
+      // Scores are used for RANKING only, not elimination
+      const lowScoring = rankedScripts.filter(
+        (s) => s.scores.final < QUALITY_THRESHOLDS.minFinalScore,
+      );
+      if (lowScoring.length > 0) {
+        this.logger.warn(
+          `[Overgen] ${lowScoring.length}/${rankedScripts.length} scripts below quality threshold (${QUALITY_THRESHOLDS.minFinalScore}) - kept for delivery`,
+        );
+      }
+
+      // Step 6: Select top N and save to database
+      // IMPORTANT: Always return requestedCount - users paid for these scripts
       const targetCount = Math.min(batch.requestedCount, rankedScripts.length);
       const topScripts = rankedScripts.slice(0, targetCount);
+
+      if (targetCount < batch.requestedCount) {
+        this.logger.warn(
+          `[Overgen] Only ${targetCount}/${batch.requestedCount} scripts generated - some generation may have failed`,
+        );
+      }
 
       this.logger.log(
         `[Overgen] Returning top ${targetCount} scripts. Score range: ${topScripts[0]?.scores.final} - ${topScripts[topScripts.length - 1]?.scores.final}`,
@@ -843,6 +862,21 @@ Return ONLY valid JSON.`;
           warnings.push(beatWarning);
         }
 
+        // Add user-facing warnings for filter violations
+        if (script.filterViolations && script.filterViolations.length > 0) {
+          warnings.push('Script contains phrases that may need review before use');
+        }
+
+        // Build analytics data for admin visibility
+        const analyticsData = this.buildAnalyticsData(
+          script,
+          scores,
+          i + 1, // batchPosition (1-indexed)
+          generatedScripts.length,
+          filteredScripts.length,
+          script.filterViolations,
+        );
+
         await this.prisma.script.create({
           data: {
             batchId,
@@ -858,19 +892,10 @@ Return ONLY valid JSON.`;
               ...warnings,
             ],
             score: filmabilityScore,
+            analyticsData,
           },
         });
-
-        // Emit progress
-        this.notifications.emitScriptProgress({
-          batchId,
-          scriptId: `temp-${i}`,
-          status: 'completed',
-          completedCount: i + 1,
-          generatingCount: 0,
-          totalCount: targetCount,
-          progress: Math.round(((i + 1) / targetCount) * 100),
-        });
+        // Progress already emitted during generation, no need to emit again during save
       }
 
       // Mark batch complete
@@ -914,6 +939,8 @@ Return ONLY valid JSON.`;
   ): Promise<ScriptOutput[]> {
     const results: ScriptOutput[] = [];
     const model = getModelForQuality(batch.quality);
+    const totalCount = hooks.length;
+    let completedCount = 0;
 
     // Simple semaphore for concurrency control
     let activeCount = 0;
@@ -972,11 +999,39 @@ Return ONLY valid JSON.`;
 
             try {
               const cleaned = this.stripMarkdown(response);
-              return JSON.parse(cleaned) as ScriptOutput;
+              const script = JSON.parse(cleaned) as ScriptOutput;
+
+              // Emit progress during generation (not just during save)
+              completedCount++;
+              this.notifications.emitScriptProgress({
+                batchId: batch.id,
+                scriptId: `generating-${index}`,
+                status: 'generating',
+                completedCount,
+                generatingCount: activeCount - 1, // -1 because this one just finished
+                totalCount,
+                progress: Math.round((completedCount / totalCount) * 100),
+              });
+
+              return script;
             } catch {
               this.logger.warn(`Failed to parse script for hook ${index + 1}, attempting repair`);
               const repaired = await this.repairJson(response, 'JSON parse error');
-              return JSON.parse(repaired) as ScriptOutput;
+              const script = JSON.parse(repaired) as ScriptOutput;
+
+              // Emit progress for repaired scripts too
+              completedCount++;
+              this.notifications.emitScriptProgress({
+                batchId: batch.id,
+                scriptId: `generating-${index}`,
+                status: 'generating',
+                completedCount,
+                generatingCount: activeCount - 1,
+                totalCount,
+                progress: Math.round((completedCount / totalCount) * 100),
+              });
+
+              return script;
             }
           } catch (retryError) {
             if (attempt === MAX_SCRIPT_RETRIES) {
@@ -1079,13 +1134,17 @@ OUTPUT CONTRACT:
   }
 
   /**
-   * Hard filter scripts - reject those that fail StylePolicy
+   * Soft filter scripts - check StylePolicy but keep all scripts
+   * Scripts that fail get filterViolations attached (used for ranking penalty)
+   * No scripts are discarded - users paid for them, they get them
    */
-  private async hardFilterScripts(
+  private async softFilterScripts(
     scripts: ScriptOutput[],
     language: string,
-  ): Promise<ScriptOutput[]> {
-    const passed: ScriptOutput[] = [];
+  ): Promise<{ scripts: ScriptOutput[]; passedCount: number; failedCount: number }> {
+    const result: ScriptOutput[] = [];
+    let passedCount = 0;
+    let failedCount = 0;
 
     for (const script of scripts) {
       const filterResult = await this.styleFilter.filterScript(
@@ -1101,14 +1160,85 @@ OUTPUT CONTRACT:
       );
 
       if (filterResult.passed) {
-        passed.push(script);
+        result.push(script);
+        passedCount++;
       } else {
+        // Keep the script but attach violations for ranking penalty
         this.logger.debug(
-          `[Overgen] Script filtered out: ${filterResult.violations.join(', ')}`,
+          `[Overgen] Script has filter violations (kept with penalty): ${filterResult.violations.join(', ')}`,
         );
+        result.push({
+          ...script,
+          filterViolations: filterResult.violations,
+        });
+        failedCount++;
       }
     }
 
-    return passed;
+    return { scripts: result, passedCount, failedCount };
+  }
+
+  /**
+   * Build analytics data object for admin visibility
+   * Includes all scoring details and batch context
+   */
+  private buildAnalyticsData(
+    script: ScriptOutput,
+    scores: RerankScores,
+    batchPosition: number,
+    totalGenerated: number,
+    totalFiltered: number,
+    filterViolations?: string[],
+  ): Prisma.InputJsonObject {
+    const hook = script.hook || '';
+    const wordCount = hook.split(/\s+/).length;
+
+    return {
+      // Rerank scores (0-100 each)
+      specificity: scores.specificity,
+      novelty: scores.novelty,
+      audienceFit: scores.audienceFit,
+      hookStrength: scores.hookStrength,
+      finalScore: scores.final,
+
+      // Penalties applied
+      penalties: {
+        diversityPenalty: scores.diversityPenalty || 0,
+        filterPenalty: scores.filterPenalty || 0,
+      },
+
+      // Filter violations (for admin review)
+      filterViolations: filterViolations || [],
+
+      // Hook metadata
+      hookMeta: {
+        wordCount,
+        hasQuestion: hook.includes('?'),
+        hasNumber: /\d+/.test(hook),
+        powerWordsFound: this.findPowerWords(hook),
+      },
+
+      // Batch context
+      batchPosition,
+      totalGenerated,
+      totalFiltered,
+
+      // Timestamp for debugging
+      scoredAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Find power words in hook for analytics
+   */
+  private findPowerWords(hook: string): string[] {
+    const powerWords = [
+      'stop', 'wait', 'secret', 'finally', 'never', 'always',
+      'everyone', 'nobody', 'mistake', 'wrong', 'actually',
+      'truth', 'real', 'honest',
+    ];
+
+    const hookLower = hook.toLowerCase();
+    return powerWords.filter((w) => hookLower.includes(w));
   }
 }

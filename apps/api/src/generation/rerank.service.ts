@@ -12,6 +12,11 @@ const WEIGHTS = {
 };
 
 /**
+ * Penalty for scripts that failed style filter (kept but ranked lower)
+ */
+const STYLE_FILTER_PENALTY = 25;
+
+/**
  * Score breakdown for transparency/debugging
  */
 export interface RerankScores {
@@ -20,6 +25,10 @@ export interface RerankScores {
   audienceFit: number;
   hookStrength: number;
   final: number;
+  /** Diversity penalty applied (negative value subtracted from final) */
+  diversityPenalty?: number;
+  /** Style filter penalty for violations (script kept but ranked lower) */
+  filterPenalty?: number;
 }
 
 /**
@@ -40,6 +49,8 @@ interface ScriptContent {
     onScreen?: string;
   }>;
   ctaVariants: string[];
+  /** Filter violations from soft filter (script kept but penalized) */
+  filterViolations?: string[];
 }
 
 /**
@@ -125,18 +136,30 @@ export class RerankService {
 
   /**
    * Rerank scripts by quality scores and return sorted list
+   * Applies diversity penalties to avoid repetitive hook patterns
    */
   rerankScripts<T extends ScriptContent>(
     scripts: T[],
     productContext: ProductContext,
     personas: Persona[],
   ): RankedScript<T>[] {
+    // First pass: score all scripts individually
     const ranked = scripts.map((script) => {
       const scores = this.scoreScript(script, productContext, personas);
       return { script, scores };
     });
 
-    // Sort by final score descending
+    // Apply filter penalty to scripts with style violations
+    // They're kept (users paid for them) but ranked lower
+    this.applyFilterPenalties(ranked);
+
+    // Sort by final score descending (initial ranking)
+    ranked.sort((a, b) => b.scores.final - a.scores.final);
+
+    // Second pass: apply diversity penalties to avoid repetitive hooks
+    this.applyDiversityPenalties(ranked);
+
+    // Re-sort after diversity penalties
     ranked.sort((a, b) => b.scores.final - a.scores.final);
 
     this.logger.log(
@@ -144,6 +167,77 @@ export class RerankService {
     );
 
     return ranked;
+  }
+
+  /**
+   * Apply penalty to scripts that failed the style filter
+   * Scripts are kept (users paid for them) but ranked lower
+   */
+  private applyFilterPenalties<T extends ScriptContent>(
+    ranked: RankedScript<T>[],
+  ): void {
+    for (const item of ranked) {
+      if (item.script.filterViolations && item.script.filterViolations.length > 0) {
+        item.scores.filterPenalty = STYLE_FILTER_PENALTY;
+        item.scores.final = Math.max(0, item.scores.final - STYLE_FILTER_PENALTY);
+
+        this.logger.debug(
+          `Filter penalty: -${STYLE_FILTER_PENALTY} for violations: ${item.script.filterViolations.join(', ')}`,
+        );
+      }
+    }
+  }
+
+  /**
+   * Apply diversity penalties to scripts with similar hook openers
+   * Penalizes scripts that start with the same 3 words as higher-ranked scripts
+   */
+  private applyDiversityPenalties<T extends ScriptContent>(
+    ranked: RankedScript<T>[],
+  ): void {
+    const seenOpeners = new Map<string, number>(); // opener -> count
+
+    for (const item of ranked) {
+      const hook = item.script.hook || '';
+      const opener = this.getHookOpener(hook);
+
+      if (opener) {
+        const count = seenOpeners.get(opener) || 0;
+
+        if (count > 0) {
+          // Apply increasing penalty for repeated openers
+          // First duplicate: -8, second: -16, etc.
+          const penalty = count * 8;
+          item.scores.diversityPenalty = penalty;
+          item.scores.final = Math.max(0, item.scores.final - penalty);
+
+          this.logger.debug(
+            `Diversity penalty: -${penalty} for repeated opener "${opener}" (occurrence ${count + 1})`,
+          );
+        }
+
+        seenOpeners.set(opener, count + 1);
+      }
+    }
+  }
+
+  /**
+   * Extract normalized hook opener (first 3 significant words)
+   */
+  private getHookOpener(hook: string): string | null {
+    if (!hook) return null;
+
+    // Normalize: lowercase, remove punctuation
+    const normalized = hook
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim();
+
+    // Get first 3 words
+    const words = normalized.split(/\s+/).slice(0, 3);
+    if (words.length < 2) return null; // Need at least 2 words to compare
+
+    return words.join(' ');
   }
 
   /**
@@ -333,6 +427,7 @@ export class RerankService {
 
   /**
    * Audience Fit: How well the script addresses persona pain points and desires
+   * Uses fuzzy matching and includes persona name/description matching
    */
   private scoreAudienceFit(script: ScriptContent, personas: Persona[]): number {
     if (!personas || personas.length === 0) return 50; // Default if no personas
@@ -340,7 +435,7 @@ export class RerankService {
     const text = this.extractText(script).toLowerCase();
     let score = 0;
 
-    // Collect all pain points and desires from personas
+    // Collect all pain points, desires, and context from personas
     const painPoints: string[] = [];
     const desires: string[] = [];
 
@@ -353,32 +448,60 @@ export class RerankService {
       }
     }
 
-    // Score pain point mentions (0-50)
+    // NEW: Score persona name/description relevance (0-20 bonus)
+    let personaContextBonus = 0;
+    for (const persona of personas) {
+      // Check if persona name keywords appear in script
+      const nameKeywords = this.extractKeywordsWithStemming(persona.name);
+      for (const kw of nameKeywords) {
+        if (text.includes(kw)) {
+          personaContextBonus += 5;
+          break;
+        }
+      }
+
+      // Check if description keywords appear
+      if (persona.description) {
+        const descKeywords = this.extractKeywordsWithStemming(persona.description).slice(0, 10);
+        let descHits = 0;
+        for (const kw of descKeywords) {
+          if (text.includes(kw) || this.stemContains(text, kw)) {
+            descHits++;
+          }
+        }
+        if (descHits >= 2) {
+          personaContextBonus += 5;
+        }
+      }
+    }
+    score += Math.min(20, personaContextBonus);
+
+    // Score pain point mentions (0-40)
     let painHits = 0;
     for (const pain of painPoints) {
-      if (this.textContainsKeywords(text, pain)) {
+      if (this.textContainsKeywordsFuzzy(text, pain)) {
         painHits++;
       }
     }
     const painTarget = Math.min(painPoints.length, 5);
     if (painTarget > 0) {
-      score += Math.min(50, Math.round((painHits / painTarget) * 50));
+      score += Math.min(40, Math.round((painHits / painTarget) * 40));
     } else {
-      score += 25; // Default if no pain points defined
+      score += 20; // Default if no pain points defined
     }
 
-    // Score desire mentions (0-50)
+    // Score desire mentions (0-40)
     let desireHits = 0;
     for (const desire of desires) {
-      if (this.textContainsKeywords(text, desire)) {
+      if (this.textContainsKeywordsFuzzy(text, desire)) {
         desireHits++;
       }
     }
     const desireTarget = Math.min(desires.length, 5);
     if (desireTarget > 0) {
-      score += Math.min(50, Math.round((desireHits / desireTarget) * 50));
+      score += Math.min(40, Math.round((desireHits / desireTarget) * 40));
     } else {
-      score += 25; // Default if no desires defined
+      score += 20; // Default if no desires defined
     }
 
     return Math.min(100, score);
@@ -425,7 +548,7 @@ export class RerankService {
   }
 
   /**
-   * Check if text contains keywords from a phrase
+   * Check if text contains keywords from a phrase (legacy exact match)
    */
   private textContainsKeywords(text: string, phrase: string): boolean {
     const keywords = phrase
@@ -438,5 +561,104 @@ export class RerankService {
     // At least 50% of keywords should be present
     const hits = keywords.filter((kw) => text.includes(kw)).length;
     return hits >= keywords.length * 0.5;
+  }
+
+  /**
+   * Check if text contains keywords from a phrase with fuzzy/stem matching
+   * More lenient than textContainsKeywords - uses 40% threshold and stem matching
+   */
+  private textContainsKeywordsFuzzy(text: string, phrase: string): boolean {
+    const keywords = this.extractKeywordsWithStemming(phrase);
+    if (keywords.length === 0) return false;
+
+    // Count matches using stem matching
+    let hits = 0;
+    for (const kw of keywords) {
+      if (text.includes(kw) || this.stemContains(text, kw)) {
+        hits++;
+      }
+    }
+
+    // At least 40% of keywords should be present (more lenient than 50%)
+    return hits >= keywords.length * 0.4;
+  }
+
+  /**
+   * Extract keywords with basic stemming applied
+   */
+  private extractKeywordsWithStemming(text: string): string[] {
+    const stopWords = new Set([
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+      'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
+      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would',
+      'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need',
+      'that', 'this', 'these', 'those', 'it', 'its', 'they', 'them',
+      'their', 'we', 'us', 'our', 'you', 'your', 'i', 'me', 'my',
+    ]);
+
+    const words = text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !stopWords.has(w)) // Lower threshold to 2 chars
+      .map((w) => this.simpleStem(w));
+
+    return [...new Set(words)];
+  }
+
+  /**
+   * Simple stemming: remove common suffixes
+   * This is a lightweight approach that handles common cases
+   */
+  private simpleStem(word: string): string {
+    // Handle common suffixes
+    if (word.endsWith('ing') && word.length > 5) {
+      return word.slice(0, -3);
+    }
+    if (word.endsWith('ed') && word.length > 4) {
+      return word.slice(0, -2);
+    }
+    if (word.endsWith('er') && word.length > 4) {
+      return word.slice(0, -2);
+    }
+    if (word.endsWith('est') && word.length > 5) {
+      return word.slice(0, -3);
+    }
+    if (word.endsWith('ness') && word.length > 6) {
+      return word.slice(0, -4);
+    }
+    if (word.endsWith('ment') && word.length > 6) {
+      return word.slice(0, -4);
+    }
+    if (word.endsWith('ly') && word.length > 4) {
+      return word.slice(0, -2);
+    }
+    if (word.endsWith('ies') && word.length > 4) {
+      return word.slice(0, -3) + 'y';
+    }
+    if (word.endsWith('es') && word.length > 4) {
+      return word.slice(0, -2);
+    }
+    if (word.endsWith('s') && word.length > 3 && !word.endsWith('ss')) {
+      return word.slice(0, -1);
+    }
+    return word;
+  }
+
+  /**
+   * Check if text contains a stemmed version of keyword
+   * Checks if keyword stem appears as prefix of any word in text
+   */
+  private stemContains(text: string, keyword: string): boolean {
+    const stem = this.simpleStem(keyword);
+    // Check if any word in text starts with the stem (handles gaming/gamer/games)
+    const textWords = text.split(/\s+/);
+    return textWords.some((w) => {
+      const wordStem = this.simpleStem(w);
+      // Match if stems are equal or one is prefix of the other (min 4 chars)
+      return wordStem === stem ||
+        (stem.length >= 4 && wordStem.startsWith(stem)) ||
+        (wordStem.length >= 4 && stem.startsWith(wordStem));
+    });
   }
 }

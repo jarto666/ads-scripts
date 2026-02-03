@@ -171,6 +171,7 @@ model Script {
   filmingChecklist String[] @default([])
   warnings         String[] @default([])
   score            Int?     // 0-100
+  analyticsData    Json?    // Quality analytics: scores, penalties, filter results (admin-only)
   errorMessage     String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

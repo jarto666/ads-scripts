@@ -758,6 +758,37 @@
         ]
       }
     },
+    "/batches/{id}/export-analytics": {
+      "post": {
+        "operationId": "ExportsController_exportAnalytics",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalyticsExportResultDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Export analytics report (admin only)",
+        "tags": [
+          "Exports"
+        ]
+      }
+    },
     "/admin/stats": {
       "get": {
         "operationId": "AdminController_getStats",
@@ -2356,6 +2387,10 @@
           "score": {
             "type": "number"
           },
+          "analyticsData": {
+            "type": "object",
+            "description": "Quality analytics data (admin-only)"
+          },
           "errorMessage": {
             "type": "string"
           },
@@ -2408,6 +2443,17 @@
         "required": [
           "pdfUrl",
           "csvUrl"
+        ]
+      },
+      "AnalyticsExportResultDto": {
+        "type": "object",
+        "properties": {
+          "jsonUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "jsonUrl"
         ]
       },
       "UpdateUserPlanDto": {

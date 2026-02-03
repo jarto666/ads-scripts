@@ -17,7 +17,7 @@ dev:
 	pnpm run dev
 
 dev-api:
-	pnpm run dev:api
+	lsof -t -i:3232 | xargs kill -9 && pnpm run dev:api
 
 dev-web:
 	pnpm run dev:web

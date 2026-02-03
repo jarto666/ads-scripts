@@ -118,6 +118,9 @@ export class ScriptDto {
   @ApiPropertyOptional()
   score?: number;
 
+  @ApiPropertyOptional({ description: 'Quality analytics data (admin-only)' })
+  analyticsData?: object;
+
   @ApiPropertyOptional()
   errorMessage?: string;
 
@@ -195,6 +198,11 @@ export class ExportResultDto {
 
   @ApiProperty()
   csvUrl: string;
+}
+
+export class AnalyticsExportResultDto {
+  @ApiProperty()
+  jsonUrl: string;
 }
 
 export class RecentScriptDto {
