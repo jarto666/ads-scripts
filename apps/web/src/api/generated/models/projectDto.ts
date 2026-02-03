@@ -11,7 +11,6 @@ export interface ProjectDto {
   id: string;
   name: string;
   productDescription: string;
-  offer?: string;
   brandVoice?: string;
   forbiddenClaims: string[];
   language: string;

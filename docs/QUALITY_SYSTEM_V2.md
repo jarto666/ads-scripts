@@ -414,11 +414,14 @@ export const MODEL_CONFIG = {
 
 ### Week 1: Groundedness + Scoring Fixes
 
-- [ ] **ProjectFacts schema** - Prisma model + migration
-- [ ] **ProjectFacts CRUD** - Service + controller
-- [ ] **Facts block in prompts** - Update prompt builders
-- [ ] **Groundedness validator** - New service with regex + fact-mapping
-- [ ] **Rewrite loop** - Integrate into generation pipeline
+- [x] **ProjectFacts schema** - Prisma model + migration ✓
+- [x] **ProjectFacts CRUD** - Service + controller ✓
+- [x] **Facts block in prompts** - Update prompt builders ✓
+- [x] **Groundedness validator** - New service with regex + fact-mapping ✓
+- [x] **Rewrite loop** - Integrate into generation pipeline ✓
+- [ ] **ProjectFacts UI (Wizard)** - Add to Step 2 (Brand & Facts) with AI generation option
+- [ ] **ProjectFacts UI (Settings)** - Add to project settings Brand/Guidelines tab
+- [ ] **ProjectFacts AI generation** - API endpoint to extract facts from product description
 - [ ] **Persona auto-generation** - LLM extraction on create
 - [ ] **Expand cliché patterns** - 100+ patterns organized by category
 - [ ] **Grounded specificity** - Replace old specificity scoring

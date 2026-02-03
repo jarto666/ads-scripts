@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Project, Persona } from '@prisma/client';
+import { Project, Persona, ProjectFacts } from '@prisma/client';
 import { OpenRouterClient } from './openrouter.client';
 import { StyleFilterService } from './style-filter.service';
 import { RerankService } from './rerank.service';
+import { GroundednessService } from './groundedness.service';
 import { buildHookGenerationPrompt } from './prompt-builder';
 import { MODEL_CONFIG, calculateHooksPerAngle, QUALITY_THRESHOLDS } from '../config';
 
@@ -57,6 +58,7 @@ export class HookGeneratorService {
     private openRouter: OpenRouterClient,
     private styleFilter: StyleFilterService,
     private rerankService: RerankService,
+    private groundednessService: GroundednessService,
   ) {}
 
   /**
@@ -83,13 +85,20 @@ export class HookGeneratorService {
     const policy = await this.styleFilter.getPolicy(project.language || 'en');
     const bannedPhrases = policy?.bannedPhrases || [];
 
+    // Get ProjectFacts for grounding
+    const facts = await this.groundednessService.getProjectFacts(project.id);
+
     // Step 1: Generate hooks via LLM (structured by angle)
-    const prompt = buildHookGenerationPrompt(project, {
-      platform: settings.platform,
-      angles: settings.angles,
-      hooksPerAngle,
-      bannedPhrases,
-    });
+    const prompt = buildHookGenerationPrompt(
+      project,
+      {
+        platform: settings.platform,
+        angles: settings.angles,
+        hooksPerAngle,
+        bannedPhrases,
+      },
+      facts,
+    );
 
     const response = await this.openRouter.chatCompletion(
       [

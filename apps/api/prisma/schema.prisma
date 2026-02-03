@@ -102,7 +102,6 @@ model Project {
   id                 String    @id @default(cuid())
   name               String
   productDescription String    @db.Text
-  offer              String?   @db.Text
   brandVoice         String?   @db.Text
   forbiddenClaims    String[]  @default([])
   language           String    @default("en")
@@ -115,9 +114,35 @@ model Project {
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   personas Persona[]
   batches  Batch[]
+  facts    ProjectFacts?
 
   @@index([userId])
   @@index([deletedAt])
+}
+
+// Structured facts for grounding - prevents hallucinations
+model ProjectFacts {
+  id        String @id @default(cuid())
+  projectId String @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Product grounding
+  features      String[] @default([]) // Verified feature list
+  workflowSteps String[] @default([]) // Correct order of actions (e.g., "Upload photo", "Choose template")
+
+  // Offer grounding
+  pricing   String?  // Exact pricing info (e.g., "$9/mo", "Free tier available")
+  promos    String[] @default([]) // Allowed promos ONLY (empty = no promos allowed)
+  ctaRules  String[] @default([]) // Allowed CTAs (e.g., "Link in bio", "Try free")
+
+  // Proof grounding
+  allowedProof String[] @default([]) // Stats/testimonials we CAN use (e.g., "50,000 users")
+
+  // Tone constraints
+  harshLabelsBan String[] @default([]) // Words to never use (e.g., "ugly", "terrible")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Persona {

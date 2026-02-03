@@ -10,11 +10,24 @@ import type { PersonaSuggestionDto } from './personaSuggestionDto';
 export interface DraftFormDataDto {
   name?: string;
   productDescription?: string;
-  offer?: string;
   brandVoice?: string;
   forbiddenClaims?: string[];
   language?: string;
   region?: string;
   suggestedPersonas?: PersonaSuggestionDto[];
   selectedPersonaIds?: string[];
+  /** Verified product features */
+  features?: string[];
+  /** Correct workflow steps in order */
+  workflowSteps?: string[];
+  /** Exact pricing info */
+  pricing?: string;
+  /** Allowed promos */
+  promos?: string[];
+  /** Allowed CTAs */
+  ctaRules?: string[];
+  /** Allowed proof/stats */
+  allowedProof?: string[];
+  /** Words to never use */
+  harshLabelsBan?: string[];
 }

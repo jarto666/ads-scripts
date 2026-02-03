@@ -1,4 +1,4 @@
-import { Project, Persona } from '@prisma/client';
+import { Project, Persona, ProjectFacts } from '@prisma/client';
 import {
   getPlatformPromptBlock,
   getBeatCountGuidance,
@@ -15,6 +15,120 @@ interface ScriptPlan {
   complianceNotes: string[];
 }
 
+/**
+ * Build the grounding facts block for prompts.
+ * This is the core mechanism to prevent hallucinations.
+ */
+function buildFactsBlock(facts: ProjectFacts | null, forbiddenClaims: string[]): string {
+  if (!facts) {
+    // Even without facts, include basic grounding rules
+    return `## GROUNDING RULES (CRITICAL)
+- Do NOT invent promotional offers, discounts, trials, or guarantees
+- Do NOT invent statistics, user counts, ratings, or reviews
+- Do NOT make absolute claims (best, only, ultimate, guaranteed)
+- Do NOT invent features or capabilities not mentioned in the product description
+${forbiddenClaims.length ? `\n### Forbidden Claims (DO NOT USE)\n${forbiddenClaims.map((c) => `- "${c}"`).join('\n')}` : ''}`;
+  }
+
+  const sections: string[] = [
+    '## GROUNDING FACTS (CRITICAL)',
+    'You must ONLY use these verified facts. Do NOT invent details.',
+  ];
+
+  // Product features
+  if (facts.features.length > 0) {
+    sections.push('\n### Verified Product Features');
+    sections.push(facts.features.map((f) => `- ${f}`).join('\n'));
+  }
+
+  // Workflow steps (correct order)
+  if (facts.workflowSteps.length > 0) {
+    sections.push('\n### Workflow Steps (CORRECT ORDER - do not rearrange)');
+    sections.push(facts.workflowSteps.map((s, i) => `${i + 1}. ${s}`).join('\n'));
+  }
+
+  // Pricing
+  if (facts.pricing) {
+    sections.push(`\n### Pricing: ${facts.pricing}`);
+  }
+
+  // Allowed promos
+  sections.push('\n### Allowed Offers/Promos');
+  if (facts.promos.length > 0) {
+    sections.push(facts.promos.map((p) => `- ${p}`).join('\n'));
+  } else {
+    sections.push('NONE - do NOT mention any promotions, discounts, or special offers');
+  }
+
+  // Allowed CTAs
+  if (facts.ctaRules.length > 0) {
+    sections.push('\n### Allowed CTAs');
+    sections.push(facts.ctaRules.map((c) => `- ${c}`).join('\n'));
+  }
+
+  // Allowed proof/stats
+  sections.push('\n### Allowed Proof/Stats');
+  if (facts.allowedProof.length > 0) {
+    sections.push(facts.allowedProof.map((p) => `- ${p}`).join('\n'));
+  } else {
+    sections.push('NONE - do NOT claim statistics, user counts, ratings, or reviews');
+  }
+
+  // Forbidden claims
+  if (forbiddenClaims.length > 0) {
+    sections.push('\n### Forbidden Claims (NEVER use)');
+    sections.push(forbiddenClaims.map((c) => `- "${c}"`).join('\n'));
+  }
+
+  // Harsh labels ban
+  if (facts.harshLabelsBan.length > 0) {
+    sections.push('\n### Banned Harsh Language');
+    sections.push(facts.harshLabelsBan.map((w) => `- "${w}"`).join('\n'));
+  }
+
+  // Rules
+  sections.push(`
+### GROUNDING RULES
+- If a fact is NOT listed above, do NOT include it
+- Do NOT invent promos, discounts, trials, or guarantees
+- Do NOT invent statistics, user counts, or reviews
+- Do NOT mention features not in the verified features list
+- Do NOT rearrange workflow steps - the order is verified
+- Do NOT use harsh language from the banned list`);
+
+  return sections.join('\n');
+}
+
+/**
+ * Simplified facts block for hooks - focuses on what NOT to include.
+ * Hooks are short so they need minimal grounding info.
+ */
+function buildFactsBlockForHooks(facts: ProjectFacts | null, forbiddenClaims: string[]): string {
+  const sections: string[] = ['## GROUNDING (CRITICAL - Hooks must be truthful)'];
+
+  // Allowed proof (hooks can mention these)
+  if (facts?.allowedProof?.length) {
+    sections.push('### You CAN mention:');
+    sections.push(facts.allowedProof.map((p) => `- ${p}`).join('\n'));
+  }
+
+  // What to avoid
+  sections.push('\n### Do NOT include in hooks:');
+  sections.push('- Made-up statistics or user counts');
+  sections.push('- Promotional claims (discounts, trials) unless verified');
+  sections.push('- Absolute claims (best, only, ultimate, guaranteed)');
+
+  if (forbiddenClaims.length > 0) {
+    sections.push(`- Forbidden: ${forbiddenClaims.slice(0, 5).join(', ')}`);
+  }
+
+  if (facts?.harshLabelsBan?.length) {
+    sections.push(`- Harsh language: ${facts.harshLabelsBan.slice(0, 5).join(', ')}`);
+  }
+
+  return sections.join('\n');
+}
+
 export function buildPass1Prompt(
   project: Project & { personas: Persona[] },
   settings: {
@@ -23,6 +137,7 @@ export function buildPass1Prompt(
     durations: number[];
     count: number;
   },
+  facts?: ProjectFacts | null,
 ): string {
   const personaDescriptions = project.personas
     .map(
@@ -49,13 +164,13 @@ ${platformBlock}
 
 ## Product
 ${project.productDescription}
-${project.offer ? `\nOffer: ${project.offer}` : ''}
 
 ${languageBlock}## Target Audiences
 ${personaDescriptions || 'General audience'}
 
 ${project.brandVoice ? `## Brand Voice\n${project.brandVoice}\n` : ''}
-${project.forbiddenClaims.length ? `## Forbidden Claims (DO NOT USE)\n${project.forbiddenClaims.map((c) => `- ${c}`).join('\n')}\n` : ''}
+${buildFactsBlock(facts || null, project.forbiddenClaims)}
+
 ## Beat Count Guidelines
 ${beatGuidance}
 
@@ -100,6 +215,7 @@ export function buildPass2Prompt(
   project: Project & { personas: Persona[] },
   plan: ScriptPlan,
   platform: string,
+  facts?: ProjectFacts | null,
 ): string {
   const personaContext = project.personas
     .map((p) => {
@@ -130,7 +246,6 @@ ${platformBlock}
 
 ## Product
 ${project.productDescription}
-${project.offer ? `\nOffer: ${project.offer}` : ''}
 
 ${languageBlock}## Target Audience
 - ${personaContext || 'General audience'}
@@ -150,7 +265,8 @@ This is UGC - it must sound like a real person talking, not a script.
 - Each line should pass the "would someone actually say this?" test
 
 ${project.brandVoice ? `## Brand Voice\n${project.brandVoice}\n` : ''}
-${project.forbiddenClaims.length ? `## FORBIDDEN (Never use these):\n${project.forbiddenClaims.map((c) => `- "${c}"`).join('\n')}\n` : ''}
+${buildFactsBlock(facts || null, project.forbiddenClaims)}
+
 ${angleGuidanceBlock}
 ## Script Plan to Expand
 Duration: ${plan.duration}s
@@ -223,6 +339,7 @@ export function buildHookGenerationPrompt(
     hooksPerAngle: number; // Number of hooks to generate per angle
     bannedPhrases?: string[]; // From StylePolicy
   },
+  facts?: ProjectFacts | null,
 ): string {
   const personaDescriptions = project.personas
     .map(
@@ -259,10 +376,11 @@ ${platformBlock}
 
 ## Product
 ${project.productDescription}
-${project.offer ? `\nOffer: ${project.offer}` : ''}
 
 ${languageBlock}## Target Audiences
 ${personaDescriptions || 'General audience'}
+
+${buildFactsBlockForHooks(facts || null, project.forbiddenClaims)}
 ${bannedSection}
 ## VOICE & TONE (CRITICAL)
 Write as if the creator is talking to a friend, NOT reading ad copy.

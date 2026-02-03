@@ -290,16 +290,6 @@ export class PdfExportService {
                 <p>${project.productDescription.substring(0, 250)}${project.productDescription.length > 250 ? "..." : ""}</p>
               </div>
               ${
-                project.offer
-                  ? `
-                <div class="summary-item">
-                  <h4>Offer</h4>
-                  <p>${project.offer}</p>
-                </div>
-              `
-                  : ""
-              }
-              ${
                 usedPersonas.length > 0
                   ? `
                 <div class="summary-item">

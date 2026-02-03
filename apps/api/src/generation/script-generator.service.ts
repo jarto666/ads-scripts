@@ -12,9 +12,10 @@ import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
 import { HookGeneratorService, SelectedHook } from './hook-generator.service';
 import { RerankService, RerankScores } from './rerank.service';
+import { GroundednessService } from './groundedness.service';
 import { CreditsService } from '../credits/credits.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { Project, Persona, Batch, Prisma } from '@prisma/client';
+import { Project, Persona, Batch, Prisma, ProjectFacts } from '@prisma/client';
 import { getScriptModel, validateBatchRequest, QUALITY_THRESHOLDS } from '../config';
 
 // Legacy mapping for backward compatibility - now uses config
@@ -70,6 +71,7 @@ export class ScriptGeneratorService {
     private styleFilter: StyleFilterService,
     private hookGenerator: HookGeneratorService,
     private rerankService: RerankService,
+    private groundednessService: GroundednessService,
     private creditsService: CreditsService,
     private notifications: NotificationsGateway,
   ) {}
@@ -139,9 +141,15 @@ export class ScriptGeneratorService {
         requestedCount: remainingCount,
       };
 
+      // Load ProjectFacts for grounding (prevents hallucinations)
+      const facts = await this.groundednessService.getProjectFacts(batch.projectId);
+      if (facts) {
+        this.logger.log(`Loaded ProjectFacts for grounding (features: ${facts.features.length}, proofs: ${facts.allowedProof.length})`);
+      }
+
       // Pass 1: Generate plans (for remaining scripts only)
       this.logger.log(`Starting Pass 1 for batch ${batchId} with ${filteredPersonas.length} personas`);
-      const plans = await this.generatePlans(batchWithFilteredProject);
+      const plans = await this.generatePlans(batchWithFilteredProject, facts);
 
       // Pass 2: Generate full scripts for each plan (in parallel with controlled concurrency)
       this.logger.log(`Starting Pass 2 for batch ${batchId}: ${plans.length} scripts (concurrency: ${SCRIPT_GENERATION_CONCURRENCY})`);
@@ -152,6 +160,7 @@ export class ScriptGeneratorService {
         batchWithFilteredProject,
         batchId,
         batch.project.forbiddenClaims,
+        facts,
       );
 
       // Update batch status
@@ -211,13 +220,18 @@ export class ScriptGeneratorService {
 
   private async generatePlans(
     batch: Batch & { project: Project & { personas: Persona[] } },
+    facts?: ProjectFacts | null,
   ): Promise<ScriptPlan[]> {
-    const prompt = buildPass1Prompt(batch.project, {
-      platform: batch.platform,
-      angles: batch.angles,
-      durations: batch.durations,
-      count: batch.requestedCount,
-    });
+    const prompt = buildPass1Prompt(
+      batch.project,
+      {
+        platform: batch.platform,
+        angles: batch.angles,
+        durations: batch.durations,
+        count: batch.requestedCount,
+      },
+      facts,
+    );
 
     const model = getModelForQuality(batch.quality);
     this.logger.log(`Using model ${model} for batch ${batch.id} (quality: ${batch.quality})`);
@@ -266,8 +280,9 @@ export class ScriptGeneratorService {
   private async generateScript(
     batch: Batch & { project: Project & { personas: Persona[] } },
     plan: ScriptPlan,
+    facts?: ProjectFacts | null,
   ): Promise<ScriptOutput> {
-    const prompt = buildPass2Prompt(batch.project, plan, batch.platform);
+    const prompt = buildPass2Prompt(batch.project, plan, batch.platform, facts);
     const model = getModelForQuality(batch.quality);
 
     for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
@@ -305,6 +320,158 @@ export class ScriptGeneratorService {
   }
 
   /**
+   * Validate script for groundedness violations and attempt rewrite if needed.
+   * Key principle: NEVER reject scripts - always deliver what was requested.
+   * If violations found, try to fix them. If rewrite fails, keep original + warnings.
+   */
+  private async validateAndRewriteIfNeeded(
+    script: ScriptOutput,
+    facts: ProjectFacts | null | undefined,
+    batch: Batch & { project: Project & { personas: Persona[] } },
+  ): Promise<ScriptOutput> {
+    // If no facts, we can't validate groundedness meaningfully
+    if (!facts) {
+      return script;
+    }
+
+    // Check groundedness
+    const groundednessResult = this.groundednessService.checkGroundedness(
+      {
+        hook: script.hook,
+        storyboard: script.storyboard.map(s => ({
+          spoken: s.spoken,
+          onScreen: s.onScreen,
+        })),
+        ctaVariants: script.ctaVariants,
+      },
+      facts,
+    );
+
+    // If no violations, return as-is
+    if (groundednessResult.passed) {
+      return script;
+    }
+
+    this.logger.warn(
+      `Script has ${groundednessResult.violations.length} groundedness violations, attempting rewrite`,
+    );
+
+    // Attempt rewrite to fix violations
+    try {
+      const rewritePrompt = this.buildRewritePrompt(script, groundednessResult.violations, facts, batch);
+
+      const response = await this.openRouter.chatCompletion(
+        [
+          { role: 'system', content: 'You fix scripts to remove violations. Always respond with valid JSON.' },
+          { role: 'user', content: rewritePrompt },
+        ],
+        {
+          model: getModelForQuality(batch.quality),
+          temperature: 0.3, // Lower temperature for more consistent fixes
+          jsonMode: true,
+        },
+      );
+
+      const cleaned = this.stripMarkdown(response);
+      const rewrittenScript = JSON.parse(cleaned) as ScriptOutput;
+
+      // Validate the rewrite
+      const rewriteGroundedness = this.groundednessService.checkGroundedness(
+        {
+          hook: rewrittenScript.hook,
+          storyboard: rewrittenScript.storyboard.map(s => ({
+            spoken: s.spoken,
+            onScreen: s.onScreen,
+          })),
+          ctaVariants: rewrittenScript.ctaVariants,
+        },
+        facts,
+      );
+
+      // Use rewrite if it's better (fewer violations or passed)
+      if (rewriteGroundedness.score > groundednessResult.score) {
+        this.logger.log(
+          `Rewrite improved groundedness: ${groundednessResult.score} → ${rewriteGroundedness.score}`,
+        );
+        // Add any remaining violations as warnings
+        if (rewriteGroundedness.violations.length > 0) {
+          rewrittenScript.warnings = [
+            ...(rewrittenScript.warnings || []),
+            ...rewriteGroundedness.violations.map(v => `${v.type}: ${v.text}`),
+          ];
+        }
+        return rewrittenScript;
+      }
+
+      // Rewrite wasn't better, keep original with warnings
+      this.logger.warn('Rewrite did not improve groundedness, keeping original');
+    } catch (error) {
+      this.logger.error('Rewrite failed:', error);
+    }
+
+    // Keep original script but add warnings about violations
+    script.warnings = [
+      ...(script.warnings || []),
+      ...groundednessResult.violations.map(v => `Unverified: ${v.text}`),
+    ];
+
+    return script;
+  }
+
+  /**
+   * Build prompt for rewriting a script to fix groundedness violations.
+   */
+  private buildRewritePrompt(
+    script: ScriptOutput,
+    violations: Array<{ type: string; text: string; suggestion?: string }>,
+    facts: ProjectFacts,
+    batch: Batch & { project: Project & { personas: Persona[] } },
+  ): string {
+    const violationsList = violations
+      .map(v => `- "${v.text}" (${v.type}): ${v.suggestion || 'Remove or replace'}`)
+      .join('\n');
+
+    const factsSection = [
+      '## VERIFIED FACTS (only use these)',
+      facts.features.length > 0 ? `Features: ${facts.features.join(', ')}` : '',
+      facts.allowedProof.length > 0 ? `Allowed proof: ${facts.allowedProof.join(', ')}` : 'No proof claims allowed',
+      facts.promos.length > 0 ? `Allowed promos: ${facts.promos.join(', ')}` : 'No promotional claims allowed',
+      facts.pricing ? `Pricing: ${facts.pricing}` : '',
+    ].filter(Boolean).join('\n');
+
+    return `You are fixing a UGC script to remove violations.
+
+## VIOLATIONS TO FIX
+${violationsList}
+
+${factsSection}
+
+## ORIGINAL SCRIPT
+${JSON.stringify(script, null, 2)}
+
+## TASK
+Rewrite the script to remove the violations above while:
+1. Keeping the same structure and flow
+2. Keeping the same hook style and angle
+3. Only using facts from the verified facts list
+4. Removing or softening any claims not backed by facts
+
+IMPORTANT:
+- Do NOT invent new claims
+- Do NOT add promotional offers not in the allowed promos
+- Do NOT add statistics not in the allowed proof
+- Replace absolute claims with softer alternatives
+
+Return the complete fixed script as valid JSON with the same structure.
+
+OUTPUT CONTRACT:
+- Output must be valid JSON
+- Output must start with '{' and end with '}'
+- Do NOT wrap in markdown fences
+- Do NOT include any explanation`;
+  }
+
+  /**
    * Process multiple script plans in parallel with controlled concurrency.
    * Uses a semaphore pattern to limit concurrent LLM requests.
    */
@@ -313,6 +480,7 @@ export class ScriptGeneratorService {
     batch: Batch & { project: Project & { personas: Persona[] } },
     batchId: string,
     forbiddenClaims: string[],
+    facts?: ProjectFacts | null,
   ): Promise<void> {
     // Create a simple semaphore for concurrency control
     let activeCount = 0;
@@ -364,7 +532,10 @@ export class ScriptGeneratorService {
       try {
         this.logger.log(`Generating script ${index + 1}/${plans.length} (angle: ${plan.angle}, duration: ${plan.duration}s)`);
 
-        const script = await this.generateScript(batch, plan);
+        let script = await this.generateScript(batch, plan, facts);
+
+        // Validate groundedness and rewrite if needed (never rejects, only fixes)
+        script = await this.validateAndRewriteIfNeeded(script, facts, batch);
 
         // Score the script
         const { score, warnings } = this.scoringService.scoreScript(
@@ -1086,7 +1257,6 @@ Return ONLY valid JSON.`;
 
 ## Product
 ${project.productDescription}
-${project.offer ? `\nOffer: ${project.offer}` : ''}
 
 ${languageBlock}## Target Audience
 ${personaContext || 'General audience'}

@@ -20,12 +20,6 @@ export class CreateProjectDto {
   @MaxLength(2000)
   productDescription: string;
 
-  @ApiPropertyOptional({ maxLength: 500 })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  offer?: string;
-
   @ApiPropertyOptional({ maxLength: 1000 })
   @IsString()
   @MaxLength(1000)
@@ -63,12 +57,6 @@ export class UpdateProjectDto {
   @MaxLength(2000)
   @IsOptional()
   productDescription?: string;
-
-  @ApiPropertyOptional({ maxLength: 500 })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  offer?: string;
 
   @ApiPropertyOptional({ maxLength: 1000 })
   @IsString()
@@ -134,9 +122,6 @@ export class ProjectDto {
   productDescription: string;
 
   @ApiPropertyOptional()
-  offer?: string;
-
-  @ApiPropertyOptional()
   brandVoice?: string;
 
   @ApiProperty({ type: [String] })
@@ -173,4 +158,131 @@ export class ProjectListItemDto {
 
   @ApiProperty()
   updatedAt: Date;
+}
+
+// ============================================================
+// ProjectFacts DTOs - Grounding data to prevent hallucinations
+// ============================================================
+
+export class UpsertProjectFactsDto {
+  @ApiPropertyOptional({ type: [String], description: 'Verified product features' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  features?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Correct workflow steps in order' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  workflowSteps?: string[];
+
+  @ApiPropertyOptional({ description: 'Exact pricing info (e.g., "$9/mo")' })
+  @IsString()
+  @IsOptional()
+  pricing?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Allowed promos ONLY (empty = none allowed)' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  promos?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Allowed CTAs' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  ctaRules?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Stats/testimonials we CAN use' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  allowedProof?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Words to never use in scripts' })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  harshLabelsBan?: string[];
+}
+
+export class ProjectFactsDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiProperty()
+  projectId: string;
+
+  @ApiProperty({ type: [String] })
+  features: string[];
+
+  @ApiProperty({ type: [String] })
+  workflowSteps: string[];
+
+  @ApiPropertyOptional()
+  pricing?: string;
+
+  @ApiProperty({ type: [String] })
+  promos: string[];
+
+  @ApiProperty({ type: [String] })
+  ctaRules: string[];
+
+  @ApiProperty({ type: [String] })
+  allowedProof: string[];
+
+  @ApiProperty({ type: [String] })
+  harshLabelsBan: string[];
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
+}
+
+// ============================================================
+// ProjectFacts Generation DTOs
+// ============================================================
+
+export class GenerateFactsDto {
+  @ApiPropertyOptional({ description: 'Product name (for draft mode when no project exists)' })
+  @IsString()
+  @IsOptional()
+  productName?: string;
+
+  @ApiPropertyOptional({ description: 'Product description (for draft mode when no project exists)' })
+  @IsString()
+  @IsOptional()
+  productDescription?: string;
+}
+
+export class GeneratedFactsDto {
+  @ApiProperty({ type: [String], description: 'Verified product features' })
+  features: string[];
+
+  @ApiProperty({ type: [String], description: 'Correct workflow steps in order' })
+  workflowSteps: string[];
+
+  @ApiPropertyOptional({ description: 'Exact pricing info (e.g., "$9/mo")' })
+  pricing?: string;
+
+  @ApiProperty({ type: [String], description: 'Allowed promos (empty = none allowed)' })
+  promos: string[];
+
+  @ApiProperty({ type: [String], description: 'Allowed CTAs' })
+  ctaRules: string[];
+
+  @ApiProperty({ type: [String], description: 'Stats/testimonials that can be used' })
+  allowedProof: string[];
+
+  @ApiProperty({ type: [String], description: 'Words to never use in scripts' })
+  harshLabelsBan: string[];
+
+  @ApiPropertyOptional({ description: 'Suggested brand voice/tone' })
+  brandVoice?: string;
+
+  @ApiProperty({ type: [String], description: 'Claims to avoid for this product type' })
+  forbiddenClaims: string[];
 }

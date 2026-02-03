@@ -15,6 +15,10 @@ import {
   UpdateProjectDto,
   ProjectDto,
   ProjectListItemDto,
+  UpsertProjectFactsDto,
+  ProjectFactsDto,
+  GenerateFactsDto,
+  GeneratedFactsDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator';
@@ -71,5 +75,41 @@ export class ProjectsController {
     @Param('id') id: string,
   ) {
     return this.projectsService.delete(user.id, id);
+  }
+
+  // ============================================================
+  // ProjectFacts endpoints - Grounding data to prevent hallucinations
+  // ============================================================
+
+  @Get(':id/facts')
+  @ApiOperation({ summary: 'Get project facts (grounding data)' })
+  @ApiResponse({ status: 200, type: ProjectFactsDto })
+  async getFacts(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+  ) {
+    return this.projectsService.getFactsByProjectId(user.id, id);
+  }
+
+  @Put(':id/facts')
+  @ApiOperation({ summary: 'Create or update project facts (grounding data)' })
+  @ApiResponse({ status: 200, type: ProjectFactsDto })
+  async upsertFacts(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() dto: UpsertProjectFactsDto,
+  ) {
+    return this.projectsService.upsertFacts(user.id, id, dto);
+  }
+
+  @Post(':id/facts/generate')
+  @ApiOperation({ summary: 'Generate project facts using AI (Pro feature)' })
+  @ApiResponse({ status: 201, type: GeneratedFactsDto })
+  async generateFacts(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('id') id: string,
+    @Body() dto: GenerateFactsDto,
+  ) {
+    return this.projectsService.generateFacts(user.id, id, dto);
   }
 }

@@ -5,6 +5,7 @@ import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
 import { HookGeneratorService } from './hook-generator.service';
 import { RerankService } from './rerank.service';
+import { GroundednessService } from './groundedness.service';
 import { CreditsModule } from '../credits/credits.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { CreditsModule } from '../credits/credits.module';
     StyleFilterService,
     HookGeneratorService,
     RerankService,
+    GroundednessService,
   ],
   exports: [
     OpenRouterClient,
@@ -24,6 +26,7 @@ import { CreditsModule } from '../credits/credits.module';
     StyleFilterService,
     HookGeneratorService,
     RerankService,
+    GroundednessService,
   ],
 })
 export class GenerationModule {}

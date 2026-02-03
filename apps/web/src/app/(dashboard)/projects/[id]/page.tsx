@@ -32,6 +32,10 @@ import {
   Crown,
   Copy,
   Volume2,
+  Wand2,
+  Lock,
+  ChevronRight,
+  X,
 } from "lucide-react";
 import { getProjectGenSettingsAtom } from "@/lib/atoms";
 import { useAuth } from "@/lib/auth";
@@ -80,6 +84,9 @@ import { PersonaCard } from "@/components/persona-card";
 import {
   projectsControllerFindOne,
   projectsControllerUpdate,
+  projectsControllerGetFacts,
+  projectsControllerUpsertFacts,
+  useProjectsControllerGenerateFacts,
   batchesControllerFindAllByProject,
   batchesControllerFindOne,
   batchesControllerGetScripts,
@@ -92,13 +99,18 @@ import {
   personasControllerUpdate,
   getCreditsControllerGetBalancesQueryKey,
 } from "@/api/generated/api";
-import type { PersonaDto, BatchDto, ScriptDto } from "@/api/generated/models";
+import type { PersonaDto, BatchDto, ScriptDto, ProjectFactsDto } from "@/api/generated/models";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 
 interface ProjectData {
   id: string;
   name: string;
   productDescription: string;
-  offer?: string;
   brandVoice?: string;
   forbiddenClaims: string[];
   language: string;
@@ -213,6 +225,330 @@ function VoiceoverModal({ storyboard }: { storyboard: Array<{ spoken?: string }>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// Grounding Facts Card Component
+function GroundingFactsCard({
+  projectId,
+  productName,
+  productDescription,
+  isPro,
+  onBrandDataGenerated,
+}: {
+  projectId: string;
+  productName: string;
+  productDescription: string;
+  isPro: boolean;
+  onBrandDataGenerated?: (brandVoice: string, forbiddenClaims: string[]) => void;
+}) {
+  const { toast } = useToast();
+  const [facts, setFacts] = useState<ProjectFactsDto | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Local state for editing
+  const [features, setFeatures] = useState<string[]>([]);
+  const [workflowSteps, setWorkflowSteps] = useState<string[]>([]);
+  const [pricing, setPricing] = useState("");
+  const [promos, setPromos] = useState<string[]>([]);
+  const [allowedProof, setAllowedProof] = useState<string[]>([]);
+  const [harshLabelsBan, setHarshLabelsBan] = useState<string[]>([]);
+
+  // Input states
+  const [newFeature, setNewFeature] = useState("");
+  const [newStep, setNewStep] = useState("");
+  const [newPromo, setNewPromo] = useState("");
+  const [newProof, setNewProof] = useState("");
+  const [newHarshWord, setNewHarshWord] = useState("");
+
+  const generateFactsMutation = useProjectsControllerGenerateFacts();
+
+  // Load facts on mount
+  useEffect(() => {
+    const loadFacts = async () => {
+      try {
+        const response = await projectsControllerGetFacts(projectId);
+        if (response.data) {
+          setFacts(response.data);
+          setFeatures(response.data.features || []);
+          setWorkflowSteps(response.data.workflowSteps || []);
+          setPricing(response.data.pricing || "");
+          setPromos(response.data.promos || []);
+          setAllowedProof(response.data.allowedProof || []);
+          setHarshLabelsBan(response.data.harshLabelsBan || []);
+        }
+      } catch {
+        // No facts yet, that's ok
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadFacts();
+  }, [projectId]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await projectsControllerUpsertFacts(projectId, {
+        features,
+        workflowSteps,
+        pricing: pricing || undefined,
+        promos,
+        ctaRules: [],
+        allowedProof,
+        harshLabelsBan,
+      });
+      toast({ title: "Facts saved", description: "Grounding facts have been updated." });
+    } catch {
+      toast({ title: "Save failed", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      const result = await generateFactsMutation.mutateAsync({
+        id: projectId,
+        data: { productName, productDescription },
+      });
+      const factsData = result.data;
+      setFeatures(factsData.features || []);
+      setWorkflowSteps(factsData.workflowSteps || []);
+      setPricing(factsData.pricing || "");
+      setPromos(factsData.promos || []);
+      setAllowedProof(factsData.allowedProof || []);
+      setHarshLabelsBan(factsData.harshLabelsBan || []);
+
+      // Also update brand voice and forbidden claims in parent form
+      if (onBrandDataGenerated && (factsData.brandVoice || factsData.forbiddenClaims?.length)) {
+        onBrandDataGenerated(factsData.brandVoice || "", factsData.forbiddenClaims || []);
+      }
+
+      toast({ title: "Facts generated", description: "Review and save the extracted facts and brand guidelines." });
+    } catch {
+      toast({ title: "Generation failed", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const addToList = (
+    list: string[],
+    setList: (v: string[]) => void,
+    value: string,
+    setValue: (v: string) => void
+  ) => {
+    if (value.trim() && !list.includes(value.trim())) {
+      setList([...list, value.trim()]);
+      setValue("");
+    }
+  };
+
+  const removeFromList = (list: string[], setList: (v: string[]) => void, item: string) => {
+    setList(list.filter((i) => i !== item));
+  };
+
+  const ListEditor = ({
+    label,
+    list,
+    setList,
+    newValue,
+    setNewValue,
+    placeholder,
+  }: {
+    label: string;
+    list: string[];
+    setList: (v: string[]) => void;
+    newValue: string;
+    setNewValue: (v: string) => void;
+    placeholder: string;
+  }) => (
+    <div className="space-y-2">
+      <Label className="text-sm">{label}</Label>
+      <div className="flex gap-2">
+        <Input
+          placeholder={placeholder}
+          value={newValue}
+          onChange={(e) => setNewValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addToList(list, setList, newValue, setNewValue);
+            }
+          }}
+          className="text-sm"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => addToList(list, setList, newValue, setNewValue)}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {list.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {list.map((item) => (
+            <Badge key={item} variant="secondary" className="text-xs gap-1 pr-1">
+              {item}
+              <button
+                onClick={() => removeFromList(list, setList, item)}
+                className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Grounding Facts</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-20 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasAnyFacts =
+    features.length > 0 ||
+    workflowSteps.length > 0 ||
+    pricing ||
+    promos.length > 0 ||
+    allowedProof.length > 0 ||
+    harshLabelsBan.length > 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>Grounding Facts</span>
+          {hasAnyFacts && (
+            <Badge variant="outline" className="text-xs font-normal">
+              {features.length + workflowSteps.length + promos.length + allowedProof.length} facts
+            </Badge>
+          )}
+        </CardTitle>
+        <CardDescription>
+          Factual data that prevents AI from making up information in scripts
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* AI Generation */}
+        {isPro && (
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Extracting facts...
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4 mr-2" />
+                Generate from Product Description
+              </>
+            )}
+          </Button>
+        )}
+        {!isPro && (
+          <Button variant="outline" className="w-full" disabled>
+            <Lock className="h-4 w-4 mr-2" />
+            AI Generation (Pro)
+          </Button>
+        )}
+
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-between">
+              <span>{isExpanded ? "Hide" : "Show"} fact fields</span>
+              <ChevronRight
+                className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4 space-y-4">
+            <ListEditor
+              label="Verified Features"
+              list={features}
+              setList={setFeatures}
+              newValue={newFeature}
+              setNewValue={setNewFeature}
+              placeholder="e.g., AI-powered editing..."
+            />
+
+            <ListEditor
+              label="Workflow Steps (in order)"
+              list={workflowSteps}
+              setList={setWorkflowSteps}
+              newValue={newStep}
+              setNewValue={setNewStep}
+              placeholder="e.g., Upload photo..."
+            />
+
+            <div className="space-y-2">
+              <Label className="text-sm">Pricing</Label>
+              <Input
+                placeholder="e.g., $9/month..."
+                value={pricing}
+                onChange={(e) => setPricing(e.target.value)}
+                className="text-sm"
+              />
+            </div>
+
+            <ListEditor
+              label="Allowed Promotions"
+              list={promos}
+              setList={setPromos}
+              newValue={newPromo}
+              setNewValue={setNewPromo}
+              placeholder="e.g., 30-day free trial..."
+            />
+
+            <ListEditor
+              label="Allowed Proof/Stats"
+              list={allowedProof}
+              setList={setAllowedProof}
+              newValue={newProof}
+              setNewValue={setNewProof}
+              placeholder="e.g., 50,000 users..."
+            />
+
+            <ListEditor
+              label="Banned Harsh Words"
+              list={harshLabelsBan}
+              setList={setHarshLabelsBan}
+              newValue={newHarshWord}
+              setNewValue={setNewHarshWord}
+              placeholder="e.g., ugly, terrible..."
+            />
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex justify-end pt-2 border-t">
+          <Button onClick={handleSave} disabled={isSaving} size="sm">
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? "Saving..." : "Save Facts"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -552,6 +888,7 @@ export default function ProjectDetailPage({
   const scriptParam = searchParams.get("script");
   const { user } = useAuth();
   const isAdmin = user?.isAdmin ?? false;
+  const isPro = user?.plan === "pro";
   const queryClient = useQueryClient();
 
   const [project, setProject] = useState<ProjectData | null>(null);
@@ -570,7 +907,6 @@ export default function ProjectDetailPage({
   const [formData, setFormData] = useState({
     name: "",
     productDescription: "",
-    offer: "",
     brandVoice: "",
     forbiddenClaims: "",
     language: "en",
@@ -796,7 +1132,6 @@ export default function ProjectDetailPage({
       setFormData({
         name: data.name,
         productDescription: data.productDescription,
-        offer: data.offer || "",
         brandVoice: data.brandVoice || "",
         forbiddenClaims: (data.forbiddenClaims || []).join("\n"),
         language: data.language,
@@ -865,7 +1200,6 @@ export default function ProjectDetailPage({
       await projectsControllerUpdate(id, {
         name: formData.name,
         productDescription: formData.productDescription,
-        offer: formData.offer || undefined,
         brandVoice: formData.brandVoice || undefined,
         forbiddenClaims: formData.forbiddenClaims
           .split("\n")
@@ -1303,24 +1637,6 @@ export default function ProjectDetailPage({
                     }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="offer" className="flex items-center">
-                    Offer (optional)
-                    <InfoTip>
-                      Promotional offers get woven into CTAs and closing hooks.
-                      Examples: &quot;20% off&quot;, &quot;Free shipping&quot;,
-                      &quot;Limited time&quot;.
-                    </InfoTip>
-                  </Label>
-                  <Input
-                    id="offer"
-                    placeholder="e.g., 20% off, Free shipping, Buy 1 Get 1..."
-                    value={formData.offer}
-                    onChange={(e) =>
-                      setFormData({ ...formData, offer: e.target.value })
-                    }
-                  />
-                </div>
               </div>
               <div className="space-y-2">
                 <Label
@@ -1476,6 +1792,23 @@ export default function ProjectDetailPage({
               </div>
             </CardContent>
           </Card>
+
+          {/* Grounding Facts Card */}
+          <GroundingFactsCard
+            projectId={id}
+            productName={formData.name}
+            productDescription={formData.productDescription}
+            isPro={isPro}
+            onBrandDataGenerated={(brandVoice, forbiddenClaims) => {
+              setFormData(prev => ({
+                ...prev,
+                brandVoice: brandVoice || prev.brandVoice,
+                forbiddenClaims: forbiddenClaims.length > 0
+                  ? forbiddenClaims.join("\n")
+                  : prev.forbiddenClaims,
+              }));
+            }}
+          />
         </TabsContent>
 
         {/* Settings Tab */}

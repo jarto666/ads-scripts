@@ -53,6 +53,8 @@ export class OpenRouterClient {
     const temperature = options?.temperature ?? 0.7;
     const maxTokens = options?.maxTokens ?? 4096;
 
+    this.logger.log(`Starting chat completion with model: ${model}, temp: ${temperature}, maxTokens: ${maxTokens}, jsonMode: ${options?.jsonMode || false}`);
+
     const requestBody: Record<string, unknown> = {
       model,
       messages,

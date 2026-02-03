@@ -20,6 +20,9 @@ import {
   ClipboardCheck,
   AlertCircle,
   RefreshCw,
+  ChevronDown,
+  Lock,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +36,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { PersonaDialog } from '@/components/persona-dialog';
 import { PersonaCard } from '@/components/persona-card';
@@ -44,6 +53,7 @@ import {
   useProjectDraftsControllerDeleteDraft,
   useProjectDraftsControllerImportFromUrl,
   useProjectDraftsControllerFinalizeDraft,
+  useProjectsControllerGenerateFacts,
   getProjectDraftsControllerGetDraftQueryKey,
   getProjectsControllerFindAllQueryKey,
 } from '@/api/generated/api';
@@ -60,25 +70,39 @@ const STEPS = [
 interface FormData {
   name: string;
   productDescription: string;
-  offer: string;
   brandVoice: string;
   forbiddenClaims: string[];
   language: string;
   region: string;
   suggestedPersonas: PersonaSuggestionDto[];
   selectedPersonaIds: string[];
+  // ProjectFacts fields for grounding
+  features: string[];
+  workflowSteps: string[];
+  pricing: string;
+  promos: string[];
+  ctaRules: string[];
+  allowedProof: string[];
+  harshLabelsBan: string[];
 }
 
 const initialFormData: FormData = {
   name: '',
   productDescription: '',
-  offer: '',
   brandVoice: '',
   forbiddenClaims: [],
   language: 'en',
   region: '',
   suggestedPersonas: [],
   selectedPersonaIds: [],
+  // ProjectFacts fields
+  features: [],
+  workflowSteps: [],
+  pricing: '',
+  promos: [],
+  ctaRules: [],
+  allowedProof: [],
+  harshLabelsBan: [],
 };
 
 export default function NewProjectPage() {
@@ -152,13 +176,20 @@ export default function NewProjectPage() {
         setFormData({
           name: fd.name || '',
           productDescription: fd.productDescription || '',
-          offer: fd.offer || '',
           brandVoice: fd.brandVoice || '',
           forbiddenClaims: fd.forbiddenClaims || [],
           language: fd.language || 'en',
           region: fd.region || '',
           suggestedPersonas: fd.suggestedPersonas || [],
           selectedPersonaIds: fd.selectedPersonaIds || [],
+          // ProjectFacts fields
+          features: fd.features || [],
+          workflowSteps: fd.workflowSteps || [],
+          pricing: fd.pricing || '',
+          promos: fd.promos || [],
+          ctaRules: fd.ctaRules || [],
+          allowedProof: fd.allowedProof || [],
+          harshLabelsBan: fd.harshLabelsBan || [],
         });
       }
     } else {
@@ -190,13 +221,20 @@ export default function NewProjectPage() {
       setFormData({
         name: fd.name || '',
         productDescription: fd.productDescription || '',
-        offer: fd.offer || '',
         brandVoice: fd.brandVoice || '',
         forbiddenClaims: fd.forbiddenClaims || [],
         language: fd.language || 'en',
         region: fd.region || '',
         suggestedPersonas: fd.suggestedPersonas || [],
         selectedPersonaIds: fd.selectedPersonaIds || [],
+        // ProjectFacts fields
+        features: fd.features || [],
+        workflowSteps: fd.workflowSteps || [],
+        pricing: fd.pricing || '',
+        promos: fd.promos || [],
+        ctaRules: fd.ctaRules || [],
+        allowedProof: fd.allowedProof || [],
+        harshLabelsBan: fd.harshLabelsBan || [],
       });
     }
 
@@ -542,6 +580,7 @@ export default function NewProjectPage() {
             onChange={setFormData}
             onAddClaim={addForbiddenClaim}
             onRemoveClaim={removeForbiddenClaim}
+            isPro={isPro}
           />
         )}
 
@@ -981,34 +1020,36 @@ function StepBasicInfo({
             The more detail you provide, the better your scripts will be
           </p>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="offer">Current Offer (optional)</Label>
-          <Input
-            id="offer"
-            placeholder="e.g., 20% off with code SUMMER20"
-            value={formData.offer}
-            onChange={(e) => onChange({ ...formData, offer: e.target.value })}
-          />
-        </div>
       </CardContent>
     </Card>
   );
 }
 
-// Step 2: Brand
+// Step 2: Brand & Facts
 function StepBrand({
   formData,
   onChange,
   onAddClaim,
   onRemoveClaim,
+  isPro,
 }: {
   formData: FormData;
   onChange: (data: FormData) => void;
   onAddClaim: (claim: string) => void;
   onRemoveClaim: (claim: string) => void;
+  isPro: boolean;
 }) {
+  const { toast } = useToast();
   const [newClaim, setNewClaim] = useState('');
+  const [newFeature, setNewFeature] = useState('');
+  const [newStep, setNewStep] = useState('');
+  const [newPromo, setNewPromo] = useState('');
+  const [newProof, setNewProof] = useState('');
+  const [newHarshWord, setNewHarshWord] = useState('');
+  const [isAiOpen, setIsAiOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateFactsMutation = useProjectsControllerGenerateFacts();
 
   const handleAddClaim = () => {
     if (newClaim.trim()) {
@@ -1017,34 +1058,203 @@ function StepBrand({
     }
   };
 
+  const handleAddToList = (field: keyof FormData, value: string, setter: (v: string) => void) => {
+    if (value.trim()) {
+      const currentList = formData[field] as string[];
+      if (!currentList.includes(value.trim())) {
+        onChange({ ...formData, [field]: [...currentList, value.trim()] });
+      }
+      setter('');
+    }
+  };
+
+  const handleRemoveFromList = (field: keyof FormData, value: string) => {
+    const currentList = formData[field] as string[];
+    onChange({ ...formData, [field]: currentList.filter(item => item !== value) });
+  };
+
+  const handleGenerateFacts = async () => {
+    if (!formData.productDescription) {
+      toast({
+        title: 'Product description required',
+        description: 'Please fill in the product description in the previous step first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const result = await generateFactsMutation.mutateAsync({
+        id: 'draft',
+        data: {
+          productName: formData.name,
+          productDescription: formData.productDescription,
+        },
+      });
+
+      // Merge generated facts into form
+      const facts = result.data;
+      onChange({
+        ...formData,
+        features: facts.features || [],
+        workflowSteps: facts.workflowSteps || [],
+        pricing: facts.pricing || '',
+        promos: facts.promos || [],
+        ctaRules: facts.ctaRules || [],
+        allowedProof: facts.allowedProof || [],
+        harshLabelsBan: facts.harshLabelsBan || [],
+        brandVoice: facts.brandVoice || formData.brandVoice,
+        forbiddenClaims: facts.forbiddenClaims || formData.forbiddenClaims,
+      });
+
+      toast({
+        title: 'Facts generated',
+        description: 'AI has extracted grounding facts and brand guidelines. Review and edit as needed.',
+      });
+    } catch {
+      toast({
+        title: 'Generation failed',
+        description: 'Failed to generate facts. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const ListInput = ({
+    label,
+    description,
+    field,
+    placeholder,
+    value,
+    setValue,
+  }: {
+    label: string;
+    description: string;
+    field: keyof FormData;
+    placeholder: string;
+    value: string;
+    setValue: (v: string) => void;
+  }) => (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <p className="text-xs text-muted-foreground">{description}</p>
+      <div className="flex gap-2">
+        <Input
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleAddToList(field, value, setValue);
+            }
+          }}
+        />
+        <Button variant="outline" onClick={() => handleAddToList(field, value, setValue)}>
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {(formData[field] as string[]).length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {(formData[field] as string[]).map((item) => (
+            <Badge key={item} variant="secondary" className="gap-1 pr-1">
+              {item}
+              <button
+                onClick={() => handleRemoveFromList(field, item)}
+                className="ml-1 hover:bg-destructive/20 rounded p-0.5"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Brand Guidelines</CardTitle>
+        <CardTitle>Brand & Grounding Facts</CardTitle>
         <CardDescription>
-          Help the AI understand your brand voice and any claims to avoid
+          Define your brand voice and factual information to prevent AI hallucinations
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* AI Generation Section */}
+        <Collapsible open={isAiOpen} onOpenChange={setIsAiOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-between"
+              disabled={!isPro}
+            >
+              <div className="flex items-center gap-2">
+                {isPro ? (
+                  <Wand2 className="h-4 w-4" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )}
+                <span>AI Assist - Extract Facts from Description</span>
+                {!isPro && (
+                  <Badge variant="secondary" className="ml-2">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Pro
+                  </Badge>
+                )}
+              </div>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isAiOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-4">
+            <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                AI will analyze your product description and extract factual grounding data to prevent hallucinations in generated scripts.
+              </p>
+              <Button
+                onClick={handleGenerateFacts}
+                disabled={isGenerating || !formData.productDescription}
+                className="w-full"
+              >
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Extracting facts...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate Facts from Product Description
+                  </>
+                )}
+              </Button>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <Separator />
+
+        {/* Brand Voice */}
         <div className="space-y-2">
           <Label htmlFor="brandVoice">Brand Voice (optional)</Label>
           <Textarea
             id="brandVoice"
-            placeholder="Describe your brand's tone and personality. e.g., Friendly and approachable, uses casual language, empowers customers..."
-            rows={4}
+            placeholder="Describe your brand's tone and personality. e.g., Friendly and approachable, uses casual language..."
+            rows={3}
             value={formData.brandVoice}
-            onChange={(e) =>
-              onChange({ ...formData, brandVoice: e.target.value })
-            }
+            onChange={(e) => onChange({ ...formData, brandVoice: e.target.value })}
           />
         </div>
 
-        <div className="space-y-3">
-          <Label>Forbidden Claims (optional)</Label>
+        {/* Forbidden Claims */}
+        <div className="space-y-2">
+          <Label>Forbidden Claims</Label>
           <p className="text-xs text-muted-foreground">
-            Add any claims or phrases that should never appear in your scripts
+            Claims or phrases that should never appear in scripts
           </p>
-
           <div className="flex gap-2">
             <Input
               placeholder="e.g., FDA approved, cures disease..."
@@ -1061,15 +1271,10 @@ function StepBrand({
               <Plus className="h-4 w-4" />
             </Button>
           </div>
-
           {formData.forbiddenClaims.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-wrap gap-2 pt-1">
               {formData.forbiddenClaims.map((claim) => (
-                <Badge
-                  key={claim}
-                  variant="secondary"
-                  className="gap-1 pr-1"
-                >
+                <Badge key={claim} variant="secondary" className="gap-1 pr-1">
                   {claim}
                   <button
                     onClick={() => onRemoveClaim(claim)}
@@ -1082,6 +1287,77 @@ function StepBrand({
             </div>
           )}
         </div>
+
+        <Separator />
+
+        <div className="space-y-1">
+          <h4 className="font-medium">Grounding Facts</h4>
+          <p className="text-xs text-muted-foreground">
+            These facts help prevent AI from making up information
+          </p>
+        </div>
+
+        {/* Features */}
+        <ListInput
+          label="Verified Features"
+          description="Product features that can be mentioned in scripts"
+          field="features"
+          placeholder="e.g., AI-powered editing, cloud sync..."
+          value={newFeature}
+          setValue={setNewFeature}
+        />
+
+        {/* Workflow Steps */}
+        <ListInput
+          label="Workflow Steps (in order)"
+          description="Correct order of steps to use your product"
+          field="workflowSteps"
+          placeholder="e.g., Upload photo, Choose template..."
+          value={newStep}
+          setValue={setNewStep}
+        />
+
+        {/* Pricing */}
+        <div className="space-y-2">
+          <Label htmlFor="pricing">Pricing</Label>
+          <p className="text-xs text-muted-foreground">Exact pricing info (leave empty if not to be mentioned)</p>
+          <Input
+            id="pricing"
+            placeholder="e.g., $9/month, Free tier available..."
+            value={formData.pricing}
+            onChange={(e) => onChange({ ...formData, pricing: e.target.value })}
+          />
+        </div>
+
+        {/* Allowed Promos */}
+        <ListInput
+          label="Allowed Promotions"
+          description="Only these promotional offers can be mentioned (empty = no promos)"
+          field="promos"
+          placeholder="e.g., 30-day free trial, 20% off first month..."
+          value={newPromo}
+          setValue={setNewPromo}
+        />
+
+        {/* Allowed Proof */}
+        <ListInput
+          label="Allowed Proof/Stats"
+          description="Statistics and testimonials that can be used"
+          field="allowedProof"
+          placeholder="e.g., 50,000 users, 4.8 star rating..."
+          value={newProof}
+          setValue={setNewProof}
+        />
+
+        {/* Harsh Words Ban */}
+        <ListInput
+          label="Banned Harsh Words"
+          description="Negative words to never use when addressing the audience"
+          field="harshLabelsBan"
+          placeholder="e.g., ugly, terrible, stupid..."
+          value={newHarshWord}
+          setValue={setNewHarshWord}
+        />
       </CardContent>
     </Card>
   );
@@ -1256,12 +1532,6 @@ function StepReview({
                   {formData.productDescription || '-'}
                 </p>
               </div>
-              {formData.offer && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Offer</p>
-                  <p className="text-sm">{formData.offer}</p>
-                </div>
-              )}
             </div>
           </div>
 

@@ -106,9 +106,6 @@ export class DraftFormDataDto {
   productDescription?: string;
 
   @ApiPropertyOptional()
-  offer?: string;
-
-  @ApiPropertyOptional()
   brandVoice?: string;
 
   @ApiPropertyOptional({ type: [String] })
@@ -125,6 +122,28 @@ export class DraftFormDataDto {
 
   @ApiPropertyOptional({ type: [String] })
   selectedPersonaIds?: string[];
+
+  // ProjectFacts fields for grounding
+  @ApiPropertyOptional({ type: [String], description: 'Verified product features' })
+  features?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Correct workflow steps in order' })
+  workflowSteps?: string[];
+
+  @ApiPropertyOptional({ description: 'Exact pricing info' })
+  pricing?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Allowed promos' })
+  promos?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Allowed CTAs' })
+  ctaRules?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Allowed proof/stats' })
+  allowedProof?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Words to never use' })
+  harshLabelsBan?: string[];
 }
 
 export class DraftDto {

@@ -263,6 +263,164 @@
         ]
       }
     },
+    "/projects/{id}/facts": {
+      "get": {
+        "operationId": "ProjectsController_getFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectFactsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get project facts (grounding data)",
+        "tags": [
+          "Projects"
+        ]
+      },
+      "put": {
+        "operationId": "ProjectsController_upsertFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertProjectFactsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectFactsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Create or update project facts (grounding data)",
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/projects/{id}/facts/generate": {
+      "post": {
+        "operationId": "ProjectsController_generateFacts",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateFactsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedFactsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generate project facts using AI (Pro feature)",
+        "tags": [
+          "Projects"
+        ]
+      }
+    },
+    "/credits/balances": {
+      "get": {
+        "operationId": "CreditsController_getBalances",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditsBalancesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get current credit balances",
+        "tags": [
+          "Credits"
+        ]
+      }
+    },
+    "/credits/transactions": {
+      "get": {
+        "operationId": "CreditsController_getTransactions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CreditTransactionDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get credit transaction history",
+        "tags": [
+          "Credits"
+        ]
+      }
+    },
     "/projects/{projectId}/personas": {
       "post": {
         "operationId": "PersonasController_create",
@@ -473,53 +631,6 @@
         "summary": "Delete a persona",
         "tags": [
           "Personas"
-        ]
-      }
-    },
-    "/credits/balances": {
-      "get": {
-        "operationId": "CreditsController_getBalances",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreditsBalancesResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get current credit balances",
-        "tags": [
-          "Credits"
-        ]
-      }
-    },
-    "/credits/transactions": {
-      "get": {
-        "operationId": "CreditsController_getTransactions",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/CreditTransactionDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get credit transaction history",
-        "tags": [
-          "Credits"
         ]
       }
     },
@@ -1623,10 +1734,6 @@
             "type": "string",
             "maxLength": 2000
           },
-          "offer": {
-            "type": "string",
-            "maxLength": 500
-          },
           "brandVoice": {
             "type": "string",
             "maxLength": 1000
@@ -1715,9 +1822,6 @@
           "productDescription": {
             "type": "string"
           },
-          "offer": {
-            "type": "string"
-          },
           "brandVoice": {
             "type": "string"
           },
@@ -1798,10 +1902,6 @@
             "type": "string",
             "maxLength": 2000
           },
-          "offer": {
-            "type": "string",
-            "maxLength": 500
-          },
           "brandVoice": {
             "type": "string",
             "maxLength": 1000
@@ -1819,6 +1919,315 @@
             "type": "string"
           }
         }
+      },
+      "ProjectFactsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workflowSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "string"
+          },
+          "promos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ctaRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedProof": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "harshLabelsBan": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "features",
+          "workflowSteps",
+          "promos",
+          "ctaRules",
+          "allowedProof",
+          "harshLabelsBan",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpsertProjectFactsDto": {
+        "type": "object",
+        "properties": {
+          "features": {
+            "description": "Verified product features",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workflowSteps": {
+            "description": "Correct workflow steps in order",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "string",
+            "description": "Exact pricing info (e.g., \"$9/mo\")"
+          },
+          "promos": {
+            "description": "Allowed promos ONLY (empty = none allowed)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ctaRules": {
+            "description": "Allowed CTAs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedProof": {
+            "description": "Stats/testimonials we CAN use",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "harshLabelsBan": {
+            "description": "Words to never use in scripts",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GenerateFactsDto": {
+        "type": "object",
+        "properties": {
+          "productName": {
+            "type": "string",
+            "description": "Product name (for draft mode when no project exists)"
+          },
+          "productDescription": {
+            "type": "string",
+            "description": "Product description (for draft mode when no project exists)"
+          }
+        }
+      },
+      "GeneratedFactsDto": {
+        "type": "object",
+        "properties": {
+          "features": {
+            "description": "Verified product features",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workflowSteps": {
+            "description": "Correct workflow steps in order",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "string",
+            "description": "Exact pricing info (e.g., \"$9/mo\")"
+          },
+          "promos": {
+            "description": "Allowed promos (empty = none allowed)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ctaRules": {
+            "description": "Allowed CTAs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedProof": {
+            "description": "Stats/testimonials that can be used",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "harshLabelsBan": {
+            "description": "Words to never use in scripts",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "brandVoice": {
+            "type": "string",
+            "description": "Suggested brand voice/tone"
+          },
+          "forbiddenClaims": {
+            "description": "Claims to avoid for this product type",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "features",
+          "workflowSteps",
+          "promos",
+          "ctaRules",
+          "allowedProof",
+          "harshLabelsBan",
+          "forbiddenClaims"
+        ]
+      },
+      "CreditsBalanceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "free",
+              "subscription",
+              "pack"
+            ]
+          },
+          "balance": {
+            "type": "number"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "isExpired": {
+            "type": "boolean"
+          },
+          "effectiveBalance": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "balance",
+          "isExpired",
+          "effectiveBalance"
+        ]
+      },
+      "CreditsBalancesResponseDto": {
+        "type": "object",
+        "properties": {
+          "balances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreditsBalanceDto"
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "balances",
+          "total"
+        ]
+      },
+      "CreditTransactionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "creditType": {
+            "type": "string",
+            "enum": [
+              "free",
+              "subscription",
+              "pack"
+            ]
+          },
+          "amount": {
+            "type": "number"
+          },
+          "balanceAfter": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "renewal",
+              "generation",
+              "purchase",
+              "admin",
+              "refund",
+              "expire"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "batchId": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "creditType",
+          "amount",
+          "balanceAfter",
+          "type",
+          "createdAt"
+        ]
       },
       "CreatePersonaDto": {
         "type": "object",
@@ -2005,110 +2414,6 @@
             }
           }
         }
-      },
-      "CreditsBalanceDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": [
-              "free",
-              "subscription",
-              "pack"
-            ]
-          },
-          "balance": {
-            "type": "number"
-          },
-          "expiresAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "isExpired": {
-            "type": "boolean"
-          },
-          "effectiveBalance": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "type",
-          "balance",
-          "isExpired",
-          "effectiveBalance"
-        ]
-      },
-      "CreditsBalancesResponseDto": {
-        "type": "object",
-        "properties": {
-          "balances": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreditsBalanceDto"
-            }
-          },
-          "total": {
-            "type": "number"
-          }
-        },
-        "required": [
-          "balances",
-          "total"
-        ]
-      },
-      "CreditTransactionDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "creditType": {
-            "type": "string",
-            "enum": [
-              "free",
-              "subscription",
-              "pack"
-            ]
-          },
-          "amount": {
-            "type": "number"
-          },
-          "balanceAfter": {
-            "type": "number"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "renewal",
-              "generation",
-              "purchase",
-              "admin",
-              "refund",
-              "expire"
-            ]
-          },
-          "description": {
-            "type": "string"
-          },
-          "batchId": {
-            "type": "string"
-          },
-          "orderId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "creditType",
-          "amount",
-          "balanceAfter",
-          "type",
-          "createdAt"
-        ]
       },
       "RecentScriptDto": {
         "type": "object",
@@ -2730,9 +3035,6 @@
           "productDescription": {
             "type": "string"
           },
-          "offer": {
-            "type": "string"
-          },
           "brandVoice": {
             "type": "string"
           },
@@ -2755,6 +3057,52 @@
             }
           },
           "selectedPersonaIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "features": {
+            "description": "Verified product features",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "workflowSteps": {
+            "description": "Correct workflow steps in order",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "string",
+            "description": "Exact pricing info"
+          },
+          "promos": {
+            "description": "Allowed promos",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ctaRules": {
+            "description": "Allowed CTAs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowedProof": {
+            "description": "Allowed proof/stats",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "harshLabelsBan": {
+            "description": "Words to never use",
             "type": "array",
             "items": {
               "type": "string"

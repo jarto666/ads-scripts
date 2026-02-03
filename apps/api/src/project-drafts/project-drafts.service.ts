@@ -211,7 +211,7 @@ export class ProjectDraftsService {
               '',
             brandVoice: analysisData.brandVoice || '',
             language: extractionData.language || 'en',
-            offer: extractionData.offers.length > 0 ? extractionData.offers[0] : '',
+            promos: extractionData.offers || [],
             suggestedPersonas: analysisData.suggestedPersonas,
             selectedPersonaIds: analysisData.suggestedPersonas.map((p) => p.id),
           } as object,
@@ -279,7 +279,6 @@ export class ProjectDraftsService {
           userId,
           name: formData.name as string,
           productDescription: formData.productDescription as string,
-          offer: (formData.offer as string) || null,
           brandVoice: (formData.brandVoice as string) || null,
           forbiddenClaims: (formData.forbiddenClaims as string[]) || [],
           language: (formData.language as string) || 'en',
@@ -311,6 +310,39 @@ export class ProjectDraftsService {
           },
         });
         personasCreated++;
+      }
+
+      // Create ProjectFacts if any facts data is provided
+      const features = (formData.features as string[] | undefined) || [];
+      const workflowSteps = (formData.workflowSteps as string[] | undefined) || [];
+      const pricing = (formData.pricing as string | undefined) || null;
+      const promos = (formData.promos as string[] | undefined) || [];
+      const ctaRules = (formData.ctaRules as string[] | undefined) || [];
+      const allowedProof = (formData.allowedProof as string[] | undefined) || [];
+      const harshLabelsBan = (formData.harshLabelsBan as string[] | undefined) || [];
+
+      const hasFactsData =
+        features.length > 0 ||
+        workflowSteps.length > 0 ||
+        pricing ||
+        promos.length > 0 ||
+        ctaRules.length > 0 ||
+        allowedProof.length > 0 ||
+        harshLabelsBan.length > 0;
+
+      if (hasFactsData) {
+        await tx.projectFacts.create({
+          data: {
+            projectId: project.id,
+            features,
+            workflowSteps,
+            pricing,
+            promos,
+            ctaRules,
+            allowedProof,
+            harshLabelsBan,
+          },
+        });
       }
 
       // Delete draft

@@ -11,8 +11,6 @@ export interface UpdateProjectDto {
   name?: string;
   /** @maxLength 2000 */
   productDescription?: string;
-  /** @maxLength 500 */
-  offer?: string;
   /** @maxLength 1000 */
   brandVoice?: string;
   forbiddenClaims?: string[];
