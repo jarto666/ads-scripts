@@ -6,7 +6,6 @@ export interface ProjectGenSettings {
   angles: string[];
   duration: number;
   personaIds: string[];
-  quality: "standard" | "premium";
 }
 
 const DEFAULT_GEN_SETTINGS: ProjectGenSettings = {
@@ -15,7 +14,6 @@ const DEFAULT_GEN_SETTINGS: ProjectGenSettings = {
   angles: ["pain_agitation", "objection_reversal", "problem_solution"],
   duration: 15,
   personaIds: [],
-  quality: "standard",
 };
 
 // Creates a per-project atom stored in localStorage

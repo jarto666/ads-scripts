@@ -1,0 +1,2497 @@
+[
+  {
+    "model": "google/gemini-3-flash-preview",
+    "modelName": "Gemini 3 Flash",
+    "tier": "standard",
+    "pass1": {
+      "plans": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hookIdea": "POV: You just spent 8 hours on a beat and it sounds like trash in the car.",
+          "beats": [
+            "Visual: Producer looking defeated in a car, phone recording the muffled speakers.",
+            "Beat 1: The 'Car Test' heartbreak - explain why bedroom mixes never translate.",
+            "Beat 2: Show the RiffRight dashboard - 'I finally stopped guessing.'",
+            "Beat 3: Screen recording of the Mix Analysis tool highlighting muddy low-mids.",
+            "Beat 4: Quick 'Before vs After' sound toggle (1.5s each).",
+            "Beat 5: Soft CTA - 'Link in bio for the 14-day trial, stop guessing.'"
+          ],
+          "complianceNotes": [
+            "Avoid claiming it will make the user 'famous'. Ensure the 'Before/After' audio is labeled as a demonstration."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hookIdea": "How I went from 'muffled bedroom demos' to 'radio-ready' in literally 60 seconds.",
+          "beats": [
+            "Visual: Fast-paced montage of clicking 'Upload' on RiffRight.",
+            "Beat 1: High-energy intro showing the visual waveform transformation.",
+            "Beat 2: Explain the AI analysis - it's like having a pro engineer looking over your shoulder.",
+            "Beat 3: Highlight specific features: stereo width and loudness normalization.",
+            "Beat 4: Show the user's reaction (shock/excitement) hearing the mastered version.",
+            "Beat 5: Mention the 14-day free trial - 'Zero risk to try it on your latest track.'",
+            "Beat 6: Text overlay: '14 days free. Link in bio.'"
+          ],
+          "complianceNotes": [
+            "Do not state the AI 'replaces' engineers; frame it as a 'pro tool for your workflow'."
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hookIdea": "I'm gatekeeping this AI tool because it's basically a cheat code for producers.",
+          "beats": [
+            "Visual: Talking head with green screen effect showing a Reddit thread or Discord praise.",
+            "Beat 1: 'Everyone is asking how my tracks got so clean lately.'",
+            "Beat 2: Show the RiffRight interface and the 'Mastered' badge.",
+            "Beat 3: Rapid-fire text overlays of user reviews or ratings.",
+            "Beat 4: Explain the $19/month value vs. paying $100+ per track for mastering.",
+            "Beat 5: 'Try it for free for two weeks. Link's in my bio.'"
+          ],
+          "complianceNotes": [
+            "Ensure any 'reviews' shown are representative of actual user feedback."
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hookIdea": "Unpopular opinion: Your podcast sounds thin and it's killing your retention.",
+          "beats": [
+            "Visual: Split screen - 'Bad Audio' (red text) vs 'RiffRight Audio' (green text).",
+            "Beat 1: Call out the 'boomy' or 'thin' voice issues in home setups.",
+            "Beat 2: Show the RiffRight 'Analysis' tab identifying inconsistent levels.",
+            "Beat 3: The 'One-Click' fix - show the AI mastering the vocal chain.",
+            "Beat 4: Side-by-side audio comparison of a podcast clip.",
+            "Beat 5: 'Don't let bad audio lose you listeners.'",
+            "Beat 6: Mention the $19/month price point after the 14-day trial.",
+            "Beat 7: CTA: 'Link in bio to fix your sound.'"
+          ],
+          "complianceNotes": [
+            "Avoid promising that better audio will 'guarantee' more listeners or revenue."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hookIdea": "Stop paying $150 for mastering and just do this instead.",
+          "beats": [
+            "Visual: Tearing up a fake 'Invoice' for mastering services.",
+            "Beat 1: The 'Old Way' (expensive studios) vs the 'New Way' (AI analysis).",
+            "Beat 2: Drag and drop a file into RiffRight - show the progress bar moving fast.",
+            "Beat 3: Visualizing the EQ balance feedback - 'It literally tells you what to fix.'",
+            "Beat 4: Final master playback with high-energy reaction.",
+            "Beat 5: '14 days for free, then $19/mo. Link in bio.'"
+          ],
+          "complianceNotes": [
+            "Must not claim the AI is 'exactly the same' as a specific human engineer's work."
+          ]
+        }
+      ],
+      "tokens": {
+        "input": 641,
+        "output": 1176
+      },
+      "timeMs": 10400
+    },
+    "pass2": {
+      "scripts": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hook": "POV: You spent 8 hours on a beat and it sounds like literal trash in the car.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Close-up of producer in a car, head on steering wheel, phone recording muffled audio from car speakers.",
+              "onScreen": "POV: THE CAR TEST FAILED AGAIN 💀",
+              "spoken": "POV: You just spent 8 hours on a beat and it sounds like literal trash in the car. Why does this happen?",
+              "broll": [
+                "Muffled audio of a beat playing"
+              ]
+            },
+            {
+              "t": "5-9s",
+              "shot": "Creator sitting at desk, looking frustrated at their DAW (Logic/FL Studio).",
+              "onScreen": "Bedroom mixes NEVER translate. 😭",
+              "spoken": "The heartbreak is real. It sounds fire on my monitors, but the second I leave my room? It’s muddy and thin.",
+              "broll": [
+                "Zoom in on messy EQ plugins"
+              ]
+            },
+            {
+              "t": "10-15s",
+              "shot": "Screen recording of RiffRight dashboard. Dragging and dropping an audio file.",
+              "onScreen": "I finally stopped guessing. ✅",
+              "spoken": "I finally stopped guessing and started using RiffRight. It’s an AI that actually analyzes your mix balance.",
+              "broll": [
+                "Cursor hovering over 'Analyze Mix' button"
+              ]
+            },
+            {
+              "t": "16-21s",
+              "shot": "Split screen: RiffRight dashboard showing 'Muddy Low-Mids' alert vs. the creator nodding.",
+              "onScreen": "It caught the muddy low-mids instantly. 🔍",
+              "spoken": "It literally pointed out my low-mids were a mess. One click and the AI mastering fixed my dynamics and stereo width.",
+              "broll": [
+                "Visualizing EQ curves moving"
+              ]
+            },
+            {
+              "t": "22-26s",
+              "shot": "Fast cuts between 'Before' (red text) and 'After' (green text) with high-quality audio toggle.",
+              "onScreen": "BEFORE vs AFTER (Wait for it...)",
+              "spoken": "Listen to this difference. Before... and after. It’s actually professional grade now.",
+              "broll": [
+                "Audio switch from lo-fi to high-fidelity"
+              ]
+            },
+            {
+              "t": "27-30s",
+              "shot": "Creator pointing to the link in bio on their phone screen.",
+              "onScreen": "Try it free for 14 days! 🔗",
+              "spoken": "Stop guessing. I'll drop the link in my bio for a 14-day free trial. Go save your mixes.",
+              "broll": [
+                "Website URL overlay"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "I'll drop the link in bio for the 14-day trial.",
+            "Stop guessing and grab the free trial in the bio.",
+            "Link in bio to fix your mixes for free."
+          ],
+          "filmingChecklist": [
+            "Car with a decent sound system for the intro",
+            "Studio setup (laptop, monitors, MIDI keyboard)",
+            "Screen recording software for RiffRight dashboard",
+            "Ring light or natural window light for face shots"
+          ],
+          "warnings": [
+            "Do not claim it 'replaces' engineers.",
+            "Avoid saying it 'guarantees' a hit song.",
+            "Ensure 'Before/After' audio levels are normalized so 'After' isn't just louder."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hook": "Stop making muffled bedroom demos.",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Creator looking frustrated at laptop, wearing headphones, then turns to camera.",
+              "onScreen": "STOP MAKING MUFFLED DEMOS 🛑",
+              "spoken": "Stop making muffled bedroom demos. I literally went from 'home studio' to 'radio ready' in 60 seconds.",
+              "broll": [
+                "Close up of a messy DAW project"
+              ]
+            },
+            {
+              "t": "3-8s",
+              "shot": "Fast-paced screen record of dragging a WAV file into RiffRight.",
+              "onScreen": "POV: You found the cheat code 🎹",
+              "spoken": "I just uploaded my latest track to RiffRight. It’s an AI tool that analyzes your mix better than most ears can.",
+              "broll": [
+                "Mouse clicking 'Upload'"
+              ]
+            },
+            {
+              "t": "8-15s",
+              "shot": "Split screen: Waveform before (small) vs Waveform after (thick/full).",
+              "onScreen": "LIKE A PRO ENGINEER IN YOUR POCKET",
+              "spoken": "It gives you this insane breakdown of your EQ balance and dynamics. It’s like having a pro engineer looking over your shoulder telling you exactly what’s wrong.",
+              "broll": [
+                "Close up of the AI analysis dashboard"
+              ]
+            },
+            {
+              "t": "15-23s",
+              "shot": "Creator pointing at specific UI features like 'Stereo Width' and 'Loudness'.",
+              "onScreen": "STEREO WIDTH = 🤯",
+              "spoken": "Look at the stereo width and loudness normalization. It fixed my muddy low-end and made the whole track feel wide and expensive.",
+              "broll": [
+                "UI sliders moving automatically"
+              ]
+            },
+            {
+              "t": "23-32s",
+              "shot": "Creator puts headphones back on, eyes widen, head starts nodding aggressively.",
+              "onScreen": "THAT CLARITY THOUGH... 🔥",
+              "spoken": "Wait, listen to the master. The clarity is actually wild. I didn't have to touch a single knob, the AI just... got it.",
+              "broll": [
+                "Audio visualizer reacting to a beat drop"
+              ]
+            },
+            {
+              "t": "32-38s",
+              "shot": "Creator talking directly to camera, casual 'hand-held' phone vibe.",
+              "onScreen": "TRY IT FOR $0",
+              "spoken": "Seriously, you can try this on your own track for free. There’s a 14-day trial so there is zero risk to see if it fixes your mix.",
+              "broll": [
+                "Hand scrolling through the 'Free Trial' page"
+              ]
+            },
+            {
+              "t": "38-45s",
+              "shot": "Creator waving goodbye, text overlay takes over screen.",
+              "onScreen": "14 DAYS FREE. LINK IN BIO. 🔗",
+              "spoken": "Go to the link in my bio and try RiffRight. Your Spotify listeners will thank you. I'll drop the link below.",
+              "broll": [
+                "Final shot of the RiffRight logo"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "I'll drop the link in the bio.",
+            "Try it for free for 14 days, link in bio.",
+            "Go check the link in my bio to fix your audio."
+          ],
+          "filmingChecklist": [
+            "Use a ring light or natural window light",
+            "Ensure DAW (Ableton/FL Studio/Logic) is visible in background",
+            "Screen record the RiffRight dashboard in high res",
+            "Wear over-ear headphones for the 'producer' aesthetic",
+            "Record audio with a decent mic if possible"
+          ],
+          "warnings": [
+            "Do not claim it 'replaces' engineers",
+            "Avoid saying it 'guarantees' a viral hit",
+            "Ensure the music used in the background isn't copyrighted"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hook": "I’m gatekeeping this AI tool because it’s basically a cheat code for producers.",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Talking head, green screen over a blurred Reddit thread titled 'How are his mixes so wide?'",
+              "onScreen": "GATEKEEPING THIS... 🤫",
+              "spoken": "I’m gatekeeping this AI tool because it’s basically a cheat code for producers.",
+              "broll": [
+                "Zoom in on Reddit comment asking for the secret"
+              ]
+            },
+            {
+              "t": "4-8s",
+              "shot": "Creator points to a Discord chat bubble overlay showing 'Bro, this master is insane'",
+              "onScreen": "EVERYONE IS ASKING... 📈",
+              "spoken": "Everyone’s been blowing up my DMs asking how my tracks got so clean and loud lately.",
+              "broll": [
+                "Rapid fire screenshots of DM requests"
+              ]
+            },
+            {
+              "t": "9-15s",
+              "shot": "Screen recording of RiffRight interface. Uploading a file and hitting 'Analyze'.",
+              "onScreen": "AI ANALYSIS > HUMAN ERROR",
+              "spoken": "It’s RiffRight. It analyzes your EQ balance and stereo width instantly, then gives you a pro-level master in one click.",
+              "broll": [
+                "Close up of the 'Mastered' badge appearing on screen"
+              ]
+            },
+            {
+              "t": "16-22s",
+              "shot": "Creator back on camera, holding headphones, looking shocked at the price comparison.",
+              "onScreen": "$19/mo VS $100/track 💸",
+              "spoken": "Why pay a hundred bucks per track when you can get unlimited masters for 19 a month? It’s a no-brainer.",
+              "broll": [
+                "Text overlay: 5-star review stars popping up"
+              ]
+            },
+            {
+              "t": "23-30s",
+              "shot": "Creator leaning into the camera, casual and friendly.",
+              "onScreen": "14-DAY FREE TRIAL 🔗",
+              "spoken": "Stop releasing muddy tracks. Try it for free for two weeks. The link is in my bio.",
+              "broll": [
+                "Final screen showing the RiffRight logo"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Link is in my bio to try it free.",
+            "I'll drop the link in my bio for you guys.",
+            "Grab the 14-day trial in my bio."
+          ],
+          "filmingChecklist": [
+            "Use a ring light or natural window light",
+            "Record in a home studio/bedroom producer setup",
+            "Keep the energy high and fast-paced",
+            "Props: Studio headphones, laptop",
+            "Screen record the RiffRight dashboard beforehand"
+          ],
+          "warnings": [
+            "Do not mention specific competing software names",
+            "Avoid saying it 'makes hits', focus on 'clean mixes'",
+            "Ensure text overlays are within TikTok safe zones"
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hook": "Unpopular opinion: Your podcast sounds thin and it's killing your retention.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Creator sitting in front of a basic mic, looking directly at camera with a 'hot take' facial expression.",
+              "onScreen": "UNPOPULAR OPINION: YOUR AUDIO IS KILLING YOUR RETENTION 📉",
+              "spoken": "Unpopular opinion: Your podcast sounds thin and it's literally killing your retention. People are clicking away because it hurts to listen.",
+              "broll": [
+                "Fast zoom in on face"
+              ]
+            },
+            {
+              "t": "5-10s",
+              "shot": "Split screen. Left side: Creator talking into a phone (Red 'BAD' text). Right side: Creator talking into a pro setup (Green 'PRO' text).",
+              "onScreen": "WHY IT SOUNDS BOOMY/THIN 🔊",
+              "spoken": "Most home setups have that annoying boomy echo or sound like you're in a tin can. If you can't get the EQ right, you're losing listeners.",
+              "broll": [
+                "Audio waveform flickering"
+              ]
+            },
+            {
+              "t": "11-17s",
+              "shot": "Screen recording of RiffRight 'Analysis' tab. Mouse hovering over the EQ balance and dynamics graph.",
+              "onScreen": "AI ANALYSIS = NO MORE GUESSWORK",
+              "spoken": "Instead of guessing, I drop my file into RiffRight. It analyzes my mix instantly and shows exactly where my levels are inconsistent.",
+              "broll": [
+                "Cursor highlighting the 'Dynamics' section"
+              ]
+            },
+            {
+              "t": "18-25s",
+              "shot": "Close up of a hand clicking the 'Master My Track' button on the screen.",
+              "onScreen": "ONE-CLICK VOCAL FIX ✨",
+              "spoken": "I just hit the mastering button. It’s not replacing an engineer, it’s just giving me that polished, professional vocal chain in like five seconds.",
+              "broll": [
+                "Loading bar animation"
+              ]
+            },
+            {
+              "t": "26-33s",
+              "shot": "Creator wearing headphones, reacting with a 'stank face' (impressed). Switching between audio A and B.",
+              "onScreen": "BEFORE VS AFTER 🎧",
+              "spoken": "Listen to the difference. This is the raw file... and this is the RiffRight master. The warmth and clarity? It's a total game changer.",
+              "broll": [
+                "Side-by-side audio bars jumping"
+              ]
+            },
+            {
+              "t": "34-40s",
+              "shot": "Creator holding their phone, showing the pricing/trial page on the RiffRight site.",
+              "onScreen": "14-DAY FREE TRIAL 🎁",
+              "spoken": "Stop letting bad audio hold your content back. You can try it for free for 14 days. If you love it, it's only 19 bucks a month.",
+              "broll": [
+                "Text overlay: $19/mo"
+              ]
+            },
+            {
+              "t": "41-45s",
+              "shot": "Creator pointing down toward the caption/link area.",
+              "onScreen": "LINK IN BIO TO FIX YOUR SOUND 🔗",
+              "spoken": "I'll drop the link in my bio. Seriously, go fix your sound and watch your watch-time go up.",
+              "broll": [
+                "Green checkmark emoji"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "I'll drop the link in my bio.",
+            "Link in bio to fix your sound.",
+            "Try the 14-day free trial at the link below."
+          ],
+          "filmingChecklist": [
+            "High-quality headphones for the reaction shot",
+            "Screen recording software for the RiffRight dashboard",
+            "A basic microphone and a 'pro' looking microphone (can be the same one, just different lighting)",
+            "Record audio in two qualities: raw/unprocessed and RiffRight mastered"
+          ],
+          "warnings": [
+            "Do not say it replaces human engineers",
+            "Do not use the phrase 'guaranteed hit'",
+            "Avoid saying it 'sounds exactly like' a specific studio"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hook": "Stop paying $150 for mastering and just do this instead.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Close up of creator physically ripping a piece of paper that says 'INVOICE: $150 MASTERING' in big letters.",
+              "onScreen": "STOP PAYING $150 FOR MASTERING 💸",
+              "spoken": "Stop paying a hundred and fifty bucks for mastering and just do this instead. It’s a total game changer.",
+              "broll": [
+                "Slow motion paper rip"
+              ]
+            },
+            {
+              "t": "4-9s",
+              "shot": "Screen recording of dragging an audio file into the RiffRight dashboard. Fast cursor movement.",
+              "onScreen": "POV: You found the cheat code 🎧",
+              "spoken": "I used to wait days for engineers to get back to me. Now I just drop my track into RiffRight and let the AI do the heavy lifting.",
+              "broll": [
+                "Interface loading animation"
+              ]
+            },
+            {
+              "t": "9-15s",
+              "shot": "Creator pointing at the screen showing the EQ balance and stereo width graphs.",
+              "onScreen": "IT TELLS YOU EXACTLY WHAT TO FIX 📈",
+              "spoken": "It doesn't just master it. It literally analyzes your mix and tells you exactly where your EQ balance is off. It's like having a pro engineer over your shoulder.",
+              "broll": [
+                "Close up of EQ graph visuals"
+              ]
+            },
+            {
+              "t": "15-21s",
+              "shot": "Creator putting on headphones, eyes widening, nodding head to a heavy beat.",
+              "onScreen": "THAT LOUDNESS THO 🔊🔥",
+              "spoken": "The dynamics? Perfect. The loudness? Radio ready. I’m honestly shook at how clean this sounds for a fraction of the price.",
+              "broll": [
+                "Side-by-side waveform comparison"
+              ]
+            },
+            {
+              "t": "21-26s",
+              "shot": "Creator holding phone, showing the RiffRight landing page.",
+              "onScreen": "14-DAY FREE TRIAL 🆓",
+              "spoken": "You can literally try it for free for 14 days. If you love it, it’s only 19 bucks a month for unlimited masters.",
+              "broll": [
+                "Scrolling through the pricing page"
+              ]
+            },
+            {
+              "t": "26-30s",
+              "shot": "Selfie style video, creator pointing down to the caption area.",
+              "onScreen": "LINK IN BIO 🔗✨",
+              "spoken": "Go grab the trial. I’ll drop the link in my bio. Your Spotify listeners will thank you.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "I'll drop the link in my bio.",
+            "Try the 14-day trial at the link in my bio.",
+            "Click the link to level up your sound."
+          ],
+          "filmingChecklist": [
+            "Prop: Paper 'Invoice' with '$150' written clearly in marker",
+            "High-quality headphones for the reaction shot",
+            "Screen recording software for the dashboard walkthrough",
+            "Ring light or natural window light for 'talking to camera' segments",
+            "Fast-paced background music (lo-fi or trap beat)"
+          ],
+          "warnings": [
+            "Do not claim it 'replaces human engineers'",
+            "Ensure the music used in the background does not clip",
+            "Avoid saying 'guaranteed hit'"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "total": 65,
+          "details": {
+            "justCount": 1,
+            "literallyCount": 1,
+            "exclamationCount": 1,
+            "bannedPhraseHits": [
+              "wait for it"
+            ],
+            "bannedPatternHits": [],
+            "harshWordHits": [
+              "trash"
+            ],
+            "hookWordCount": 17,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 75,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 5,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 100,
+          "details": {
+            "justCount": 0,
+            "literallyCount": 0,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 13,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 70,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [
+              "game changer"
+            ],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 11,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 30,
+          "details": {
+            "justCount": 4,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [
+              "game changer"
+            ],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 10,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        }
+      ],
+      "avgScore": 68,
+      "tokens": {
+        "input": 3790,
+        "output": 4582
+      },
+      "timeMs": 36368
+    },
+    "totalTokens": {
+      "input": 4431,
+      "output": 5758
+    },
+    "totalTimeMs": 46768
+  },
+  {
+    "model": "anthropic/claude-haiku-4.5",
+    "modelName": "Haiku 4.5",
+    "tier": "standard",
+    "pass1": {
+      "plans": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hookIdea": "POV: You spent 8 hours on your mix and it still sounds like garbage compared to Spotify",
+          "beats": [
+            "Open with frustrated producer at desk, shaking head at monitor",
+            "Quick cuts: waveform zooming in, EQ plugin chaos, multiple failed attempts",
+            "Text overlay: 'Muddy bass? Thin vocals? Clipping everywhere?'",
+            "Show the problem: 'You have NO IDEA what's actually wrong'",
+            "Cut to RiffRight interface loading",
+            "Text: 'Upload. Analyze. Fix. In seconds.'",
+            "Show before/after waveform comparison",
+            "CTA: 'Try free for 14 days - link in bio'"
+          ],
+          "complianceNotes": [
+            "Avoid claiming it 'fixes' all problems - use 'identifies' and 'helps you fix'",
+            "Don't compare directly to professional engineers as replacement",
+            "Ensure before/after visuals are realistic and representative"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hookIdea": "This AI just gave me professional mixing feedback for $0 (and it actually worked)",
+          "beats": [
+            "Open: Bedroom producer looking defeated at setup",
+            "Text overlay: 'I couldn't afford $500/hour mastering engineers'",
+            "Quick transition: 'So I tried RiffRight'",
+            "Show uploading a track - fast motion",
+            "RiffRight dashboard reveals: 'EQ balance: 34% bass heavy', 'Dynamics: Inconsistent peaks'",
+            "Producer reacting with surprise: 'Wait... THAT'S what was wrong?'",
+            "Show making quick adjustments based on feedback",
+            "Play audio comparison: rough mix → improved mix",
+            "Text: 'Sounds professional now. Shipped it.'",
+            "Show Spotify/SoundCloud upload confirmation",
+            "CTA: 'I'll drop the link in bio if you want to try it'"
+          ],
+          "complianceNotes": [
+            "Don't claim it 'rivals' professional engineers - say 'professional-grade analysis'",
+            "Audio comparison must be genuine and not misleading",
+            "Avoid testimonial-style claims without proper disclosure if paid partnership"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hookIdea": "Every producer I know just switched to this for mixing feedback",
+          "beats": [
+            "Quick cuts of 3-4 different producers in different studios",
+            "Producer 1: 'This told me exactly what my mix needed'",
+            "Producer 2: 'Saved me thousands on mastering'",
+            "Text overlay rapid-fire: '10K+ producers using it', '14-day free trial'",
+            "Show RiffRight interface with analysis results",
+            "Producer 3: 'My mixes sound radio-ready now'",
+            "Montage: Multiple tracks uploading, analyses completing",
+            "Text: 'Professional mastering. AI speed. Your budget.'",
+            "CTA: 'Join them - free trial link in bio'"
+          ],
+          "complianceNotes": [
+            "Verify user count claim (10K+) before use - use actual data",
+            "If using real user testimonials, ensure proper consent and disclosure",
+            "Avoid 'everyone is using it' hyperbole - stick to verifiable metrics"
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hookIdea": "Podcast creators: your audio is embarrassing and you don't even know it",
+          "beats": [
+            "Open: Podcast creator reviewing episode, looking uncomfortable",
+            "Text: 'Episode 47 sounds NOTHING like episode 46'",
+            "Quick cuts showing problems: boomy intro, thin vocals, inconsistent levels",
+            "Creator frustrated: 'Why does this sound so unprofessional?'",
+            "Text overlay: 'You're losing listeners to bad audio quality'",
+            "Transition: 'What if you could fix it in 2 minutes?'",
+            "Show uploading episode to RiffRight",
+            "Dashboard reveals: 'Loudness inconsistent', 'EQ: Bassy in intro, thin in middle'",
+            "Creator implementing suggested fixes",
+            "Play before/after: rough episode → polished episode",
+            "Text: 'Now it sounds like a real podcast'",
+            "Show listener engagement boost (metaphorical)",
+            "CTA: 'Try 14 days free - link in bio'"
+          ],
+          "complianceNotes": [
+            "Don't claim it will 'gain listeners' - stick to audio quality improvements",
+            "Avoid exaggerating the speed ('2 minutes' is implementation, not guaranteed)",
+            "Ensure before/after examples are realistic podcast audio"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hookIdea": "I stopped paying for expensive mastering engineers and now my tracks sound just as good",
+          "beats": [
+            "Open: Producer at laptop, checking bank account looking sad",
+            "Text: '$500+ per master. Every. Single. Track.'",
+            "Cut to RiffRight loading: 'What if mastering was $19/month?'",
+            "Show upload process - one click",
+            "AI analysis running with visual feedback",
+            "Producer reviewing detailed breakdown: EQ, dynamics, stereo width",
+            "One-click mastering button highlighted",
+            "Play final result: professional-sounding master",
+            "Text overlay: 'Professional. Affordable. Instant.'",
+            "Show track going live on streaming platform",
+            "Producer smiling: 'This actually works'",
+            "CTA: 'Free trial in bio - no credit card needed'"
+          ],
+          "complianceNotes": [
+            "Don't say 'replaces mastering engineers' - say 'professional-grade mastering'",
+            "Clarify $19/month pricing in CTA or follow-up",
+            "Ensure audio example is genuinely improved, not just louder",
+            "Avoid claiming it's 'exactly like' expensive mastering"
+          ]
+        }
+      ],
+      "tokens": {
+        "input": 707,
+        "output": 1565
+      },
+      "timeMs": 16058
+    },
+    "pass2": {
+      "scripts": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hook": "POV: You spent 8 hours on your mix and it STILL sounds like garbage",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up of frustrated producer at desk, shaking head at monitor. Red-tinted lighting. Multiple coffee cups visible.",
+              "onScreen": "POV: 8 HOURS LATER\n\nStill sounds like... 🗑️",
+              "spoken": "Bro, I don't even know what's wrong anymore.",
+              "broll": [
+                "Waveform zooming in erratically",
+                "EQ plugin with random sliders everywhere"
+              ]
+            },
+            {
+              "t": "3-8s",
+              "shot": "Quick montage: Producer clicking frantically through plugins, shaking head, looking defeated. Zoom into messy DAW session.",
+              "onScreen": "Muddy bass?\nThin vocals?\nClipping EVERYWHERE?\n\nYou have NO IDEA what's actually wrong",
+              "spoken": "Is it the EQ? The compression? Both? I literally can't tell anymore.",
+              "broll": [
+                "Waveform clipping indicators",
+                "Spectrum analyzer showing red zones",
+                "Producer rubbing eyes in frustration"
+              ]
+            },
+            {
+              "t": "8-15s",
+              "shot": "Smooth transition to clean, minimalist RiffRight interface on screen. Cursor clicks 'Upload Track.' File uploads with satisfying animation.",
+              "onScreen": "Upload.\nAnalyze.\nFix.\n\nIn SECONDS.",
+              "spoken": "Then I found RiffRight. Uploaded my track. And it literally told me everything.",
+              "broll": [
+                "File uploading progress bar",
+                "Loading animation",
+                "AI analysis happening in real-time"
+              ]
+            },
+            {
+              "t": "15-23s",
+              "shot": "Split-screen before/after waveform comparison. Left side (muddy, distorted) → Right side (clean, balanced). Detailed analysis report showing EQ balance, dynamics, stereo width.",
+              "onScreen": "BEFORE vs AFTER\n\nEQ Balance: ✓\nDynamics: ✓\nStereo Width: ✓\nLoudness: ✓\n\nOne-click mastering included",
+              "spoken": "Boom. Instant feedback on everything. Bass was 3dB too hot, vocals needed compression, and my stereo field was completely off.",
+              "broll": [
+                "Analysis metrics highlighting",
+                "One-click mastering button",
+                "Final waveform looking professional"
+              ]
+            },
+            {
+              "t": "23-30s",
+              "shot": "Producer nodding, smiling at monitor. Spotify app notification showing new track uploaded. Quick cut back to RiffRight logo.",
+              "onScreen": "Try FREE for 14 days\n\n$19/month after\n\nLink in bio 👆",
+              "spoken": "Now my mixes actually sound like real music. Try it free for 14 days. Link in bio.",
+              "broll": [
+                "Spotify notification pop-up",
+                "RiffRight logo animation",
+                "Producer giving thumbs up"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Try RiffRight free for 14 days - link in bio 👆",
+            "Stop guessing. Start mastering. Free trial in bio.",
+            "I'll drop the link - try it free for 2 weeks and see the difference"
+          ],
+          "filmingChecklist": [
+            "Film in home studio setting with realistic mess (cables, coffee cups, energy drinks)",
+            "Use red/warm lighting for frustrated scenes, cool blue for RiffRight interface",
+            "Capture genuine frustration expressions - no over-acting",
+            "Have DAW open with actual messy session (multiple plugins, clipping indicators visible)",
+            "Film screen recordings of RiffRight interface: upload, analysis, before/after comparison",
+            "Get split-screen waveform footage (muddy vs. clean)",
+            "Film final reaction shot with genuine relief/satisfaction",
+            "Props: Headphones, multiple coffee cups, laptop, external monitor recommended",
+            "Use trending audio/background track with slightly chaotic energy"
+          ],
+          "warnings": [
+            "Do not claim RiffRight 'replaces human engineers' or 'guarantees hits'",
+            "Avoid saying the mastering 'sounds exactly like' professional studios",
+            "Ensure all claims about analysis accuracy are truthful and tested",
+            "Include clear disclosure of free trial terms and pricing",
+            "Do not make false before/after comparisons - use real RiffRight outputs only",
+            "Comply with TikTok's advertising policies on tech products and services"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hook": "This AI just gave me professional mixing feedback for $0 (and it actually worked)",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up of bedroom producer sitting at desk, looking frustrated at laptop screen. Home studio setup visible: headphones, monitor speakers, keyboard.",
+              "onScreen": "I couldn't afford $500/hour mastering engineers",
+              "spoken": "Yo, so I've been making beats for like two years, right? But every time I finish a track, it sounds... off.",
+              "broll": [
+                "Sad producer face",
+                "Zoom in on messy desk notes",
+                "Spotify/SoundCloud tabs open"
+              ]
+            },
+            {
+              "t": "3-7s",
+              "shot": "Fast-motion: producer dragging audio file to computer, clicking upload button. Screen shows loading animation.",
+              "onScreen": "So I tried RiffRight",
+              "spoken": "Found this AI mastering thing and I'm like... might as well, it's free for two weeks.",
+              "broll": [
+                "Cursor clicking",
+                "File upload progress bar",
+                "Loading spinner"
+              ]
+            },
+            {
+              "t": "7-13s",
+              "shot": "RiffRight dashboard reveals on screen. Show colorful analysis graphs: EQ balance meter, dynamics visualization, stereo width indicator.",
+              "onScreen": "EQ balance: 34% bass heavy\nDynamics: Inconsistent peaks\nLoudness: -8dB below standard",
+              "spoken": "And then... the dashboard just breaks down everything. Like, it literally told me my bass was eating the whole mix. My dynamics were all over the place.",
+              "broll": [
+                "Dashboard animation",
+                "Graphs filling in",
+                "Numbers updating"
+              ]
+            },
+            {
+              "t": "13-17s",
+              "shot": "Producer's face close-up, eyes widening. Genuine reaction of realization.",
+              "onScreen": "Wait... THAT'S what was wrong?",
+              "spoken": "And I'm sitting there like... wait, that's literally what I've been hearing but couldn't fix.",
+              "broll": [
+                "Shocked face reaction",
+                "Head tilt",
+                "Pointing at screen"
+              ]
+            },
+            {
+              "t": "17-25s",
+              "shot": "Split screen: Left side shows rough mix waveform in DAW, producer making adjustments (EQ tweaks visible). Right side shows RiffRight feedback guiding the process. Fast cuts between adjustments.",
+              "onScreen": "Made adjustments based on feedback\nRough mix → Professional mix",
+              "spoken": "So I spent like 20 minutes fixing the stuff it flagged. Tightened the bass, leveled out the peaks, boosted the loudness a bit.",
+              "broll": [
+                "EQ plugin adjusting",
+                "Fader movements",
+                "Before/after waveform comparison"
+              ]
+            },
+            {
+              "t": "25-35s",
+              "shot": "Audio comparison: Play 3-second clip of rough mix (muddy, unbalanced), then play improved mix (clean, punchy, professional). Producer nodding along, vibing with the improved version.",
+              "onScreen": "Sounds professional now",
+              "spoken": "Listen to the difference. It's actually... it's actually clean now. Like, actually ready to ship.",
+              "broll": [
+                "Waveform comparison",
+                "Producer headphone listening",
+                "Thumbs up gesture"
+              ]
+            },
+            {
+              "t": "35-42s",
+              "shot": "Fast montage: Producer uploading to Spotify, SoundCloud confirmation screen appears with new track live. Phone notification showing track published.",
+              "onScreen": "Shipped it.",
+              "spoken": "Uploaded it that same day. First track that actually sounds like it belongs on Spotify.",
+              "broll": [
+                "Upload button click",
+                "Confirmation screen",
+                "Phone notification pop-up",
+                "Spotify player showing track"
+              ]
+            },
+            {
+              "t": "42-45s",
+              "shot": "Producer back at desk, looking directly at camera with confident smile. Relaxed, satisfied energy.",
+              "onScreen": "14-day free trial\nThen $19/month",
+              "spoken": "I'll drop the link in bio if you want to try it. Seriously, game-changer.",
+              "broll": [
+                "Direct to camera",
+                "Shrug gesture",
+                "Smile"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "I'll drop the link in bio if you want to try it",
+            "Link in bio if you want to stop guessing on your mixes",
+            "Try it free for two weeks - link in bio"
+          ],
+          "filmingChecklist": [
+            "Film in bedroom/home studio setup for authenticity",
+            "Capture real laptop screen with RiffRight dashboard (screenshot or screen recording)",
+            "Get genuine reaction shots - don't over-act, keep it real",
+            "Film audio comparison on headphones for visual interest",
+            "Capture actual DAW (Ableton, Logic, FL Studio, etc.) with real track",
+            "Get phone notification or Spotify confirmation screen",
+            "Use natural lighting, avoid overly polished studio look",
+            "Fast cuts between segments - use trending TikTok transition sounds",
+            "Wear casual, relatable clothing (hoodie, t-shirt)",
+            "Have messy desk visible - adds authenticity for bedroom producer angle"
+          ],
+          "warnings": [
+            "Do not claim RiffRight 'replaces human engineers' or 'guarantees hits'",
+            "Ensure RiffRight dashboard footage is current and accurate",
+            "Disclose free trial terms clearly in text overlay",
+            "Audio comparison should feature actual before/after from real track (not stock audio)",
+            "Verify all claims about features (EQ analysis, dynamics detection, loudness measurement) are accurate",
+            "Include FTC disclosure if required: '#ad' or '#sponsored' in caption"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hook": "Every producer I know just switched to this for mixing feedback",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Quick cut of Producer 1 in bedroom studio, headphones on, looking at laptop screen with amazed expression",
+              "onScreen": "EVERY PRODUCER I KNOW JUST SWITCHED",
+              "spoken": "Yo, this literally told me exactly what my mix needed",
+              "broll": [
+                "Close-up of cursor clicking 'Analyze' button",
+                "Waveform appearing on screen"
+              ]
+            },
+            {
+              "t": "3-6s",
+              "shot": "Fast cut to Producer 2 in different studio space, gesturing at monitor showing RiffRight interface with detailed analysis",
+              "onScreen": "SAVED ME THOUSANDS ON MASTERING",
+              "spoken": "Saved me thousands on mastering sessions, no cap",
+              "broll": [
+                "Analysis results showing EQ balance, dynamics metrics",
+                "Green checkmarks appearing"
+              ]
+            },
+            {
+              "t": "6-9s",
+              "shot": "Rapid-fire text overlay montage with statistics, split-screen showing multiple producers nodding/reacting",
+              "onScreen": "10K+ PRODUCERS USING IT\n14-DAY FREE TRIAL\nAI MASTERING IN SECONDS",
+              "spoken": "Ten thousand producers can't be wrong",
+              "broll": [
+                "RiffRight dashboard loading",
+                "Progress bar completing",
+                "Mastered audio waveform"
+              ]
+            },
+            {
+              "t": "9-15s",
+              "shot": "Clean screen recording of RiffRight interface: track uploading, analysis running, results populating with detailed feedback metrics",
+              "onScreen": "PROFESSIONAL MASTERING\nAI SPEED\nYOUR BUDGET",
+              "spoken": "Upload your track, get professional feedback in seconds. EQ balance, dynamics, stereo width, loudness—everything",
+              "broll": [
+                "Multiple tracks in queue",
+                "Real-time analysis visualization",
+                "Before/after audio waveforms"
+              ]
+            },
+            {
+              "t": "15-18s",
+              "shot": "Producer 3 in studio, vibing to their track playing back, giving thumbs up, huge smile",
+              "onScreen": "MY MIXES SOUND RADIO-READY NOW",
+              "spoken": "My mixes sound radio-ready now, straight up",
+              "broll": [
+                "Spotify/SoundCloud open showing uploaded track",
+                "Play button being clicked"
+              ]
+            },
+            {
+              "t": "18-30s",
+              "shot": "Split-screen montage: Left side shows RiffRight logo and interface, right side shows montage of different producers working, uploading, getting feedback, nodding in approval",
+              "onScreen": "JOIN 10K+ PRODUCERS\nFREE TRIAL • NO CREDIT CARD\nLINK IN BIO",
+              "spoken": "Stop guessing on your mixes. Get real feedback. Join them—free trial, no credit card needed. Link in bio",
+              "broll": [
+                "RiffRight logo animation",
+                "Interface screens flashing",
+                "Success notifications popping up",
+                "Producers celebrating"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Free trial link in bio—no credit card needed",
+            "Try it free for 14 days, link in bio",
+            "I'll drop the free trial link in my bio"
+          ],
+          "filmingChecklist": [
+            "Recruit 3-4 real producers in different studio spaces (bedroom, semi-pro, home setup)",
+            "Film each producer reacting genuinely to RiffRight interface on their monitor",
+            "Get close-ups of laptop screens showing RiffRight dashboard and analysis results",
+            "Capture clear audio of producers speaking naturally (use phone mic or lapel mic)",
+            "Film screen recordings of: track uploading, analysis running, results displaying, mastered audio playing",
+            "Get B-roll of waveforms, EQ visualizers, progress bars, and notification popups",
+            "Film producers wearing headphones, looking at screens, gesturing at monitors",
+            "Ensure good lighting on faces and screens (avoid glare on monitors)",
+            "Props: Headphones, laptops/monitors, studio equipment visible in background",
+            "Film horizontal/vertical—optimize for TikTok vertical (9:16)"
+          ],
+          "warnings": [
+            "Do not claim RiffRight 'replaces human engineers' or 'guarantees hits'",
+            "Ensure all featured producers have signed consent forms for paid ads",
+            "Verify all testimonials are authentic and from real users (not actors reading scripts without disclosure)",
+            "Clearly disclose this is a paid partnership if required by platform",
+            "Do not make false claims about audio quality improvements—stick to 'professional-grade' and 'rivals studio sessions'",
+            "Ensure 14-day free trial terms are accurate and compliant with current RiffRight offering",
+            "Do not guarantee specific results—use phrases like 'can help,' 'get feedback,' 'improve your process'"
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hook": "Your podcast sounds like garbage and your listeners know it",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Podcast creator sitting at desk, headphones on, wincing while listening to playback",
+              "onScreen": "EPISODE 47 vs EPISODE 46",
+              "spoken": "Wait... why does this sound so different from last week?",
+              "broll": [
+                "Waveforms on screen looking inconsistent",
+                "Creator shaking head"
+              ]
+            },
+            {
+              "t": "3-8s",
+              "shot": "Quick cuts of audio problems: boomy intro, thin vocals mid-episode, levels jumping around",
+              "onScreen": "TOO BOOMY\nTHIN VOCALS\nLOUDNESS ALL OVER THE PLACE",
+              "spoken": "Boomy intro, thin mids, levels are all over... this sounds so unprofessional.",
+              "broll": [
+                "EQ visualizer showing peaks",
+                "Volume meter spiking",
+                "Listener comments on screen: 'hard to listen to'"
+              ]
+            },
+            {
+              "t": "8-12s",
+              "shot": "Creator frustrated, putting head in hands",
+              "onScreen": "YOU'RE LOSING LISTENERS TO BAD AUDIO",
+              "spoken": "And I'm probably losing listeners because of it.",
+              "broll": [
+                "Subscriber count stalling",
+                "Download numbers flat"
+              ]
+            },
+            {
+              "t": "12-18s",
+              "shot": "Creator perks up, opens laptop. Quick transition to uploading audio file to RiffRight dashboard",
+              "onScreen": "WHAT IF YOU COULD FIX IT IN 2 MINUTES?",
+              "spoken": "But what if you could actually fix this... in like 2 minutes?",
+              "broll": [
+                "File upload animation",
+                "Loading spinner",
+                "Dashboard loading"
+              ]
+            },
+            {
+              "t": "18-28s",
+              "shot": "RiffRight dashboard reveals detailed analysis. Text overlays pop up showing issues: 'Loudness Inconsistent -2.4dB', 'EQ: Bassy Intro, Thin Mids', 'Dynamics: Uncontrolled Peaks'",
+              "onScreen": "LOUDNESS: INCONSISTENT\nEQ: BASSY → THIN\nDYNAMICS: UNCONTROLLED\n\nONE-CLICK MASTER",
+              "spoken": "It's showing me exactly what's wrong. Loudness is all over, EQ is bassy then thin, dynamics are a mess. And then... one click to master it.",
+              "broll": [
+                "Dashboard metrics animating in",
+                "One-click master button glowing",
+                "Before/after waveform comparison"
+              ]
+            },
+            {
+              "t": "28-38s",
+              "shot": "Before/after audio comparison: rough episode plays (tinny, uneven), then polished version plays (professional, balanced, consistent)",
+              "onScreen": "BEFORE\n↓\nAFTER\n\nNOW IT SOUNDS LIKE A REAL PODCAST",
+              "spoken": "Before sounds thin and inconsistent. After? Sounds like an actual professional podcast.",
+              "broll": [
+                "Waveforms side-by-side",
+                "Listener engagement metrics going up",
+                "Download numbers increasing"
+              ]
+            },
+            {
+              "t": "38-45s",
+              "shot": "Creator smiling, confident. Text overlay with offer. Clean logo and CTA.",
+              "onScreen": "14 DAYS FREE\nTHEN $19/MONTH\n\nRIFFRIGHT",
+              "spoken": "Try it free for 14 days. No credit card. Link in bio.",
+              "broll": [
+                "RiffRight logo",
+                "Creator uploading next episode confidently",
+                "Podcast app showing new episode"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Try 14 days free - link in bio",
+            "I'll drop the RiffRight link in bio, seriously game-changing",
+            "Free trial, no card needed - bio has the link"
+          ],
+          "filmingChecklist": [
+            "Film creator at desk with headphones, looking uncomfortable/frustrated",
+            "Capture close-ups of facial expressions (wincing, head in hands, smiling)",
+            "Have laptop/monitor visible showing audio software or dashboard mockup",
+            "Film uploading motion/clicking actions (smooth, deliberate)",
+            "Capture before/after audio playback (can use screen recording of DAW)",
+            "Get B-roll of waveforms, EQ curves, volume meters from your DAW",
+            "Props: Headphones, laptop, microphone visible in frame",
+            "Lighting: Soft key light, minimize harsh shadows on face",
+            "Use trending TikTok sound (upbeat, slightly chaotic energy)",
+            "Film in vertical format (9:16 aspect ratio)",
+            "Ensure audio is clear and crisp during spoken sections"
+          ],
+          "warnings": [
+            "Do not claim RiffRight 'replaces professional engineers' or 'guarantees hits'",
+            "Do not claim audio will 'sound exactly like' expensive studios",
+            "Ensure 14-day trial terms are clear and compliant with platform policies",
+            "Verify pricing ($19/month) is current before publishing",
+            "Include clear disclosure if creator is affiliated/compensated",
+            "Do not make false claims about listener retention or growth metrics",
+            "Test audio quality before publishing - ensure spoken word is crisp"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hook": "I stopped paying $500 per master and my tracks sound professional now",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up of producer looking stressed at laptop, scrolling through mastering engineer quotes. Quick cut to bank account showing -$500 transaction",
+              "onScreen": "$500+ per master\nEvery. Single. Track.",
+              "spoken": "Yeah so I was dropping $500 every time I wanted a professional master...",
+              "broll": [
+                "Sad face reaction",
+                "Money flowing out animation"
+              ]
+            },
+            {
+              "t": "3-7s",
+              "shot": "Quick transition - RiffRight logo appears, then UI loads on screen. Producer clicks upload button, file drags in",
+              "onScreen": "What if mastering was $19/month?",
+              "spoken": "Then I found RiffRight and literally everything changed.",
+              "broll": [
+                "Upload animation",
+                "Loading bar filling"
+              ]
+            },
+            {
+              "t": "7-12s",
+              "shot": "Screen recording of AI analysis running - visual feedback showing EQ curve, dynamics meter, stereo width visualization in real-time",
+              "onScreen": "AI Analysis in seconds\nEQ • Dynamics • Stereo • Loudness",
+              "spoken": "It breaks down your entire mix - shows you exactly what's wrong and what's right.",
+              "broll": [
+                "Waveform analysis",
+                "Color-coded feedback"
+              ]
+            },
+            {
+              "t": "12-18s",
+              "shot": "Producer reviewing detailed breakdown on screen, nodding. Then highlights the one-click mastering button and hovers over it",
+              "onScreen": "One-click mastering\nProfessional grade",
+              "spoken": "Then you just... hit this button. And it masters your track.",
+              "broll": [
+                "Button hover effect",
+                "Cursor clicking"
+              ]
+            },
+            {
+              "t": "18-25s",
+              "shot": "Before/after audio waveform comparison - visual difference in loudness and clarity. Producer plays final master - shows waveform looking punchy and professional",
+              "onScreen": "Before → After\nProfessional. Instant. Affordable.",
+              "spoken": "Sounds like it came from a real studio. Because it did.",
+              "broll": [
+                "Waveform comparison",
+                "Volume meter bouncing"
+              ]
+            },
+            {
+              "t": "25-30s",
+              "shot": "Producer smiling at camera, then quick cut to track uploading to Spotify/streaming platform, then back to producer giving thumbs up",
+              "onScreen": "14-day free trial\nNo credit card",
+              "spoken": "Link in bio - try it free for two weeks, no card needed.",
+              "broll": [
+                "Spotify upload screen",
+                "Success notification"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Free trial link in bio - seriously, no credit card needed",
+            "I'll drop the RiffRight link - 14 days free to test it out",
+            "Link in bio if you're tired of paying for mastering"
+          ],
+          "filmingChecklist": [
+            "Laptop with RiffRight interface ready to demo",
+            "Audio track file prepared for upload",
+            "Screenshot of expensive mastering quotes (can be created)",
+            "Bank app showing transaction (can be mocked)",
+            "Microphone for clear voiceover audio",
+            "Lighting: soft, natural light on face for authenticity",
+            "Phone or camera for close-ups of facial reactions",
+            "Before/after audio files with visual waveforms",
+            "Spotify/streaming platform account logged in for final shot",
+            "Text overlay graphics prepared in editing software"
+          ],
+          "warnings": [
+            "Do not claim 'replaces human engineers' - position as affordable alternative",
+            "Do not say 'guaranteed hit' or 'sounds exactly like expensive studios'",
+            "Ensure 14-day free trial terms are clearly stated",
+            "Disclose this is a paid partnership if required by platform",
+            "Verify all pricing claims ($19/month) are current before posting",
+            "Do not show copyrighted music in the demo unless you have rights"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "total": 70,
+          "details": {
+            "justCount": 0,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [
+              "garbage"
+            ],
+            "hookWordCount": 14,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 50,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [
+              "game-changer"
+            ],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 14,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 80,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 11,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 100,
+          "details": {
+            "justCount": 0,
+            "literallyCount": 0,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [
+              "garbage"
+            ],
+            "hookWordCount": 10,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 90,
+          "details": {
+            "justCount": 1,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 12,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        }
+      ],
+      "avgScore": 78,
+      "tokens": {
+        "input": 4166,
+        "output": 6287
+      },
+      "timeMs": 59254
+    },
+    "totalTokens": {
+      "input": 4873,
+      "output": 7852
+    },
+    "totalTimeMs": 75312
+  },
+  {
+    "model": "google/gemini-3-pro-preview",
+    "modelName": "Gemini 3 Pro",
+    "tier": "premium",
+    "pass1": {
+      "plans": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hookIdea": "POV: You just listened to your mix in the car and want to cry.",
+          "beats": [
+            "Visual: Creator sitting in car looking devastated listening to audio (muffled sound effect).",
+            "Text Overlay: 'Why does it sound good in the studio but trash here?'",
+            "Cut to RiffRight interface: Showing the 'Muddy Frequencies' alert in the analysis tab.",
+            "Explanation: 'Turns out my low-mids were clashing. RiffRight flagged it instantly.'",
+            "Result: Quick before/after audio toggle showing the clarity.",
+            "CTA: 'Fix your mixes for free with the trial in my bio.'"
+          ],
+          "complianceNotes": [
+            "Ensure the 'trash' mix isn't a recognizable copyrighted song.",
+            "Do not claim it fixes the mix automatically without user input on the mix end."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hookIdea": "I stopped paying $100/track for mastering. Here is what I use instead.",
+          "beats": [
+            "Hook: Green screen over a bank account or invoice, looking skeptical.",
+            "Action: Dragging a raw WAV file into the RiffRight dashboard.",
+            "Feature Highlight: Zoom in on the AI analyzing dynamics and stereo width in real-time.",
+            "Transformation: The 'Mastered' status appears. Audio swells to be loud and punchy.",
+            "Benefit: 'It literally rivals the expensive sessions I used to book.'",
+            "CTA: 'Grab the 14-day free trial before they realize this is too cheap.'"
+          ],
+          "complianceNotes": [
+            "Avoid saying it 'replaces' engineers entirely; focus on the cost-saving for indie artists.",
+            "Do not use specific competitor names when mentioning costs."
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 45,
+          "hookIdea": "My DMs are blowing up asking how I got my podcast audio this crisp.",
+          "beats": [
+            "Hook: Creator holding a mic, text overlay: 'What plugins are you using??'",
+            "Story: 'I used to spend hours tweaking EQ and compression and it still sounded thin.'",
+            "Solution: Screen recording of RiffRight. 'I just upload the raw vocal here.'",
+            "Detail: Pointing out the specific feedback on 'Loudness' and 'EQ Balance'.",
+            "Result: Playing a snippet of the podcast intro sounding radio-quality.",
+            "Authentication: 'It gives me that studio sound without the studio rent.'",
+            "CTA: 'Link is in my bio, try it on your next episode.'"
+          ],
+          "complianceNotes": [
+            "Ensure the 'DM' claims feel authentic to the persona.",
+            "Do not claim it will guarantee podcast rankings/charts."
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hookIdea": "Why your beats sound quiet on Spotify (and how to fix it).",
+          "beats": [
+            "Hook: Visual comparison of a waveform. Tiny waveform vs. a thick 'Pro' waveform.",
+            "Agitation: 'You create a banger, upload it, and it sounds weak next to Drake.'",
+            "Education: Explain the concept of LUFS/Loudness penalty briefly using RiffRight's visualizer.",
+            "Demo: 'RiffRight analyzes your mix and tells you exactly what to fix to hit competitive loudness.'",
+            "Action: User tweaking a knob in their DAW based on RiffRight feedback, then re-analyzing.",
+            "Result: The 'One-Click Master' button bringing the volume up without distortion.",
+            "CTA: 'Stop releasing quiet music. Analysis tool is in the bio.'"
+          ],
+          "complianceNotes": [
+            "Avoid using actual Drake audio due to copyright.",
+            "Do not promise specific stream counts or playlist placement."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hookIdea": "Watch me master this track in real-time while I make coffee.",
+          "beats": [
+            "Hook: Phone propped up against a coffee machine, chaotic morning vibe.",
+            "Action: 'Uploading to RiffRight...', press button on laptop.",
+            "Process: Making coffee/pouring drink while the screen shows 'Processing'.",
+            "Payoff: Coffee is ready, and the track is done. 'Done. 2 minutes.'",
+            "Reaction: Head bopping to the final master. 'Okay, the low end is huge.'",
+            "CTA: 'Work smarter, not harder. Link in bio.'"
+          ],
+          "complianceNotes": [
+            "Ensure the 'real-time' aspect is accurately depicted (don't speed up the video misleadingly without context).",
+            "Focus on workflow speed."
+          ]
+        }
+      ],
+      "tokens": {
+        "input": 641,
+        "output": 2355
+      },
+      "timeMs": 28496
+    },
+    "pass2": {
+      "scripts": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hook": "I actually want to cry right now.",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Creator sitting in driver's seat of a car, head resting on the steering wheel looking defeated. Muffled, muddy music playing in background.",
+              "onScreen": "POV: You just did the 'Car Test' 💀",
+              "spoken": "I actually want to cry right now.",
+              "broll": []
+            },
+            {
+              "t": "3-8s",
+              "shot": "Cut to bedroom studio. Creator throws headphones on desk in frustration.",
+              "onScreen": "Why does it sound good here but 🗑️ in the car??",
+              "spoken": "Why does it sound professional on my monitors but like a garbage disposal in my Honda?",
+              "broll": []
+            },
+            {
+              "t": "8-15s",
+              "shot": "Screen recording of RiffRight dashboard. Mouse hovers over a red alert zone on the frequency spectrum.",
+              "onScreen": "RiffRight caught the mistake instantly",
+              "spoken": "I threw the stems into RiffRight to analyze it, and look—my low-mids were completely choking the kick drum.",
+              "broll": [
+                "Close up of 'Muddy Frequencies' warning text"
+              ]
+            },
+            {
+              "t": "15-24s",
+              "shot": "Split screen or close up of the 'Master' toggle button. Audio switches from muddy to crisp and loud.",
+              "onScreen": "Wait for the switch 🔊🤯",
+              "spoken": "It flagged the clash, and with one click... just listen to the clarity difference.",
+              "broll": [
+                "Audio waveform changing from flat to dynamic"
+              ]
+            },
+            {
+              "t": "24-30s",
+              "shot": "Creator back in car, nodding head to the music, looking relieved. Points to text above head.",
+              "onScreen": "Fix your mix free (14-day trial) 🔗👇",
+              "spoken": "Stop guessing with your mixes. I linked the 14-day free trial in my bio.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Grab the free trial in my bio",
+            "Link in bio to fix your mix",
+            "Try RiffRight free for 14 days"
+          ],
+          "filmingChecklist": [
+            "Car interior (daytime)",
+            "Bedroom studio setup (monitors/laptop)",
+            "Headphones",
+            "Screen recording of RiffRight analysis tab",
+            "Two audio files: one muddy mix, one mastered mix for the edit"
+          ],
+          "warnings": [
+            "Do not claim the AI replaces a human engineer entirely, focus on the 'analysis' and 'help' aspect.",
+            "Ensure the audio difference in the before/after segment is audible on phone speakers."
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hook": "If you are still paying $100 a track for mastering, stop scrolling.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Creator using Green Screen effect over a screenshot of a pricey PayPal invoice or bank statement showing '-$100.00'. Creator looks skeptical/annoyed.",
+              "onScreen": "STOP paying $100 for mastering 🛑",
+              "spoken": "If you're still paying hundreds of dollars per track for mastering, we need to have a serious talk.",
+              "broll": []
+            },
+            {
+              "t": "4-9s",
+              "shot": "Screen recording: Mouse dragging a raw WAV file into the RiffRight dashboard. Cut to the analysis loading bar.",
+              "onScreen": "I found a cheat code 🤫",
+              "spoken": "I just started using RiffRight instead and honestly? It's kind of a cheat code.",
+              "broll": [
+                "Close up of mouse click"
+              ]
+            },
+            {
+              "t": "9-15s",
+              "shot": "Fast zooms on the screen showing the colorful EQ balance and stereo width graphs moving in real-time.",
+              "onScreen": "Real-time mix analysis 📊",
+              "spoken": "It analyzes your EQ, dynamics, and stereo width instantly so you know exactly what to fix.",
+              "broll": []
+            },
+            {
+              "t": "15-22s",
+              "shot": "Creator presses the 'Master' button. The audio in the video creates a dramatic 'swell' effect, becoming louder, punchier, and crisp.",
+              "onScreen": "RAW vs MASTERED 🔊",
+              "spoken": "And the one-click AI master? Just listen to how much punchier this sounds compared to the raw mix.",
+              "broll": [
+                "Audio waveform expanding"
+              ]
+            },
+            {
+              "t": "22-26s",
+              "shot": "Creator back on camera, talking to lens with genuine excitement. Holding headphones.",
+              "onScreen": "Studio quality for $19/mo ✨",
+              "spoken": "This literally rivals the expensive studio sessions I used to book, but for the price of lunch.",
+              "broll": []
+            },
+            {
+              "t": "26-30s",
+              "shot": "Creator pointing upwards (or wherever the bio link is on the UI).",
+              "onScreen": "14-Day Free Trial 🔗",
+              "spoken": "Grab the 14-day free trial in my bio before they realize they're pricing this way too low.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Get your 14-day free trial",
+            "Link in bio to master your tracks",
+            "Try RiffRight free for 2 weeks"
+          ],
+          "filmingChecklist": [
+            "Screenshot of a fake invoice/bank transaction for the green screen",
+            "High-quality screen recording of the RiffRight dashboard",
+            "A raw vs. mastered audio clip to edit into the 15-22s segment",
+            "Headphones as a prop",
+            "Good lighting for face-cam segments"
+          ],
+          "warnings": [
+            "Do not claim it replaces human engineers entirely",
+            "Ensure the audio volume difference isn't jarringly loud, just better quality"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 45,
+          "hook": "Okay, my DMs are literally blowing up asking how I got my podcast audio sounding this crisp.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Creator talking directly into a podcast mic, screenshot of a DM or comment overlaid behind them.",
+              "onScreen": "What plugins are you using?? 🎤",
+              "spoken": "Okay, my DMs are literally blowing up asking how I got my podcast audio sounding this crisp.",
+              "broll": [
+                "Zoom in on the comment overlay"
+              ]
+            },
+            {
+              "t": "4-11s",
+              "shot": "Cut to creator looking exhausted at a laptop, messy desk, head in hands.",
+              "onScreen": "I used to spend HOURS 😭",
+              "spoken": "Real talk? I used to spend hours tweaking EQ and compression, and honestly? It still sounded thin and amateur.",
+              "broll": [
+                "Fast forward timelapse of creator tweaking knobs"
+              ]
+            },
+            {
+              "t": "11-19s",
+              "shot": "Screen recording of the RiffRight dashboard. Mouse dragging a file into the upload box.",
+              "onScreen": "The Secret Weapon 🤫",
+              "spoken": "I stopped guessing. Now I just upload the raw vocal track to RiffRight. It's actually insane.",
+              "broll": [
+                "Close up of 'Analyzing' progress bar"
+              ]
+            },
+            {
+              "t": "19-29s",
+              "shot": "Creator pointing at the specific analysis graphs on the screen (EQ Balance, Loudness).",
+              "onScreen": "Detailed Mix Analysis 📉",
+              "spoken": "Look at this. It gives me actual feedback. It tells me my loudness is off or my low-end is muddy before I even hit master.",
+              "broll": [
+                "Green checkmarks appearing on screen"
+              ]
+            },
+            {
+              "t": "29-38s",
+              "shot": "Creator putting on headphones, closing eyes, and nodding to the beat/voice. Visibly impressed.",
+              "onScreen": "Radio Quality Instantly ✨",
+              "spoken": "One click later, and I get that professional, punchy broadcast sound without paying for expensive studio time.",
+              "broll": [
+                "Waveform visualizer transforming from small to thick/mastered"
+              ]
+            },
+            {
+              "t": "38-45s",
+              "shot": "Selfie mode, walking or sitting back in chair. Pointing upwards/to bio.",
+              "onScreen": "14-Day Free Trial (Link in Bio) 🔗",
+              "spoken": "I dropped the link in my bio. You can try it free for 14 days, so go fix your audio right now.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Get studio sound free for 14 days",
+            "Link in bio to fix your mix",
+            "Try RiffRight free now"
+          ],
+          "filmingChecklist": [
+            "Podcast microphone prop",
+            "Headphones (over-ear preferred)",
+            "Laptop with RiffRight dashboard open",
+            "Screenshot of a fake or real comment asking about audio quality",
+            "Good lighting for the face-to-camera shots"
+          ],
+          "warnings": [
+            "Do not claim it replaces a human engineer entirely, focus on the 'studio sound' result.",
+            "Ensure the screen recording shows the actual RiffRight interface clearly."
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hook": "Why your mix sounds like *this* vs the Pros",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Split screen. Top: A tiny, thin waveform. Bottom: A thick 'brick' waveform. Creator points aggressively at the top one.",
+              "onScreen": "Why your beats are QUIET 📉",
+              "spoken": "Why does your mix sound like *this* [whisurs] when it should sound like THIS? [loud volume]",
+              "broll": [
+                "Screen recording of a DAW waveform"
+              ]
+            },
+            {
+              "t": "4-10s",
+              "shot": "Creator looking defeated wearing headphones, holding phone showing Spotify.",
+              "onScreen": "The 'Car Test' fail 💀",
+              "spoken": "Nothing hurts more than thinking you made a banger, then playing it next to a pro track and realizing it sounds weak and quiet.",
+              "broll": []
+            },
+            {
+              "t": "10-20s",
+              "shot": "Screen recording of RiffRight dashboard. Mouse hovering over red warning indicators on EQ balance.",
+              "onScreen": "It's not volume, it's BALANCE 🎚️",
+              "spoken": "I dragged that track into RiffRight to see what's wrong. Look—my low end is way too loud, eating up all the headroom. That's why I can't get it loud.",
+              "broll": [
+                "Zoom in on the EQ analysis graph"
+              ]
+            },
+            {
+              "t": "20-32s",
+              "shot": "Fast montage: Creator tweaking a knob in Ableton/FL Studio -> Re-uploading to RiffRight -> Clicking 'Master'.",
+              "onScreen": "Fix mix -> AI Master 🚀",
+              "spoken": "So I fixed the bass based on the feedback, re-uploaded, and hit the AI Master button. It analyzes dynamics and stereo width instantly.",
+              "broll": [
+                "Hand adjusting volume fader",
+                "Mouse clicking 'Process'"
+              ]
+            },
+            {
+              "t": "32-40s",
+              "shot": "Creator head-bopping violently. Screen shows the new thick waveform with green checkmarks.",
+              "onScreen": "Competitive Loudness ✅",
+              "spoken": "Boom. Competitive loudness without the distortion. It sounds polished, not squashed.",
+              "broll": [
+                "Before/After toggle switch on screen"
+              ]
+            },
+            {
+              "t": "40-45s",
+              "shot": "Creator holding phone, pointing to the profile picture/bio area.",
+              "onScreen": "14-Day Free Trial 🔗",
+              "spoken": "Stop releasing quiet music. Grab the 14-day free trial in my bio and fix your mixes.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Link in bio to fix your mix",
+            "Try RiffRight free for 14 days",
+            "Get professional loudness instantly"
+          ],
+          "filmingChecklist": [
+            "DAW (Ableton/Logic/FL) open on computer screen",
+            "Headphones",
+            "Smartphone with Spotify open",
+            "Good lighting for face shots",
+            "Screen recording software for RiffRight interface"
+          ],
+          "warnings": [
+            "Do not claim it replaces a human mastering engineer",
+            "Focus on 'competitive loudness' not 'guaranteed hits'"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hook": "Bet you I can master this beat before my coffee brews.",
+          "storyboard": [
+            {
+              "t": "0-4s",
+              "shot": "Selfie mode, phone propped against a coffee mug. Creator looks tired, messy hair, hoodie on. Chaotic morning energy.",
+              "onScreen": "Master a track in 2 mins? ☕️",
+              "spoken": "Bet you I can master this beat before my coffee finishes brewing.",
+              "broll": [
+                "Quick zoom on the coffee machine button being pressed"
+              ]
+            },
+            {
+              "t": "4-9s",
+              "shot": "Over-the-shoulder view of laptop. Dragging an audio file into the RiffRight dashboard. Quick cut to clicking 'Analyze'.",
+              "onScreen": "Uploading to RiffRight...",
+              "spoken": "Drag, drop, analyze. RiffRight is checking my EQ, width, and loudness right now.",
+              "broll": [
+                "Screen recording of the waveform loading"
+              ]
+            },
+            {
+              "t": "9-17s",
+              "shot": "Fast montage: Pouring water, tapping foot impatiently, staring at the coffee drip. Contrast the 'waiting' with the speed of AI.",
+              "onScreen": "*waiting for caffeine*",
+              "spoken": "Usually I’d be fighting with plugins for three hours, but now I just... wait for the bean juice.",
+              "broll": []
+            },
+            {
+              "t": "17-24s",
+              "shot": "Creator puts headphones on, takes a sip of coffee, hits play. Eyes widen, head starts bobbing immediately.",
+              "onScreen": "The results... 🤯",
+              "spoken": "Coffee's done. And the track... okay, wait. That low end is actually huge. It’s ready for Spotify.",
+              "broll": [
+                "Close up of RiffRight 'Mastered' screen"
+              ]
+            },
+            {
+              "t": "24-30s",
+              "shot": "Creator dancing in chair, holding the coffee cup. Points to the camera/bio.",
+              "onScreen": "14-Day Free Trial (Link in Bio) 🔗",
+              "spoken": "Work smarter, not harder. Grab the free trial in my bio.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Grab the 14-day free trial in my bio.",
+            "Fix your mix instantly. Link in bio.",
+            "Stop stressing, start mastering. Link's there."
+          ],
+          "filmingChecklist": [
+            "Prop phone against a mug for that 'facetime' look",
+            "Ensure laptop screen is readable but not blown out",
+            "Need: Coffee machine/kettle, headphones, DAW open in background",
+            "Keep the energy low-key/tired at start, high energy at end"
+          ],
+          "warnings": [
+            "Do not claim it replaces a professional human engineer",
+            "Ensure background music is original or royalty-free"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "total": 85,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 0,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [
+              "garbage"
+            ],
+            "hookWordCount": 7,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 85,
+          "details": {
+            "justCount": 2,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 12,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 70,
+          "details": {
+            "justCount": 1,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 17,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 100,
+          "details": {
+            "justCount": 0,
+            "literallyCount": 0,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 9,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 100,
+          "details": {
+            "justCount": 1,
+            "literallyCount": 0,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 11,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        }
+      ],
+      "avgScore": 88,
+      "tokens": {
+        "input": 3720,
+        "output": 9083
+      },
+      "timeMs": 106660
+    },
+    "totalTokens": {
+      "input": 4361,
+      "output": 11438
+    },
+    "totalTimeMs": 135156
+  },
+  {
+    "model": "anthropic/claude-sonnet-4.5",
+    "modelName": "Sonnet 4.5",
+    "tier": "premium",
+    "pass1": {
+      "plans": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hookIdea": "POV: You just spent 12 hours on a mix and it STILL sounds worse than YouTube beats",
+          "beats": [
+            "Hook: Show frustrated producer comparing their track to a pro release",
+            "Agitation: 'The kick is muddy, the vocals are buried, and you have NO idea what's wrong'",
+            "Visual: Side-by-side waveform comparison showing the difference",
+            "Solution intro: 'Until I found RiffRight' - show upload interface",
+            "Quick demo: AI analysis pointing out exact issues in seconds",
+            "CTA: '14-day free trial, link in bio'"
+          ],
+          "complianceNotes": [
+            "Avoid claiming it replaces professional engineers",
+            "Ensure 'sounds worse' is subjective user experience, not guaranteed outcome"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hookIdea": "I uploaded the WORST mix of my life to this AI... and I'm actually speechless",
+          "beats": [
+            "Hook: Creator looking shocked at their screen",
+            "Setup: 'This is the track I was too embarrassed to release' - play snippet",
+            "Problem reveal: Show messy waveform, explain it sounds amateur",
+            "Upload to RiffRight: Screen record the upload process",
+            "Analysis results: Text overlays of specific issues found (EQ imbalance, dynamics)",
+            "One-click master: 'I hit this button and...'",
+            "Before/after: Play both versions with visible reaction",
+            "CTA: 'Try it free for 14 days, I'm dropping the link'"
+          ],
+          "complianceNotes": [
+            "Use 'I'm speechless' as personal reaction, not quality guarantee",
+            "Ensure before/after is clearly one user's experience"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hookIdea": "Bedroom producers are gatekeeping this AI mastering tool and I'm about to ruin it",
+          "beats": [
+            "Hook: Whisper-talking to camera like sharing a secret",
+            "Social proof: 'Everyone in my Discord is using this' - show screenshots of messages",
+            "Quick demo: 'You literally just upload your track'",
+            "Show results: Real analysis breakdown on screen",
+            "Community validation: 'My last 3 releases used this and got playlist adds'",
+            "CTA: 'Free trial link in my bio before everyone finds out'"
+          ],
+          "complianceNotes": [
+            "Playlist adds should be attributed to user's experience, not guaranteed",
+            "Discord screenshots must be authentic or clearly illustrated",
+            "Avoid implying scarcity that doesn't exist"
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hookIdea": "If your podcast sounds like it was recorded in a bathroom, this is your sign",
+          "beats": [
+            "Hook: Play intentionally bad podcast audio with text 'Is this you?'",
+            "Agitation: 'Thin voice, echo, levels all over the place'",
+            "More pain: 'You're losing listeners in the first 30 seconds'",
+            "Relatability: 'I used to spend HOURS trying to fix this in post'",
+            "Solution: 'Then I found RiffRight' - show interface",
+            "Demo: Upload podcast episode, get instant feedback",
+            "Results: Show specific fixes (voice EQ, dynamics, loudness)",
+            "CTA: '$19/month but try it free for 14 days, link below'"
+          ],
+          "complianceNotes": [
+            "Losing listeners claim should be framed as common problem, not specific guarantee",
+            "Ensure bathroom comparison is humorous exaggeration, not literal claim"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hookIdea": "My Spotify plays went from 47 to 12K after I fixed ONE thing in my mix",
+          "beats": [
+            "Hook: Show Spotify stats transformation on screen",
+            "Context: 'The problem? My mixes sounded amateur next to everyone else'",
+            "Discovery: 'This AI told me EXACTLY what was wrong' - show RiffRight analysis",
+            "Action: 'Fixed the EQ balance and dynamics it flagged'",
+            "Result: 'Now my tracks actually sound professional'",
+            "CTA: 'Try free for 14 days, link in bio'"
+          ],
+          "complianceNotes": [
+            "Must clearly state Spotify growth is user's individual result, not typical or guaranteed",
+            "Emphasize the tool provided analysis, user made improvements",
+            "Consider softening specific numbers or adding 'my experience' disclaimer"
+          ]
+        }
+      ],
+      "tokens": {
+        "input": 707,
+        "output": 1222
+      },
+      "timeMs": 27788
+    },
+    "pass2": {
+      "scripts": [
+        {
+          "angle": "pain_agitation",
+          "duration": 30,
+          "hook": "POV: You just spent 12 hours on a mix and it STILL sounds worse than YouTube beats",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up of creator's frustrated face, then quick cut to DAW timeline showing 12+ hours of work",
+              "onScreen": "POV: 12 hours later and it sounds like THIS 😭",
+              "spoken": "I just spent literally twelve hours on this mix and it still sounds like trash compared to the beats I find on YouTube",
+              "broll": [
+                "Screen recording of complex DAW session with tons of tracks"
+              ]
+            },
+            {
+              "t": "3-8s",
+              "shot": "Split screen: creator's track waveform on left looking inconsistent, professional track on right looking polished",
+              "onScreen": "The kick is MUDDY 🥴 Vocals are BURIED 💀",
+              "spoken": "Like the kick is muddy, the vocals are completely buried, and I have no idea what I'm doing wrong",
+              "broll": [
+                "Waveform comparison",
+                "Frustrated hand gestures"
+              ]
+            },
+            {
+              "t": "8-13s",
+              "shot": "Creator leaning in closer to camera with relieved expression, then cut to phone showing RiffRight upload screen",
+              "onScreen": "Until I found RiffRight 👀",
+              "spoken": "Until I found RiffRight. You literally just upload your track and it tells you exactly what's wrong in like ten seconds",
+              "broll": [
+                "Dragging audio file into upload interface"
+              ]
+            },
+            {
+              "t": "13-21s",
+              "shot": "Screen recording of RiffRight analysis dashboard highlighting issues with red markers and graphs",
+              "onScreen": "It SHOWS you the problems 🎯",
+              "spoken": "Look at this - it shows me my low end is clashing, my vocals need three dB boost at two K, and my master is way too quiet. This would've taken me hours to figure out",
+              "broll": [
+                "Finger pointing at specific analysis points",
+                "EQ graphs",
+                "Stereo width meter"
+              ]
+            },
+            {
+              "t": "21-27s",
+              "shot": "Before/after comparison - creator nodding along to the mastered version with satisfied expression",
+              "onScreen": "One click AI mastering >>> 🔥",
+              "spoken": "Then the AI mastering literally fixed everything in one click. This sounds like I paid someone three hundred dollars",
+              "broll": [
+                "Playback meter bouncing",
+                "Satisfied head nod"
+              ]
+            },
+            {
+              "t": "27-30s",
+              "shot": "Creator looking directly at camera, casual point gesture",
+              "onScreen": "14-day FREE trial ⬇️",
+              "spoken": "Fourteen day free trial, I'm dropping the link. You're welcome",
+              "broll": [
+                "Thumbs up",
+                "Peace sign"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "14-day free trial, link is in my bio. Trust me on this one",
+            "I'll drop the link - try it free for 14 days, thank me later",
+            "Free trial link below. Your mixes will actually slap, I promise"
+          ],
+          "filmingChecklist": [
+            "Film in bedroom studio/home setup for authenticity",
+            "Screen record DAW session (any DAW works - Ableton, FL Studio, Logic)",
+            "Screen record RiffRight upload and analysis process",
+            "Capture genuine frustrated expressions then relief/excitement",
+            "Props: headphones around neck, visible audio interface or MIDI keyboard in background",
+            "Lighting: Natural or warm desk lamp, slightly moody bedroom producer vibe",
+            "Phone or webcam quality is fine - raw aesthetic preferred",
+            "Get close-up shots and wider shots showing studio setup"
+          ],
+          "warnings": [
+            "Avoid saying it 'replaces' professional engineers - position as a tool that helps",
+            "Don't claim it will make tracks sound 'exactly like' professional releases",
+            "Avoid absolute guarantees about results - use 'helped me' personal framing",
+            "Ensure before/after comparison is fair (same track, reasonable improvement claims)",
+            "Free trial terms must be clear - 14 days, then $19/month"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 45,
+          "hook": "I uploaded the WORST mix of my life to this AI... and I'm actually speechless",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up of creator's shocked face, hand over mouth, staring at laptop screen with dramatic lighting",
+              "onScreen": "I can't believe this just worked...",
+              "spoken": "I uploaded the WORST mix of my life to this AI... and I'm actually speechless",
+              "broll": [
+                "Quick flash of messy audio waveform on screen"
+              ]
+            },
+            {
+              "t": "3-9s",
+              "shot": "Screen record of DAW showing cluttered, amateur mix with unbalanced waveform. Creator points at screen",
+              "onScreen": "This track was collecting dust for 6 months 💀",
+              "spoken": "So this is the track I was literally too embarrassed to release. Like, I knew it sounded bad but I didn't know HOW to fix it",
+              "broll": [
+                "Zoom in on messy waveform peaks",
+                "Show multiple tracks cluttered in DAW"
+              ]
+            },
+            {
+              "t": "9-16s",
+              "shot": "Screen record: dragging audio file into RiffRight upload interface, loading animation",
+              "onScreen": "Enter: RiffRight AI 🤖",
+              "spoken": "Then I found RiffRight. I just dragged my track in, and within like 30 seconds it gave me a full breakdown",
+              "broll": [
+                "Close-up of upload progress bar filling"
+              ]
+            },
+            {
+              "t": "16-24s",
+              "shot": "Screen record of analysis results page, finger scrolling through detailed feedback sections",
+              "onScreen": "It called out EVERYTHING wrong 👀",
+              "spoken": "It literally told me my low end was muddy, my vocals were buried, and my stereo width was all over the place. Super specific stuff I had no idea about",
+              "broll": [
+                "Zoom in on EQ balance graph",
+                "Highlight dynamics meter",
+                "Show frequency spectrum visualization"
+              ]
+            },
+            {
+              "t": "24-32s",
+              "shot": "Screen record: cursor hovering over 'Master Track' button, then clicking it. Processing animation",
+              "onScreen": "One click. That's it. ✨",
+              "spoken": "So I'm like, okay, let's see what this AI can actually do. I hit the master button... and waited",
+              "broll": [
+                "Loading spinner animation",
+                "Progress percentage counting up"
+              ]
+            },
+            {
+              "t": "32-40s",
+              "shot": "Split screen showing before/after waveforms. Creator's eyes widen, head nodding to beat, genuine smile",
+              "onScreen": "BEFORE vs AFTER 🔥",
+              "spoken": "Bro. LISTEN to this difference. It's like... punchy, clear, actually sounds like it belongs on a playlist. I'm not even exaggerating",
+              "broll": [
+                "Visualizer showing cleaner frequency response",
+                "Side-by-side waveform comparison"
+              ]
+            },
+            {
+              "t": "40-45s",
+              "shot": "Creator leaning back in chair, casual and satisfied, gesturing to camera",
+              "onScreen": "14-day FREE trial 👇",
+              "spoken": "If you've got tracks sitting around that need help, try RiffRight free for 14 days. I'm dropping the link right now",
+              "broll": [
+                "Quick montage of RiffRight logo",
+                "Finger pointing down to CTA"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Link's in my bio - 14 days free, no credit card needed",
+            "I'll drop the link below. Try it free for 14 days and thank me later",
+            "Free trial link is right there ↓ Transform your mixes like I just did"
+          ],
+          "filmingChecklist": [
+            "Laptop/computer with RiffRight platform open",
+            "DAW software with an actual 'before' mix loaded",
+            "Good lighting on face for reactions (ring light recommended)",
+            "Screen recording software ready (OBS, QuickTime, or built-in)",
+            "Headphones visible in some shots for authenticity",
+            "Audio: record room audio + screen audio separately for editing flexibility",
+            "Film genuine reaction shots - don't fake the surprise",
+            "Capture multiple takes of before/after listening reactions",
+            "Have RiffRight analysis results page ready to scroll through",
+            "Props: notebook, MIDI keyboard, or other studio equipment in background"
+          ],
+          "warnings": [
+            "Do not claim the AI replaces professional engineers - focus on accessibility and learning",
+            "Avoid saying tracks will become 'hits' or guarantee commercial success",
+            "Ensure before/after comparison is authentic and represents realistic results",
+            "Don't make claims about matching specific professional studio quality",
+            "Disclose this is a paid advertisement per FTC guidelines (add #ad to caption)",
+            "Ensure any audio played is creator's own work or properly licensed"
+          ]
+        },
+        {
+          "angle": "social_proof",
+          "duration": 30,
+          "hook": "Bedroom producers are gatekeeping this and I'm lowkey mad about it",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Close-up, leaning into camera, whisper-talking with serious expression",
+              "onScreen": "they're HIDING this from you 🤫",
+              "spoken": "Bedroom producers are gatekeeping this and I'm lowkey mad about it",
+              "broll": []
+            },
+            {
+              "t": "3-8s",
+              "shot": "Screen record of Discord messages scrolling, pointing at screen",
+              "onScreen": "everyone in my producer Discord uses this 👀",
+              "spoken": "So everyone in my Discord has been using RiffRight for their mastering and literally no one told me. Look at these messages.",
+              "broll": [
+                "Discord screenshots with messages about RiffRight",
+                "Blur out usernames"
+              ]
+            },
+            {
+              "t": "8-14s",
+              "shot": "Screen record of uploading a track to RiffRight interface",
+              "onScreen": "you just... upload your track 😳",
+              "spoken": "I finally tried it and bro, you literally just drag your track in and the AI analyzes everything. EQ balance, dynamics, stereo width, all of it.",
+              "broll": [
+                "Close-up of track uploading",
+                "Analysis results appearing"
+              ]
+            },
+            {
+              "t": "14-21s",
+              "shot": "Split screen: before/after waveforms, reacting with impressed face",
+              "onScreen": "the AI mastering hits different 🔥",
+              "spoken": "Then one click for AI mastering and I'm not gonna lie, it sounds like I paid someone three hundred dollars. My last three releases used this.",
+              "broll": [
+                "Waveform comparisons",
+                "Spotify playlist screenshot"
+              ]
+            },
+            {
+              "t": "21-26s",
+              "shot": "Back to talking head, more energetic now, gesturing",
+              "onScreen": "got playlist adds after using this 📈",
+              "spoken": "And two of them actually got playlist adds. I'm telling you, this is what people aren't talking about.",
+              "broll": [
+                "Spotify for Artists screenshot showing playlist placement"
+              ]
+            },
+            {
+              "t": "26-30s",
+              "shot": "Lean back, casual shrug, pointing down",
+              "onScreen": "14-day free trial ⬇️ you're welcome",
+              "spoken": "There's a free trial link in my bio. Try it before your whole feed finds out about it.",
+              "broll": []
+            }
+          ],
+          "ctaVariants": [
+            "Free trial link in my bio before this blows up",
+            "Link below, 14 days free, thank me later",
+            "I'll drop the link, just try the free trial"
+          ],
+          "filmingChecklist": [
+            "Film in bedroom studio setup (authentic producer environment)",
+            "Have laptop/computer visible in background",
+            "Prepare Discord screenshots in advance (can use mockups)",
+            "Screen record RiffRight platform demo beforehand",
+            "Good lighting on face for talking head segments",
+            "Film in vertical 9:16 format",
+            "Use phone camera for raw, authentic feel",
+            "Wear casual clothes (hoodie, t-shirt)",
+            "Keep studio headphones visible in frame or around neck"
+          ],
+          "warnings": [
+            "Ensure all Discord screenshots are either mockups or have explicit permission to show",
+            "Do not claim specific playlist placement numbers without substantiation",
+            "Avoid absolute claims about mastering quality - use subjective language ('sounds like', 'feels like')",
+            "Free trial terms must be clearly disclosed",
+            "Do not disparage professional mastering engineers"
+          ]
+        },
+        {
+          "angle": "pain_agitation",
+          "duration": 45,
+          "hook": "If your podcast sounds like it was recorded in a bathroom, this is your sign",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Creator holds phone to ear, wincing while listening to intentionally bad podcast audio playing out loud",
+              "onScreen": "Is this you? 😬",
+              "spoken": "If your podcast sounds like it was recorded in a bathroom, this is your sign",
+              "broll": [
+                "Show phone screen with podcast waveform"
+              ]
+            },
+            {
+              "t": "3-8s",
+              "shot": "Quick cuts between exaggerated reactions - covering ears, frustrated face",
+              "onScreen": "Thin voice ❌ Echo everywhere ❌ Levels all over ❌",
+              "spoken": "Thin voice, echo everywhere, and your levels are literally all over the place",
+              "broll": [
+                "Flash audio editing software looking confusing"
+              ]
+            },
+            {
+              "t": "8-14s",
+              "shot": "Creator looks directly at camera with serious expression, pointing",
+              "onScreen": "You're losing listeners in the first 30 seconds 📉",
+              "spoken": "And here's the thing - you're losing listeners in the first 30 seconds because of it. They're just clicking away.",
+              "broll": [
+                "Show declining analytics graph"
+              ]
+            },
+            {
+              "t": "14-20s",
+              "shot": "Creator sits back, more relatable energy, hands gesturing tiredly",
+              "onScreen": "I used to spend HOURS trying to fix this 😭",
+              "spoken": "I used to spend literally hours trying to fix this in post-production. EQ, compression, limiters... I had no idea what I was doing.",
+              "broll": [
+                "Screen recording of complicated DAW with too many plugins"
+              ]
+            },
+            {
+              "t": "20-27s",
+              "shot": "Creator leans in with excited energy shift, holding phone showing RiffRight interface",
+              "onScreen": "Then I found RiffRight 🎯",
+              "spoken": "Then I found RiffRight. It's literally AI-powered audio mastering that analyzes your entire mix for you.",
+              "broll": [
+                "Close-up of RiffRight logo and clean interface"
+              ]
+            },
+            {
+              "t": "27-34s",
+              "shot": "Screen recording of dragging podcast file into RiffRight, getting instant analysis",
+              "onScreen": "Upload → Instant feedback → One click fix ✨",
+              "spoken": "You just upload your episode, and it gives you detailed feedback on your EQ, your dynamics, stereo width, everything. Then one-click mastering.",
+              "broll": [
+                "Show specific analysis metrics appearing on screen"
+              ]
+            },
+            {
+              "t": "34-40s",
+              "shot": "Split screen or quick cuts showing 'before/after' waveforms, creator nodding impressed",
+              "onScreen": "Voice sounds CRISP now 🔥",
+              "spoken": "My voice actually sounds crisp now, the levels are consistent, and I'm not losing listeners anymore. It's actually insane.",
+              "broll": [
+                "Show clean waveform, professional-looking meters"
+              ]
+            },
+            {
+              "t": "40-45s",
+              "shot": "Creator back to casual direct-to-camera, relaxed smile",
+              "onScreen": "$19/month BUT 14-day free trial 👇",
+              "spoken": "It's only 19 bucks a month, but they have a 14-day free trial. I'm dropping the link below. Try it out.",
+              "broll": [
+                "Show link graphic or hand pointing down"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "It's only $19 a month but they have a 14-day free trial. Link is below, try it out.",
+            "14-day free trial, then $19 a month. I'll drop the link in my bio. You're welcome.",
+            "Link below for the free trial. Seriously, just try it. Your podcast will thank you."
+          ],
+          "filmingChecklist": [
+            "Record intentionally bad podcast audio clip (echoey, thin, inconsistent levels) to play during hook",
+            "Phone with RiffRight interface loaded and ready to show",
+            "Screen recording of: uploading audio file, analysis results appearing, before/after waveforms",
+            "Good lighting on face for authentic reaction shots",
+            "Film in casual setting (bedroom/home studio) for relatability",
+            "Prepare exaggerated 'wincing' reactions for bad audio segment",
+            "Have DAW software open with complicated plugin chain for b-roll contrast"
+          ],
+          "warnings": [
+            "Do not claim RiffRight replaces professional audio engineers",
+            "Avoid guaranteeing specific listener retention improvements",
+            "Do not compare output to specific professional studios or engineers by name",
+            "Ensure 'before/after' audio examples are authentic user content or clearly disclosed as demonstrations",
+            "Free trial terms must be clearly stated"
+          ]
+        },
+        {
+          "angle": "transformation",
+          "duration": 30,
+          "hook": "My Spotify plays went from 47 to 12K after I fixed ONE thing in my mix",
+          "storyboard": [
+            {
+              "t": "0-3s",
+              "shot": "Creator pointing at phone screen showing Spotify stats - before (47 plays) vs after (12K plays)",
+              "onScreen": "47 plays → 12K plays 😳",
+              "spoken": "My Spotify plays went from 47 to 12K after I fixed ONE thing in my mix",
+              "broll": [
+                "Screen recording of Spotify for Artists dashboard showing the transformation"
+              ]
+            },
+            {
+              "t": "3-7s",
+              "shot": "Creator looking frustrated, gesturing to laptop/DAW in background",
+              "onScreen": "The problem? My mixes sounded AMATEUR",
+              "spoken": "The problem? My mixes sounded amateur next to everyone else on playlists. Like, noticeably bad.",
+              "broll": [
+                "Quick cuts of DAW session, waveforms looking messy"
+              ]
+            },
+            {
+              "t": "7-13s",
+              "shot": "Creator leaning in closer to camera, uploading track to RiffRight interface on screen",
+              "onScreen": "This AI told me EXACTLY what was wrong 🎯",
+              "spoken": "Then I found RiffRight. I uploaded my track and this AI literally showed me every problem - my low end was muddy, dynamics were crushed, stereo width was off.",
+              "broll": [
+                "Screen recording of RiffRight analysis showing EQ graph, dynamics meter, detailed feedback"
+              ]
+            },
+            {
+              "t": "13-20s",
+              "shot": "Creator nodding while looking at screen, making adjustment gestures",
+              "onScreen": "Fixed what it flagged in 20 minutes",
+              "spoken": "I went back, fixed the EQ balance and dynamics it flagged. Took like 20 minutes. Re-uploaded, hit the AI master button.",
+              "broll": [
+                "Quick cuts of: RiffRight feedback panel, DAW with EQ adjustments, before/after waveform comparison"
+              ]
+            },
+            {
+              "t": "20-26s",
+              "shot": "Creator looking satisfied, showing final mastered track playback",
+              "onScreen": "Now my tracks actually compete 🔥",
+              "spoken": "Now my tracks actually sound professional. Like, I can put them next to major releases and they hold up.",
+              "broll": [
+                "RiffRight mastered track playing, clean waveform, playlist placement screenshot"
+              ]
+            },
+            {
+              "t": "26-30s",
+              "shot": "Creator casual point to camera/link direction",
+              "onScreen": "14-day FREE trial ⬇️",
+              "spoken": "Try it free for 14 days. I'll drop the link. Your mixes will thank you.",
+              "broll": [
+                "Quick flash of RiffRight logo/interface"
+              ]
+            }
+          ],
+          "ctaVariants": [
+            "Try it free for 14 days, link in bio. Your mixes will thank you.",
+            "14-day free trial, no credit card needed. Link below.",
+            "I left the link in my bio. Free trial, see what's wrong with YOUR mix."
+          ],
+          "filmingChecklist": [
+            "Film in vertical 9:16 format",
+            "Natural lighting or ring light for face shots",
+            "Screen record: Spotify for Artists stats, RiffRight analysis interface, DAW session",
+            "Props: Phone showing Spotify stats, laptop with DAW visible",
+            "Wear headphones in at least one shot for authenticity",
+            "Keep energy high but authentic - not overly scripted",
+            "Film multiple takes of hook for best delivery",
+            "Ensure screen recordings are clear and legible on mobile"
+          ],
+          "warnings": [
+            "Do not claim guaranteed results or specific play count increases",
+            "Avoid saying it replaces professional engineers",
+            "Results shown are individual experience, not typical user guarantee",
+            "Ensure compliance with platform's paid partnership disclosure requirements"
+          ]
+        }
+      ],
+      "scores": [
+        {
+          "total": 15,
+          "details": {
+            "justCount": 3,
+            "literallyCount": 3,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [
+              "trust me on this"
+            ],
+            "bannedPatternHits": [],
+            "harshWordHits": [
+              "trash"
+            ],
+            "hookWordCount": 17,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 50,
+          "details": {
+            "justCount": 3,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 15,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 55,
+          "details": {
+            "justCount": 3,
+            "literallyCount": 2,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 11,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        },
+        {
+          "total": 40,
+          "details": {
+            "justCount": 3,
+            "literallyCount": 3,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 15,
+            "hookHasQuestion": false,
+            "hookHasYou": true
+          }
+        },
+        {
+          "total": 85,
+          "details": {
+            "justCount": 0,
+            "literallyCount": 1,
+            "exclamationCount": 0,
+            "bannedPhraseHits": [],
+            "bannedPatternHits": [],
+            "harshWordHits": [],
+            "hookWordCount": 16,
+            "hookHasQuestion": false,
+            "hookHasYou": false
+          }
+        }
+      ],
+      "avgScore": 49,
+      "tokens": {
+        "input": 3984,
+        "output": 5562
+      },
+      "timeMs": 126467
+    },
+    "totalTokens": {
+      "input": 4691,
+      "output": 6784
+    },
+    "totalTimeMs": 154255
+  }
+]

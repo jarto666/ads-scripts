@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronUp,
   AlertTriangle,
+  AlertCircle,
   Filter,
   Clock,
   Zap,
@@ -241,13 +242,14 @@ function ScriptCard({
   isHighlighted?: boolean;
 }) {
   const isRegenerating = script.status === "pending" || script.status === "generating";
+  const isFailed = script.status === "failed";
 
   return (
     <Card
       id={`script-${script.id}`}
       className={`script-card animate-fade-up overflow-visible ${
         isRegenerating ? "border-primary/30 bg-primary/5" : ""
-      } ${isVersion ? "border-l-2 border-l-primary/30" : ""} ${
+      } ${isFailed ? "border-destructive/30 bg-destructive/5" : ""} ${isVersion ? "border-l-2 border-l-primary/30" : ""} ${
         isHighlighted ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""
       }`}
       style={{ animationDelay: `${index * 0.03}s` }}
@@ -268,9 +270,35 @@ function ScriptCard({
           </div>
         )}
 
+        {/* Failed state indicator */}
+        {isFailed && (
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-destructive/20">
+            <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/15">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">Generation failed</p>
+              <p className="text-xs text-muted-foreground">
+                {script.errorMessage || "An error occurred. Your credit has been refunded."}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRegenerate();
+              }}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Retry
+            </Button>
+          </div>
+        )}
+
         <div
-          className={`${!isRegenerating ? "cursor-pointer" : ""}`}
-          onClick={() => !isRegenerating && onToggleExpand()}
+          className={`${!isRegenerating && !isFailed ? "cursor-pointer" : ""}`}
+          onClick={() => !isRegenerating && !isFailed && onToggleExpand()}
         >
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -292,7 +320,7 @@ function ScriptCard({
                 <Badge variant="secondary" className="text-xs">
                   {script.duration}s
                 </Badge>
-                {!isRegenerating && isAdmin && (
+                {!isRegenerating && !isFailed && isAdmin && (
                   <Badge
                     variant={getScoreVariant(script.score)}
                     className="text-xs"
@@ -308,13 +336,13 @@ function ScriptCard({
                 )}
               </div>
               <p className={`font-medium text-lg leading-snug ${
-                isRegenerating ? "text-muted-foreground" : "text-foreground"
+                isRegenerating || isFailed ? "text-muted-foreground" : "text-foreground"
               }`}>
-                {isRegenerating ? "Generating new version..." : (script.hook || "No hook")}
+                {isRegenerating ? "Generating new version..." : isFailed ? "Generation failed" : (script.hook || "No hook")}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {!isRegenerating && (
+              {!isRegenerating && !isFailed && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -327,7 +355,7 @@ function ScriptCard({
                   <RefreshCw className="h-4 w-4" />
                 </Button>
               )}
-              {!isRegenerating && (
+              {!isRegenerating && !isFailed && (
                 isExpanded ? (
                   <ChevronUp className="h-5 w-5 text-muted-foreground" />
                 ) : (
@@ -512,15 +540,12 @@ export default function ProjectDetailPage({
   const genSettingsAtom = useMemo(() => getProjectGenSettingsAtom(id), [id]);
   const [genSettings, setGenSettings] = useAtom(genSettingsAtom);
 
-  // Credits per script by quality
-  const CREDITS_PER_SCRIPT = {
-    standard: 1,
-    premium: 5,
-  };
+  // Credits per script (single tier - 1 credit = 1 script)
+  const CREDIT_COST_PER_SCRIPT = 1;
 
   // Calculate total scripts
   const totalScripts = genSettings.scriptsPerAngle * genSettings.angles.length;
-  const totalCredits = totalScripts * CREDITS_PER_SCRIPT[genSettings.quality];
+  const totalCredits = totalScripts * CREDIT_COST_PER_SCRIPT;
 
   const [filterAngle, setFilterAngle] = useState<string>("all");
   const [filterDuration, setFilterDuration] = useState<string>("all");
@@ -552,16 +577,20 @@ export default function ProjectDetailPage({
 
   const handleProgress = useCallback((event: ScriptProgressEvent) => {
     setBatchesList((prev) =>
-      prev.map((b) =>
-        b.id === event.batchId
-          ? {
-              ...b,
-              completedCount: event.completedCount,
-              generatingCount: event.generatingCount,
-              progress: event.progress,
-            }
-          : b
-      )
+      prev.map((b) => {
+        if (b.id !== event.batchId) return b;
+
+        // Only accept forward progress (monotonic) to prevent jumping
+        const newProgress = Math.max(b.progress ?? 0, event.progress);
+        const newCompleted = Math.max(b.completedCount ?? 0, event.completedCount);
+
+        return {
+          ...b,
+          completedCount: newCompleted,
+          generatingCount: event.generatingCount,
+          progress: newProgress,
+        };
+      })
     );
   }, []);
 
@@ -892,7 +921,7 @@ export default function ProjectDetailPage({
     setGenerateCooldown(true);
     try {
       const result = await batchesControllerCreate(id, {
-        requestedCount: totalScripts,
+        scriptsPerAngle: genSettings.scriptsPerAngle,
         platform: genSettings.platform as
           | "tiktok"
           | "reels"
@@ -904,7 +933,6 @@ export default function ProjectDetailPage({
           genSettings.personaIds.length > 0
             ? genSettings.personaIds
             : undefined,
-        quality: genSettings.quality,
       });
       const batch = result.data;
       // Add new batch to the top of the list and select it
@@ -1531,11 +1559,17 @@ export default function ProjectDetailPage({
 
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label>Scripts per Angle</Label>
+                  <Label className="flex items-center">
+                    Scripts per Angle
+                    <InfoTip>
+                      How many script variations to generate for each selected
+                      angle. Maximum 30 scripts total per batch.
+                    </InfoTip>
+                  </Label>
                   <Input
                     type="number"
                     min={1}
-                    max={25}
+                    max={30}
                     value={genSettings.scriptsPerAngle}
                     onChange={(e) =>
                       setGenSettings({
@@ -1543,12 +1577,19 @@ export default function ProjectDetailPage({
                         scriptsPerAngle: parseInt(e.target.value) || 1,
                       })
                     }
-                    className="h-9"
+                    className={`h-9 ${totalScripts > 30 ? "border-destructive focus-visible:ring-destructive" : ""}`}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Total: {totalScripts} scripts ({genSettings.angles.length}{" "}
-                    angles × {genSettings.scriptsPerAngle})
-                  </p>
+                  <div className="space-y-1">
+                    <p className={`text-xs ${totalScripts > 30 ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                      Total: {genSettings.angles.length} angle{genSettings.angles.length !== 1 ? "s" : ""} × {genSettings.scriptsPerAngle} = {totalScripts} scripts
+                      {totalScripts > 30 && " (exceeds limit)"}
+                    </p>
+                    {totalScripts > 30 && (
+                      <p className="text-xs text-destructive">
+                        Reduce scripts per angle or select fewer angles.
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center">
@@ -1611,52 +1652,12 @@ export default function ProjectDetailPage({
                 </div>
               </div>
 
-              {/* Quality */}
-              <div className="space-y-2">
-                <Label className="flex items-center">
-                  Quality
-                  <InfoTip>
-                    Premium (5 credits) uses more expensive models for better
-                    hooks and dialogue.
-                  </InfoTip>
-                </Label>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant={
-                      genSettings.quality === "standard" ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() =>
-                      setGenSettings((s) => ({ ...s, quality: "standard" }))
-                    }
-                    className="h-9"
-                  >
-                    Standard
-                    <CreditsCost amount={1} className="ml-1.5" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={
-                      genSettings.quality === "premium" ? "default" : "outline"
-                    }
-                    size="sm"
-                    onClick={() =>
-                      setGenSettings((s) => ({ ...s, quality: "premium" }))
-                    }
-                    className="h-9"
-                  >
-                    Premium
-                    <CreditsCost amount={5} className="ml-1.5" />
-                  </Button>
-                </div>
-              </div>
-
               <Button
                 onClick={handleGenerate}
                 disabled={
                   generateCooldown ||
-                  genSettings.angles.length === 0
+                  genSettings.angles.length === 0 ||
+                  totalScripts > 30
                 }
                 className="w-full h-12 text-base gap-2"
                 variant="glow"
@@ -1665,6 +1666,11 @@ export default function ProjectDetailPage({
                   <>
                     <CheckCircle2 className="h-5 w-5" />
                     Started!
+                  </>
+                ) : totalScripts > 30 ? (
+                  <>
+                    <Sparkles className="h-5 w-5 opacity-50" />
+                    Exceeds 30 Script Limit
                   </>
                 ) : (
                   <>
@@ -1776,14 +1782,6 @@ export default function ProjectDetailPage({
                                     batch.requestedCount}{" "}
                                   scripts
                                 </Badge>
-                                {batch.quality === "premium" && (
-                                  <Badge
-                                    variant="warning"
-                                    className="text-[10px] px-1.5 py-0 gap-0.5"
-                                  >
-                                    Premium
-                                  </Badge>
-                                )}
                               </>
                             )}
                           </div>
@@ -1815,17 +1813,6 @@ export default function ProjectDetailPage({
                       {selectedBatch.angles.length}{" "}
                       {selectedBatch.angles.length === 1 ? "angle" : "angles"}
                     </span>
-                    <span className="text-muted-foreground">·</span>
-                    <Badge
-                      variant={
-                        selectedBatch.quality === "premium"
-                          ? "warning"
-                          : "secondary"
-                      }
-                      className="text-[10px] capitalize gap-1"
-                    >
-                      {selectedBatch.quality || "standard"}
-                    </Badge>
                     <div className="flex flex-wrap gap-1 ml-auto">
                       {selectedBatch.angles.map((angle) => (
                         <Badge
@@ -2090,12 +2077,10 @@ export default function ProjectDetailPage({
               onChange={(e) => setRegenerateInstruction(e.target.value)}
             />
             {/* Cost indicator */}
-            {selectedBatch && (
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border">
-                <span className="text-sm text-muted-foreground">Regeneration cost</span>
-                <CreditsCost amount={selectedBatch.quality === "premium" ? 5 : 1} />
-              </div>
-            )}
+            <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border">
+              <span className="text-sm text-muted-foreground">Regeneration cost</span>
+              <CreditsCost amount={1} />
+            </div>
             <div className="flex justify-end gap-3">
               <Button
                 variant="outline"
@@ -2115,7 +2100,7 @@ export default function ProjectDetailPage({
                 ) : (
                   <>
                     Regenerate
-                    <CreditsCost amount={selectedBatch?.quality === "premium" ? 5 : 1} className="ml-1.5" />
+                    <CreditsCost amount={1} className="ml-1.5" />
                   </>
                 )}
               </Button>

@@ -2,7 +2,12 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { ScriptGeneratorService } from '../generation/script-generator.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreditsService } from '../credits/credits.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from './constants';
+
+const CREDIT_COST_PER_SCRIPT = 1;
 
 export interface ScriptGenerationJobData {
   type: 'generate-batch' | 'regenerate-script';
@@ -17,7 +22,12 @@ export interface ScriptGenerationJobData {
 export class ScriptGenerationProcessor extends WorkerHost {
   private readonly logger = new Logger(ScriptGenerationProcessor.name);
 
-  constructor(private readonly scriptGenerator: ScriptGeneratorService) {
+  constructor(
+    private readonly scriptGenerator: ScriptGeneratorService,
+    private readonly prisma: PrismaService,
+    private readonly creditsService: CreditsService,
+    private readonly notifications: NotificationsGateway,
+  ) {
     super();
   }
 
@@ -26,7 +36,7 @@ export class ScriptGenerationProcessor extends WorkerHost {
 
     if (type === 'generate-batch') {
       this.logger.log(`Processing batch generation job ${job.id} for batch ${job.data.batchId}`);
-      await this.scriptGenerator.generateBatch(job.data.batchId!);
+      await this.scriptGenerator.generateBatchWithOvergeneration(job.data.batchId!);
       this.logger.log(`Batch generation job ${job.id} completed`);
     } else if (type === 'regenerate-script') {
       this.logger.log(`Processing regeneration job ${job.id} for script ${job.data.scriptId}`);
@@ -51,11 +61,51 @@ export class ScriptGenerationProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<ScriptGenerationJobData>, error: Error) {
+  async onFailed(job: Job<ScriptGenerationJobData>, error: Error) {
     const target = job.data.batchId || job.data.scriptId;
+    const maxAttempts = job.opts?.attempts ?? 1;
+
     this.logger.error(
-      `Job ${job.id} failed for ${job.data.type} ${target}: ${error.message}`,
+      `Job ${job.id} failed for ${job.data.type} ${target} (attempt ${job.attemptsMade}/${maxAttempts}): ${error.message}`,
     );
+
+    // Only act after all retries exhausted for regenerate-script jobs
+    if (job.attemptsMade >= maxAttempts && job.data.type === 'regenerate-script' && job.data.scriptId) {
+      // Check if script is still in generating state (catch block didn't run)
+      const script = await this.prisma.script.findUnique({
+        where: { id: job.data.scriptId },
+        include: { batch: { include: { project: true } } },
+      });
+
+      if (script && script.status === 'generating') {
+        this.logger.warn(`Script ${job.data.scriptId} still in generating state after job failure, marking as failed`);
+
+        await this.prisma.script.update({
+          where: { id: job.data.scriptId },
+          data: { status: 'failed', errorMessage: error.message },
+        });
+
+        await this.creditsService.refund(
+          script.batch.project.userId,
+          CREDIT_COST_PER_SCRIPT,
+          script.batchId,
+          'Refund for failed regeneration',
+        );
+
+        this.logger.log(`Refunded ${CREDIT_COST_PER_SCRIPT} credit for failed regeneration of script ${job.data.scriptId}`);
+
+        // Emit WebSocket event for frontend
+        this.notifications.emitScriptProgress({
+          batchId: script.batchId,
+          scriptId: job.data.scriptId,
+          status: 'failed',
+          completedCount: 0,
+          generatingCount: 0,
+          totalCount: 1,
+          progress: 0,
+        });
+      }
+    }
   }
 
   @OnWorkerEvent('stalled')
@@ -69,7 +119,12 @@ export class ScriptGenerationProcessor extends WorkerHost {
 export class ScriptGenerationProProcessor extends WorkerHost {
   private readonly logger = new Logger(ScriptGenerationProProcessor.name);
 
-  constructor(private readonly scriptGenerator: ScriptGeneratorService) {
+  constructor(
+    private readonly scriptGenerator: ScriptGeneratorService,
+    private readonly prisma: PrismaService,
+    private readonly creditsService: CreditsService,
+    private readonly notifications: NotificationsGateway,
+  ) {
     super();
   }
 
@@ -78,7 +133,7 @@ export class ScriptGenerationProProcessor extends WorkerHost {
 
     if (type === 'generate-batch') {
       this.logger.log(`[PRO] Processing batch generation job ${job.id} for batch ${job.data.batchId}`);
-      await this.scriptGenerator.generateBatch(job.data.batchId!);
+      await this.scriptGenerator.generateBatchWithOvergeneration(job.data.batchId!);
       this.logger.log(`[PRO] Batch generation job ${job.id} completed`);
     } else if (type === 'regenerate-script') {
       this.logger.log(`[PRO] Processing regeneration job ${job.id} for script ${job.data.scriptId}`);
@@ -103,11 +158,51 @@ export class ScriptGenerationProProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<ScriptGenerationJobData>, error: Error) {
+  async onFailed(job: Job<ScriptGenerationJobData>, error: Error) {
     const target = job.data.batchId || job.data.scriptId;
+    const maxAttempts = job.opts?.attempts ?? 1;
+
     this.logger.error(
-      `[PRO] Job ${job.id} failed for ${job.data.type} ${target}: ${error.message}`,
+      `[PRO] Job ${job.id} failed for ${job.data.type} ${target} (attempt ${job.attemptsMade}/${maxAttempts}): ${error.message}`,
     );
+
+    // Only act after all retries exhausted for regenerate-script jobs
+    if (job.attemptsMade >= maxAttempts && job.data.type === 'regenerate-script' && job.data.scriptId) {
+      // Check if script is still in generating state (catch block didn't run)
+      const script = await this.prisma.script.findUnique({
+        where: { id: job.data.scriptId },
+        include: { batch: { include: { project: true } } },
+      });
+
+      if (script && script.status === 'generating') {
+        this.logger.warn(`[PRO] Script ${job.data.scriptId} still in generating state after job failure, marking as failed`);
+
+        await this.prisma.script.update({
+          where: { id: job.data.scriptId },
+          data: { status: 'failed', errorMessage: error.message },
+        });
+
+        await this.creditsService.refund(
+          script.batch.project.userId,
+          CREDIT_COST_PER_SCRIPT,
+          script.batchId,
+          'Refund for failed regeneration',
+        );
+
+        this.logger.log(`[PRO] Refunded ${CREDIT_COST_PER_SCRIPT} credit for failed regeneration of script ${job.data.scriptId}`);
+
+        // Emit WebSocket event for frontend
+        this.notifications.emitScriptProgress({
+          batchId: script.batchId,
+          scriptId: job.data.scriptId,
+          status: 'failed',
+          completedCount: 0,
+          generatingCount: 0,
+          totalCount: 1,
+          progress: 0,
+        });
+      }
+    }
   }
 
   @OnWorkerEvent('stalled')

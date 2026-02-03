@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { BrowserlessClient } from './browserless.client';
 import { OpenRouterClient } from '../generation/openrouter.client';
+import { MODEL_CONFIG } from '../config';
 
 export interface ExtractionResult {
   title?: string;
@@ -161,8 +162,8 @@ Return ONLY valid JSON, no markdown, no explanation.`;
       const content = await this.openRouter.chatCompletion(
         [{ role: 'user', content: prompt }],
         {
-          model: 'anthropic/claude-3-5-haiku',
-          temperature: 0.1,
+          model: MODEL_CONFIG.urlAnalysis.model,
+          temperature: MODEL_CONFIG.urlAnalysis.temperature,
           maxTokens: 1000,
           jsonMode: true,
         },

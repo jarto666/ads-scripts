@@ -207,3 +207,35 @@ model ProjectDraft {
 
   @@index([userId])
 }
+
+// Language-aware style rules for script quality filtering
+model StylePolicy {
+  id            String   @id @default(cuid())
+  language      String   // "en", "es", "ru", etc.
+  scope         String   @default("global") // "global", "platform:tiktok", "region:uk"
+  status        String   @default("beta") // "stable", "beta"
+
+  // Word/phrase usage limits (JSON: { "just": { max: 1, enforce: true }, ... })
+  wordLimits    Json     @default("{}")
+
+  // Exact match banned phrases
+  bannedPhrases String[] @default([])
+
+  // Regex patterns for structural clichés
+  bannedRegex   String[] @default([])
+
+  // Soft warnings (not hard blocks)
+  softAvoid     String[] @default([])
+
+  // Harsh tone words to block
+  harshWords    String[] @default([])
+
+  // Schema version for migrations
+  schemaVersion Int      @default(1)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([language, scope])
+  @@index([language])
+}

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenRouterClient } from '../generation/openrouter.client';
 import { CreatePersonaDto, UpdatePersonaDto, GeneratePersonaDto, GeneratedPersonaDto } from './dto';
+import { MODEL_CONFIG } from '../config';
 
 @Injectable()
 export class PersonasService {
@@ -153,9 +154,9 @@ Respond ONLY with valid JSON in this exact format:
         { role: 'user', content: dto.prompt },
       ],
       {
-        model: 'anthropic/claude-3.5-haiku',
-        temperature: 0.7,
-        maxTokens: 1024,
+        model: MODEL_CONFIG.personaGeneration.model,
+        temperature: MODEL_CONFIG.personaGeneration.temperature,
+        maxTokens: MODEL_CONFIG.personaGeneration.maxTokens,
         jsonMode: true,
       },
     );

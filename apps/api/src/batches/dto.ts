@@ -11,11 +11,27 @@ import {
 } from 'class-validator';
 
 export class CreateBatchDto {
-  @ApiProperty({ minimum: 1, maximum: 200 })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 200,
+    description: 'Total scripts to generate (legacy). Use scriptsPerAngle instead.',
+  })
   @IsNumber()
   @Min(1)
   @Max(200)
-  requestedCount: number;
+  @IsOptional()
+  requestedCount?: number;
+
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: 30,
+    description: 'Scripts to generate per angle. Total = scriptsPerAngle × angles.length',
+  })
+  @IsNumber()
+  @Min(1)
+  @Max(30)
+  @IsOptional()
+  scriptsPerAngle?: number;
 
   @ApiProperty({ enum: ['universal', 'tiktok', 'reels', 'shorts'] })
   @IsString()

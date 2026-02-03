@@ -12,6 +12,7 @@ export interface PlatformProfile {
   editNotes: string;
   ctaStyle: string;
   tone: string;
+  conversationalGuidance: string;
 }
 
 export const PLATFORM_PROFILES: Record<string, PlatformProfile> = {
@@ -23,6 +24,7 @@ export const PLATFORM_PROFILES: Record<string, PlatformProfile> = {
     editNotes: 'Clean cuts, good lighting, phone-native but polished',
     ctaStyle: 'Platform-neutral ("Link in bio", "Check it out", "Learn more")',
     tone: 'Authentic UGC that fits TikTok, Reels, and Shorts equally',
+    conversationalGuidance: 'Conversational but adaptable. Avoid platform-specific slang. Natural speech patterns that work across audiences.',
   },
   tiktok: {
     name: 'TikTok',
@@ -32,6 +34,7 @@ export const PLATFORM_PROFILES: Record<string, PlatformProfile> = {
     editNotes: 'Jump cuts every 1-2s, handheld/phone-native feel, chaotic energy OK, strong visual in first frame',
     ctaStyle: 'Direct and urgent ("Get yours", "Try it now", "Link in bio")',
     tone: 'Raw, unpolished, native creator energy - like talking to a friend',
+    conversationalGuidance: 'Ultra-casual. Slang OK. Trending phrases OK. Talk like you\'re sharing a secret with your best friend. High energy, no filter.',
   },
   reels: {
     name: 'Instagram Reels',
@@ -41,6 +44,7 @@ export const PLATFORM_PROFILES: Record<string, PlatformProfile> = {
     editNotes: 'Smoother transitions, better lighting, Instagram-aesthetic, visually appealing',
     ctaStyle: 'Softer, brand-safe ("Learn more", "Shop the link", "Check it out")',
     tone: 'Elevated UGC, aspirational but authentic, slightly more polished than TikTok',
+    conversationalGuidance: 'Casual but polished. Less slang than TikTok. Slightly more \'lifestyle influencer\' energy. Relatable but aspirational.',
   },
   shorts: {
     name: 'YouTube Shorts',
@@ -50,6 +54,7 @@ export const PLATFORM_PROFILES: Record<string, PlatformProfile> = {
     editNotes: 'Voiceover-friendly, structured beats, tutorial-adjacent, clear visual hierarchy',
     ctaStyle: 'Straightforward and neutral ("Check the link", "See description", "More below")',
     tone: 'Informative creator, less slang, more substance, YouTube audience expectations',
+    conversationalGuidance: 'Informative casual. Less trendy slang. More \'helpful friend\' than \'cool friend\'. Clear and direct communication.',
   },
 };
 
@@ -92,6 +97,7 @@ export function getPlatformPromptBlock(platform: string): string {
 - Edit Notes: ${profile.editNotes}
 - CTA Style: ${profile.ctaStyle}
 - Tone: ${profile.tone}
+- Conversational Style: ${profile.conversationalGuidance}
 
 Tailor all hooks, dialogue, pacing, and storyboard directions to match this platform's native advertising style.`;
 }

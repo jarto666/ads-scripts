@@ -47,6 +47,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { PLANS_LIST, CREDIT_PACKS } from "@/lib/constants/plans";
 
 // Format date as "1st Dec 2025"
 function formatDate(date: string | Date): string {
@@ -67,66 +68,6 @@ function formatDate(date: string | Date): string {
   return `${day}${suffix} ${month} ${year}`;
 }
 
-const PLANS = [
-  {
-    id: "free",
-    name: "Free",
-    price: 0,
-    credits: 20,
-    period: "month",
-    description: "Perfect for trying out the platform",
-    features: [
-      "20 credits/month",
-      "Standard & Premium quality",
-      "All script angles",
-      "All platforms",
-      "PDF export",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 12,
-    credits: 500,
-    period: "month",
-    description: "For serious content creators",
-    features: [
-      "Everything in Free, plus:",
-      "500 credits/month",
-      "AI persona research",
-      "URL import with AI analysis",
-      "PDF & CSV export",
-      "Priority generation",
-      "Credit pack purchases",
-    ],
-    recommended: true,
-  },
-];
-
-const CREDIT_PACKS = [
-  {
-    id: "boost",
-    name: "Boost Pack",
-    credits: 500,
-    price: 18,
-    pricePerCredit: 0.036,
-  },
-  {
-    id: "campaign",
-    name: "Campaign Pack",
-    credits: 1000,
-    price: 30,
-    pricePerCredit: 0.03,
-  },
-  {
-    id: "agency",
-    name: "Agency Pack",
-    credits: 2500,
-    price: 60,
-    pricePerCredit: 0.024,
-    popular: true,
-  },
-];
 
 export default function PricingPage() {
   const { user } = useAuth();
@@ -281,7 +222,7 @@ export default function PricingPage() {
         isPro ? "stagger-4" : "stagger-3"
       )}
     >
-      {PLANS.map((plan) => {
+      {PLANS_LIST.map((plan) => {
         const isCurrent =
           (plan.id === "free" && !isPro) || (plan.id === "pro" && isPro);
         const isProPlan = plan.id === "pro";

@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { authControllerMe, authControllerRequestLink } from '@/api/generated/api';
+import { PLANS, PRICING_FAQS } from '@/lib/constants/plans';
 
 // Script angles data
 const scriptAngles = [
@@ -113,24 +114,7 @@ const howItWorks = [
   },
 ];
 
-const faqs = [
-  {
-    q: 'What platforms do you support?',
-    a: 'Klippli generates scripts optimized for TikTok, Instagram Reels, and YouTube Shorts. Each platform has unique content patterns we account for.',
-  },
-  {
-    q: 'How many scripts can I generate?',
-    a: 'Free accounts get 20 credits/month (standard quality costs 1 credit, premium costs 5). Pro accounts get 500 credits/month plus the ability to buy additional credit packs.',
-  },
-  {
-    q: 'What\'s included in each script?',
-    a: 'Every script includes a hook, body copy, CTA, shot-by-shot storyboard, filming directions, and prop suggestions. Premium scripts also include quality scoring.',
-  },
-  {
-    q: 'Can I export my scripts?',
-    a: 'Yes! All plans include PDF export. Pro users also get CSV export for bulk operations and easier handoff to creators.',
-  },
-];
+const faqs = PRICING_FAQS;
 
 export default function LandingPage() {
   const [email, setEmail] = useState('');
@@ -460,15 +444,15 @@ export default function LandingPage() {
             {/* Free Plan */}
             <div className="relative p-8 rounded-2xl bg-card/50 border border-border">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Free</h3>
-                <p className="text-muted-foreground">Perfect for trying out the platform</p>
+                <h3 className="text-2xl font-bold mb-2">{PLANS.free.name}</h3>
+                <p className="text-muted-foreground">{PLANS.free.description}</p>
               </div>
               <div className="mb-8">
-                <span className="text-5xl font-black">$0</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-5xl font-black">${PLANS.free.price}</span>
+                <span className="text-muted-foreground">/{PLANS.free.period}</span>
               </div>
               <ul className="space-y-4 mb-8">
-                {['20 credits/month', 'Standard & Premium quality', 'All 8 script angles', 'All platforms', 'PDF export'].map((feature, i) => (
+                {PLANS.free.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
                     <span>{feature}</span>
@@ -495,15 +479,15 @@ export default function LandingPage() {
                 </Badge>
               </div>
               <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                <p className="text-muted-foreground">For serious content creators</p>
+                <h3 className="text-2xl font-bold mb-2">{PLANS.pro.name}</h3>
+                <p className="text-muted-foreground">{PLANS.pro.description}</p>
               </div>
               <div className="mb-8">
-                <span className="text-5xl font-black">$12</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-5xl font-black">${PLANS.pro.price}</span>
+                <span className="text-muted-foreground">/{PLANS.pro.period}</span>
               </div>
               <ul className="space-y-4 mb-8">
-                {['Everything in Free, plus:', '500 credits/month', 'AI persona research', 'URL import with AI analysis', 'PDF & CSV producer sheets', 'Priority generation', 'Credit pack purchases'].map((feature, i) => (
+                {PLANS.pro.features.map((feature, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
                     <span>{feature}</span>
@@ -523,9 +507,8 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="text-center mt-8 text-sm text-muted-foreground space-y-1">
-            <p>Free: 20 standard scripts or 4 premium scripts/month</p>
-            <p>Pro: 500 standard scripts or 100 premium scripts/month</p>
+          <div className="text-center mt-8 text-sm text-muted-foreground">
+            <p>1 credit = 1 script. All scripts use pro-grade AI models.</p>
           </div>
         </div>
       </section>

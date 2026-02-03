@@ -7,27 +7,31 @@ import {
   buildRepairPrompt,
 } from './prompt-builder';
 import { getLanguageInstruction } from './language-utils';
-import { validateBeatCount } from './platform-profiles';
+import { validateBeatCount, getBeatRange } from './platform-profiles';
 import { ScoringService } from './scoring.service';
+import { StyleFilterService } from './style-filter.service';
+import { HookGeneratorService, SelectedHook } from './hook-generator.service';
+import { RerankService } from './rerank.service';
 import { CreditsService } from '../credits/credits.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
-import { Project, Persona, Batch, Script } from '@prisma/client';
+import { Project, Persona, Batch } from '@prisma/client';
+import { getScriptModel, validateBatchRequest } from '../config';
 
-// Model configuration by quality tier
-const QUALITY_MODELS = {
-  standard: 'anthropic/claude-3.5-haiku',
-  premium: 'anthropic/claude-sonnet-4.5',
-} as const;
+// Legacy mapping for backward compatibility - now uses config
+const getModelForQuality = (quality: string) => {
+  const config = getScriptModel(quality === 'premium' ? 'premium' : 'standard');
+  return config.model;
+};
 
-// Credit cost per script based on quality
-const CREDIT_COSTS = {
-  standard: 1,
-  premium: 5,
-} as const;
+// Credit cost per script (single tier - 1 credit = 1 script)
+const CREDIT_COST_PER_SCRIPT = 1;
 
 // Concurrency limit for parallel script generation
 // Keep moderate to avoid rate limiting from LLM providers
 const SCRIPT_GENERATION_CONCURRENCY = 4;
+
+// Max retries for LLM refusals
+const MAX_SCRIPT_RETRIES = 3;
 
 interface ScriptPlan {
   angle: string;
@@ -61,6 +65,9 @@ export class ScriptGeneratorService {
     private prisma: PrismaService,
     private openRouter: OpenRouterClient,
     private scoringService: ScoringService,
+    private styleFilter: StyleFilterService,
+    private hookGenerator: HookGeneratorService,
+    private rerankService: RerankService,
     private creditsService: CreditsService,
     private notifications: NotificationsGateway,
   ) {}
@@ -163,9 +170,7 @@ export class ScriptGeneratorService {
 
       // Refund credits for failed scripts
       if (failedScripts > 0) {
-        const quality = (batch.quality as keyof typeof CREDIT_COSTS) || 'standard';
-        const creditCostPerScript = CREDIT_COSTS[quality];
-        const refundAmount = creditCostPerScript * failedScripts;
+        const refundAmount = CREDIT_COST_PER_SCRIPT * failedScripts;
 
         await this.creditsService.refund(
           batch.project.userId,
@@ -212,7 +217,7 @@ export class ScriptGeneratorService {
       count: batch.requestedCount,
     });
 
-    const model = QUALITY_MODELS[batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+    const model = getModelForQuality(batch.quality);
     this.logger.log(`Using model ${model} for batch ${batch.id} (quality: ${batch.quality})`);
 
     const response = await this.openRouter.chatCompletion(
@@ -228,13 +233,32 @@ export class ScriptGeneratorService {
       if (!Array.isArray(plans)) {
         throw new Error('Response is not an array');
       }
-      return plans as ScriptPlan[];
+      return this.normalizePlans(plans);
     } catch (error) {
       // Try to repair
       this.logger.warn('Pass 1 JSON parse failed, attempting repair');
       const repaired = await this.repairJson(response, error instanceof Error ? error.message : 'Unknown error');
-      return JSON.parse(repaired) as ScriptPlan[];
+      return this.normalizePlans(JSON.parse(repaired));
     }
+  }
+
+  /**
+   * Normalize plans to ensure array fields are actually arrays.
+   * LLMs sometimes return strings instead of arrays.
+   */
+  private normalizePlans(plans: unknown[]): ScriptPlan[] {
+    return plans.map((plan: unknown) => {
+      const p = plan as Record<string, unknown>;
+      return {
+        angle: String(p.angle || ''),
+        duration: Number(p.duration) || 15,
+        hookIdea: String(p.hookIdea || ''),
+        beats: Array.isArray(p.beats) ? p.beats : (p.beats ? [String(p.beats)] : []),
+        complianceNotes: Array.isArray(p.complianceNotes)
+          ? p.complianceNotes
+          : (p.complianceNotes ? [String(p.complianceNotes)] : []),
+      };
+    });
   }
 
   private async generateScript(
@@ -242,25 +266,40 @@ export class ScriptGeneratorService {
     plan: ScriptPlan,
   ): Promise<ScriptOutput> {
     const prompt = buildPass2Prompt(batch.project, plan, batch.platform);
+    const model = getModelForQuality(batch.quality);
 
-    const model = QUALITY_MODELS[batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+    for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
+      try {
+        const response = await this.openRouter.chatCompletion(
+          [
+            { role: 'system', content: 'You are a UGC script writer. Always respond with valid JSON.' },
+            { role: 'user', content: prompt },
+          ],
+          { model, temperature: 0.7, jsonMode: true },
+        );
 
-    const response = await this.openRouter.chatCompletion(
-      [
-        { role: 'system', content: 'You are a UGC script writer. Always respond with valid JSON.' },
-        { role: 'user', content: prompt },
-      ],
-      { model, temperature: 0.7, jsonMode: true },
-    );
+        if (this.isLlmRefusal(response)) {
+          throw new Error('LLM refused to generate content');
+        }
 
-    try {
-      const cleaned = this.stripMarkdown(response);
-      return JSON.parse(cleaned) as ScriptOutput;
-    } catch (error) {
-      this.logger.warn('Pass 2 JSON parse failed, attempting repair');
-      const repaired = await this.repairJson(response, error instanceof Error ? error.message : 'Unknown error');
-      return JSON.parse(repaired) as ScriptOutput;
+        try {
+          const cleaned = this.stripMarkdown(response);
+          return JSON.parse(cleaned) as ScriptOutput;
+        } catch (parseError) {
+          this.logger.warn('Pass 2 JSON parse failed, attempting repair');
+          const repaired = await this.repairJson(response, parseError instanceof Error ? parseError.message : 'Unknown error');
+          return JSON.parse(repaired) as ScriptOutput;
+        }
+      } catch (error) {
+        if (attempt === MAX_SCRIPT_RETRIES) {
+          throw error;
+        }
+        this.logger.warn(`Script attempt ${attempt} failed, retrying: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
+
+    // This should never be reached due to throw in final attempt
+    throw new Error('Script generation failed after all retries');
   }
 
   /**
@@ -330,6 +369,27 @@ export class ScriptGeneratorService {
           script,
           forbiddenClaims,
         );
+
+        // Apply style filter (language-based quality rules)
+        const filterResult = await this.styleFilter.filterScript(
+          {
+            hook: script.hook,
+            storyboard: script.storyboard.map(s => ({
+              spoken: s.spoken,
+              onScreen: s.onScreen,
+            })),
+            ctaVariants: script.ctaVariants,
+          },
+          batch.project.language || 'en',
+        );
+
+        // Log filter results for analysis (internal only - not user-visible)
+        if (filterResult.violations.length > 0) {
+          this.logger.warn(
+            `Script ${index + 1} style violations: ${filterResult.violations.join(', ')}`,
+          );
+          // Don't add to user-visible warnings - internal logging only
+        }
 
         // Validate beat count
         const beatWarning = validateBeatCount(script.storyboard, script.duration);
@@ -409,6 +469,21 @@ export class ScriptGeneratorService {
       totalCount,
       progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
     };
+  }
+
+  /**
+   * Detect if LLM response is a refusal rather than content.
+   * Common refusal patterns from various models.
+   */
+  private isLlmRefusal(response: string): boolean {
+    const refusalPatterns = [
+      /^I('m| am) (sorry|unable|afraid)/i,
+      /^I apologize/i,
+      /^I cannot/i,
+      /^Unfortunately/i,
+      /^As an AI/i,
+    ];
+    return refusalPatterns.some(pattern => pattern.test(response.trim()));
   }
 
   private async repairJson(rawOutput: string, error: string): Promise<string> {
@@ -509,29 +584,69 @@ ${languageBlock}Return the modified script in the same JSON format:
 Return ONLY valid JSON.`;
 
       // Use model based on batch quality
-      const model = QUALITY_MODELS[script.batch.quality as keyof typeof QUALITY_MODELS] || QUALITY_MODELS.standard;
+      const model = getModelForQuality(script.batch.quality);
       this.logger.log(`Regenerating script ${scriptId} with model ${model}`);
 
-      const response = await this.openRouter.chatCompletion(
-        [
-          { role: 'system', content: 'You modify UGC scripts. Always respond with valid JSON.' },
-          { role: 'user', content: prompt },
-        ],
-        { model, temperature: 0.5, jsonMode: true },
-      );
+      let scriptOutput: ScriptOutput | null = null;
 
-      let scriptOutput: ScriptOutput;
-      try {
-        scriptOutput = JSON.parse(response);
-      } catch {
-        const repaired = await this.repairJson(response, 'JSON parse error');
-        scriptOutput = JSON.parse(repaired);
+      for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
+        try {
+          const response = await this.openRouter.chatCompletion(
+            [
+              { role: 'system', content: 'You modify UGC scripts. Always respond with valid JSON.' },
+              { role: 'user', content: prompt },
+            ],
+            { model, temperature: 0.5, jsonMode: true },
+          );
+
+          if (this.isLlmRefusal(response)) {
+            throw new Error('LLM refused to generate content');
+          }
+
+          try {
+            scriptOutput = JSON.parse(response);
+          } catch {
+            const repaired = await this.repairJson(response, 'JSON parse error');
+            scriptOutput = JSON.parse(repaired);
+          }
+          break; // Success, exit retry loop
+        } catch (retryError) {
+          if (attempt === MAX_SCRIPT_RETRIES) {
+            throw retryError;
+          }
+          this.logger.warn(`Regeneration attempt ${attempt} failed, retrying: ${retryError instanceof Error ? retryError.message : 'Unknown error'}`);
+        }
+      }
+
+      if (!scriptOutput) {
+        throw new Error('Regeneration failed after all retries');
       }
 
       const { score, warnings } = this.scoringService.scoreScript(
         scriptOutput,
         script.batch.project.forbiddenClaims,
       );
+
+      // Apply style filter
+      const filterResult = await this.styleFilter.filterScript(
+        {
+          hook: scriptOutput.hook,
+          storyboard: scriptOutput.storyboard.map(s => ({
+            spoken: s.spoken,
+            onScreen: s.onScreen,
+          })),
+          ctaVariants: scriptOutput.ctaVariants,
+        },
+        script.batch.project.language || 'en',
+      );
+
+      // Log filter results for analysis (internal only - not user-visible)
+      if (filterResult.violations.length > 0) {
+        this.logger.warn(
+          `Regenerated script ${scriptId} style violations: ${filterResult.violations.join(', ')}`,
+        );
+        // Don't add to user-visible warnings - internal logging only
+      }
 
       // Update the script with generated content
       await this.prisma.script.update({
@@ -559,7 +674,441 @@ Return ONLY valid JSON.`;
         },
       });
 
+      // Refund the credit
+      await this.creditsService.refund(
+        script.batch.project.userId,
+        CREDIT_COST_PER_SCRIPT,
+        script.batchId,
+        'Refund for failed regeneration',
+      );
+
+      this.logger.log(`Refunded ${CREDIT_COST_PER_SCRIPT} credit for failed regeneration of script ${scriptId}`);
+
+      // Emit WebSocket event for frontend
+      this.notifications.emitScriptProgress({
+        batchId: script.batchId,
+        scriptId,
+        status: 'failed',
+        completedCount: 0,
+        generatingCount: 0,
+        totalCount: 1,
+        progress: 0,
+      });
+
       throw error;
     }
+  }
+
+  // ============================================================
+  // OVERGENERATION PIPELINE (Phase 2)
+  // Generate → Filter → Rerank → Return Top N
+  // ============================================================
+
+  /**
+   * Generate batch using overgeneration pipeline.
+   * 1. Generate many hooks
+   * 2. Filter and select top hooks
+   * 3. Generate scripts from hooks in parallel
+   * 4. Hard filter scripts that fail StylePolicy
+   * 5. Rerank surviving scripts
+   * 6. Return top N requested
+   */
+  async generateBatchWithOvergeneration(batchId: string): Promise<void> {
+    const batch = await this.prisma.batch.findUnique({
+      where: { id: batchId },
+      include: {
+        project: {
+          include: {
+            personas: true,
+          },
+        },
+        scripts: true,
+      },
+    });
+
+    if (!batch) {
+      throw new Error('Batch not found');
+    }
+
+    if (batch.status === 'completed') {
+      this.logger.log(`Batch ${batchId} already completed, skipping`);
+      return;
+    }
+
+    const quality = (batch.quality as 'standard' | 'premium') || 'standard';
+    const totalRequested = batch.requestedCount;
+    const anglesCount = Math.max(batch.angles.length, 1);
+    const scriptsPerAngle = Math.ceil(totalRequested / anglesCount);
+
+    // Validate batch doesn't exceed limits
+    const validation = validateBatchRequest(scriptsPerAngle, anglesCount);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    try {
+      await this.prisma.batch.update({
+        where: { id: batchId },
+        data: { status: 'processing' },
+      });
+
+      // Filter personas if specific ones were selected
+      const filteredPersonas =
+        batch.personaIds.length > 0
+          ? batch.project.personas.filter((p) => batch.personaIds.includes(p.id))
+          : batch.project.personas;
+
+      const projectWithFilteredPersonas = {
+        ...batch.project,
+        personas: filteredPersonas,
+      };
+
+      this.logger.log(
+        `[Overgen] Starting for batch ${batchId} (${quality} tier: ${scriptsPerAngle} scripts per angle × ${anglesCount} angles = ${totalRequested} final)`,
+      );
+
+      // Step 1: Generate and select hooks (stratified by angle)
+      const hookResult = await this.hookGenerator.generateHooks(
+        projectWithFilteredPersonas,
+        {
+          platform: batch.platform,
+          angles: batch.angles,
+          quality,
+          scriptsPerAngle,
+        },
+      );
+
+      this.logger.log(
+        `[Overgen] Hook stats: ${hookResult.stats.generated} generated, ${hookResult.stats.passedFilter} passed filter, ${hookResult.stats.selected} selected`,
+      );
+
+      if (hookResult.selectedHooks.length === 0) {
+        throw new Error('No hooks survived filtering');
+      }
+
+      // Step 2: Generate scripts from selected hooks (each hook has its angle)
+      const generatedScripts = await this.generateScriptsFromHooks(
+        hookResult.selectedHooks,
+        batch,
+        projectWithFilteredPersonas,
+      );
+
+      this.logger.log(`[Overgen] Generated ${generatedScripts.length} scripts`);
+
+      // Step 3: Hard filter - reject scripts that fail StylePolicy
+      const filteredScripts = await this.hardFilterScripts(
+        generatedScripts,
+        projectWithFilteredPersonas.language || 'en',
+      );
+
+      this.logger.log(
+        `[Overgen] ${filteredScripts.length}/${generatedScripts.length} scripts passed hard filter`,
+      );
+
+      if (filteredScripts.length === 0) {
+        throw new Error('No scripts passed hard filter');
+      }
+
+      // Step 4: Rerank by quality scores
+      const rankedScripts = this.rerankService.rerankScripts(
+        filteredScripts,
+        {
+          productDescription: projectWithFilteredPersonas.productDescription,
+          productName: projectWithFilteredPersonas.name,
+        },
+        filteredPersonas,
+      );
+
+      // Step 5: Select top N and save to database
+      const targetCount = Math.min(batch.requestedCount, rankedScripts.length);
+      const topScripts = rankedScripts.slice(0, targetCount);
+
+      this.logger.log(
+        `[Overgen] Returning top ${targetCount} scripts. Score range: ${topScripts[0]?.scores.final} - ${topScripts[topScripts.length - 1]?.scores.final}`,
+      );
+
+      // Save selected scripts to database
+      for (let i = 0; i < topScripts.length; i++) {
+        const { script, scores } = topScripts[i];
+
+        // Score with existing scoring service for filmability score
+        const { score: filmabilityScore, warnings } = this.scoringService.scoreScript(
+          script,
+          batch.project.forbiddenClaims,
+        );
+
+        // Validate beat count
+        const beatWarning = validateBeatCount(script.storyboard, script.duration);
+        if (beatWarning) {
+          warnings.push(beatWarning);
+        }
+
+        await this.prisma.script.create({
+          data: {
+            batchId,
+            status: 'completed',
+            angle: script.angle,
+            duration: script.duration,
+            hook: script.hook,
+            storyboard: script.storyboard,
+            ctaVariants: script.ctaVariants,
+            filmingChecklist: script.filmingChecklist,
+            warnings: [
+              ...(script.warnings || []),
+              ...warnings,
+            ],
+            score: filmabilityScore,
+          },
+        });
+
+        // Emit progress
+        this.notifications.emitScriptProgress({
+          batchId,
+          scriptId: `temp-${i}`,
+          status: 'completed',
+          completedCount: i + 1,
+          generatingCount: 0,
+          totalCount: targetCount,
+          progress: Math.round(((i + 1) / targetCount) * 100),
+        });
+      }
+
+      // Mark batch complete
+      await this.prisma.batch.update({
+        where: { id: batchId },
+        data: { status: 'completed' },
+      });
+
+      this.notifications.emitBatchCompleted({
+        batchId,
+        projectId: batch.projectId,
+        totalScripts: targetCount,
+        completedScripts: topScripts.length,
+        failedScripts: 0,
+      });
+
+      this.logger.log(`[Overgen] Batch ${batchId} completed successfully`);
+    } catch (error) {
+      this.logger.error(`[Overgen] Batch ${batchId} failed: ${error}`);
+
+      await this.prisma.batch.update({
+        where: { id: batchId },
+        data: {
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        },
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Generate full scripts from selected hooks (parallel with concurrency control).
+   * Each hook now includes its angle, so we use that instead of round-robin.
+   */
+  private async generateScriptsFromHooks(
+    hooks: SelectedHook[],
+    batch: Batch,
+    project: Project & { personas: Persona[] },
+  ): Promise<ScriptOutput[]> {
+    const results: ScriptOutput[] = [];
+    const model = getModelForQuality(batch.quality);
+
+    // Simple semaphore for concurrency control
+    let activeCount = 0;
+    const waiting: Array<() => void> = [];
+
+    const acquireSemaphore = (): Promise<void> => {
+      return new Promise((resolve) => {
+        if (activeCount < SCRIPT_GENERATION_CONCURRENCY) {
+          activeCount++;
+          resolve();
+        } else {
+          waiting.push(resolve);
+        }
+      });
+    };
+
+    const releaseSemaphore = (): void => {
+      activeCount--;
+      const next = waiting.shift();
+      if (next) {
+        activeCount++;
+        next();
+      }
+    };
+
+    const generateFromHook = async (selectedHook: SelectedHook, index: number): Promise<ScriptOutput | null> => {
+      await acquireSemaphore();
+
+      try {
+        // Use the angle from the hook (stratified selection ensures proper distribution)
+        const duration = batch.durations[index % batch.durations.length];
+        const angle = selectedHook.angle;
+        const beatRange = getBeatRange(duration);
+
+        const prompt = this.buildScriptFromHookPrompt(project, {
+          hook: selectedHook.hook,
+          angle,
+          duration,
+          beatRange,
+          platform: batch.platform,
+        });
+
+        for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
+          try {
+            const response = await this.openRouter.chatCompletion(
+              [
+                { role: 'system', content: 'You are a UGC script writer. Always respond with valid JSON.' },
+                { role: 'user', content: prompt },
+              ],
+              { model, temperature: 0.7, jsonMode: true },
+            );
+
+            if (this.isLlmRefusal(response)) {
+              throw new Error('LLM refused to generate content');
+            }
+
+            try {
+              const cleaned = this.stripMarkdown(response);
+              return JSON.parse(cleaned) as ScriptOutput;
+            } catch {
+              this.logger.warn(`Failed to parse script for hook ${index + 1}, attempting repair`);
+              const repaired = await this.repairJson(response, 'JSON parse error');
+              return JSON.parse(repaired) as ScriptOutput;
+            }
+          } catch (retryError) {
+            if (attempt === MAX_SCRIPT_RETRIES) {
+              throw retryError;
+            }
+            this.logger.warn(`Hook script attempt ${attempt} failed, retrying: ${retryError instanceof Error ? retryError.message : 'Unknown error'}`);
+          }
+        }
+        return null; // Should not reach here
+      } catch (error) {
+        this.logger.error(`Failed to generate script from hook ${index + 1}: ${error}`);
+        return null;
+      } finally {
+        releaseSemaphore();
+      }
+    };
+
+    // Generate all scripts in parallel
+    const scriptPromises = hooks.map((hook, index) => generateFromHook(hook, index));
+    const scriptResults = await Promise.all(scriptPromises);
+
+    // Filter out nulls (failed generations)
+    for (const script of scriptResults) {
+      if (script) {
+        results.push(script);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Build prompt for generating a full script from a specific hook
+   */
+  private buildScriptFromHookPrompt(
+    project: Project & { personas: Persona[] },
+    settings: {
+      hook: string;
+      angle: string;
+      duration: number;
+      beatRange: { min: number; max: number };
+      platform: string;
+    },
+  ): string {
+    const personaContext = project.personas
+      .map((p) => `${p.name}: ${p.description}`)
+      .join('; ');
+
+    const languageBlock = getLanguageInstruction(project.language, project.region);
+
+    return `You are an expert UGC video ad script writer.
+
+## Product
+${project.productDescription}
+${project.offer ? `\nOffer: ${project.offer}` : ''}
+
+${languageBlock}## Target Audience
+${personaContext || 'General audience'}
+
+${project.brandVoice ? `## Brand Voice\n${project.brandVoice}\n` : ''}
+${project.forbiddenClaims.length ? `## FORBIDDEN (Never use these):\n${project.forbiddenClaims.map((c) => `- "${c}"`).join('\n')}\n` : ''}
+
+## Task
+Write a complete PAID AD script using this EXACT hook:
+"${settings.hook}"
+
+Angle: ${settings.angle}
+Duration: ${settings.duration}s
+Platform: ${settings.platform}
+
+Return this EXACT JSON structure:
+{
+  "angle": "${settings.angle}",
+  "duration": ${settings.duration},
+  "hook": "${settings.hook}",
+  "storyboard": [
+    {
+      "t": "0-3s",
+      "shot": "What is in frame and the action",
+      "onScreen": "Text overlay for this segment",
+      "spoken": "Exact words the creator says",
+      "broll": ["B-roll idea 1", "B-roll idea 2"]
+    }
+  ],
+  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3"],
+  "filmingChecklist": ["Filming instruction 1", "Props needed"],
+  "warnings": []
+}
+
+REQUIREMENTS:
+- Use the EXACT hook provided (do not modify it)
+- Storyboard should have ${settings.beatRange.min}-${settings.beatRange.max} segments
+- Time segments should add up to ~${settings.duration}s
+- CTAs should match platform style
+
+OUTPUT CONTRACT:
+- Output must be valid JSON starting with '{' and ending with '}'
+- Do NOT wrap in markdown fences
+- Do NOT include any explanation`;
+  }
+
+  /**
+   * Hard filter scripts - reject those that fail StylePolicy
+   */
+  private async hardFilterScripts(
+    scripts: ScriptOutput[],
+    language: string,
+  ): Promise<ScriptOutput[]> {
+    const passed: ScriptOutput[] = [];
+
+    for (const script of scripts) {
+      const filterResult = await this.styleFilter.filterScript(
+        {
+          hook: script.hook,
+          storyboard: script.storyboard.map((s) => ({
+            spoken: s.spoken,
+            onScreen: s.onScreen,
+          })),
+          ctaVariants: script.ctaVariants,
+        },
+        language,
+      );
+
+      if (filterResult.passed) {
+        passed.push(script);
+      } else {
+        this.logger.debug(
+          `[Overgen] Script filtered out: ${filterResult.violations.join(', ')}`,
+        );
+      }
+    }
+
+    return passed;
   }
 }

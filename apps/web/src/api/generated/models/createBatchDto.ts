@@ -10,10 +10,17 @@ import type { CreateBatchDtoQuality } from './createBatchDtoQuality';
 
 export interface CreateBatchDto {
   /**
+   * Total scripts to generate (legacy). Use scriptsPerAngle instead.
    * @minimum 1
    * @maximum 200
    */
-  requestedCount: number;
+  requestedCount?: number;
+  /**
+   * Scripts to generate per angle. Total = scriptsPerAngle × angles.length
+   * @minimum 1
+   * @maximum 30
+   */
+  scriptsPerAngle?: number;
   platform: CreateBatchDtoPlatform;
   angles: string[];
   durations: number[];

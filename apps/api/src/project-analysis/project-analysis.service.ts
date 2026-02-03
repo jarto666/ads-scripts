@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenRouterClient } from '../generation/openrouter.client';
 import { ExtractionResult } from '../url-extraction/url-extraction.service';
+import { MODEL_CONFIG } from '../config';
 
 export interface PersonaSuggestion {
   id: string;
@@ -46,9 +47,9 @@ export class ProjectAnalysisService {
           { role: 'user', content: prompt },
         ],
         {
-          model: 'anthropic/claude-3-5-haiku',
-          temperature: 0.5,
-          maxTokens: 4096,
+          model: MODEL_CONFIG.urlAnalysis.model,
+          temperature: MODEL_CONFIG.urlAnalysis.temperature,
+          maxTokens: MODEL_CONFIG.urlAnalysis.maxTokens,
           jsonMode: true,
         },
       );

@@ -3,6 +3,9 @@ import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScriptGenerationProcessor, ScriptGenerationProProcessor } from './script-generation.processor';
 import { GenerationModule } from '../generation/generation.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { CreditsModule } from '../credits/credits.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from './constants';
 
 @Module({
@@ -55,6 +58,9 @@ import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from './constant
       },
     }),
     GenerationModule,
+    PrismaModule,
+    CreditsModule,
+    NotificationsModule,
   ],
   providers: [ScriptGenerationProcessor, ScriptGenerationProProcessor],
   exports: [BullModule],

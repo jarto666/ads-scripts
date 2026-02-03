@@ -7,12 +7,10 @@ import { CreditsService } from '../credits/credits.service';
 import { CreateBatchDto, RegenerateDto } from './dto';
 import { SCRIPT_GENERATION_QUEUE, SCRIPT_GENERATION_PRO_QUEUE } from '../queue/constants';
 import { ScriptGenerationJobData } from '../queue/script-generation.processor';
+import { BATCH_LIMITS } from '../config';
 
-// Credit cost per script based on quality
-const CREDIT_COSTS = {
-  standard: 1,
-  premium: 5,
-} as const;
+// Credit cost per script (single tier - 1 credit = 1 script)
+const CREDIT_COST_PER_SCRIPT = 1;
 
 @Injectable()
 export class BatchesService {
@@ -79,8 +77,28 @@ export class BatchesService {
   async create(userId: string, projectId: string, dto: CreateBatchDto) {
     await this.verifyProjectAccess(userId, projectId);
 
-    const quality = dto.quality || 'standard';
-    const creditCost = CREDIT_COSTS[quality] * dto.requestedCount;
+    // Support both scriptsPerAngle (new) and requestedCount (legacy)
+    // scriptsPerAngle takes precedence if provided
+    let requestedCount: number;
+    if (dto.scriptsPerAngle !== undefined) {
+      requestedCount = dto.scriptsPerAngle * dto.angles.length;
+    } else if (dto.requestedCount !== undefined) {
+      requestedCount = dto.requestedCount;
+    } else {
+      throw new BadRequestException('Either scriptsPerAngle or requestedCount must be provided');
+    }
+
+    // Validate total scripts don't exceed limit
+    if (requestedCount > BATCH_LIMITS.maxTotalScripts) {
+      throw new BadRequestException(
+        `Total scripts (${requestedCount}) exceeds limit of ${BATCH_LIMITS.maxTotalScripts}. ` +
+        `Reduce scripts per angle or select fewer angles.`,
+      );
+    }
+
+    // Default to premium quality (single tier - all scripts use best models)
+    const quality = dto.quality || 'premium';
+    const creditCost = CREDIT_COST_PER_SCRIPT * requestedCount;
 
     // Check if user has enough credits
     const hasCredits = await this.creditsService.hasEnoughCredits(userId, creditCost);
@@ -88,7 +106,7 @@ export class BatchesService {
       const available = await this.creditsService.getTotalAvailable(userId);
       throw new BadRequestException(
         `Insufficient credits. Need ${creditCost}, have ${available}. ` +
-        `Each ${quality} script costs ${CREDIT_COSTS[quality]} credit(s).`,
+        `Each script costs ${CREDIT_COST_PER_SCRIPT} credit.`,
       );
     }
 
@@ -96,7 +114,7 @@ export class BatchesService {
     const batch = await this.prisma.batch.create({
       data: {
         projectId,
-        requestedCount: dto.requestedCount,
+        requestedCount,
         platform: dto.platform,
         angles: dto.angles,
         durations: dto.durations,
@@ -111,7 +129,7 @@ export class BatchesService {
       userId,
       creditCost,
       batch.id,
-      `Generated ${dto.requestedCount} ${quality} scripts`,
+      `Generated ${requestedCount} ${quality} scripts`,
     );
 
     // Add job to appropriate queue based on user plan
@@ -240,9 +258,8 @@ export class BatchesService {
       throw new ForbiddenException('Access denied');
     }
 
-    // Calculate credit cost based on batch quality
-    const quality = script.batch.quality as 'standard' | 'premium';
-    const creditCost = CREDIT_COSTS[quality] || CREDIT_COSTS.standard;
+    // Credit cost for regeneration (single tier)
+    const creditCost = CREDIT_COST_PER_SCRIPT;
 
     // Check if user has enough credits
     const hasCredits = await this.creditsService.hasEnoughCredits(userId, creditCost);
@@ -274,7 +291,7 @@ export class BatchesService {
       userId,
       creditCost,
       script.batchId,
-      `Regenerated ${quality} script`,
+      'Regenerated script',
     );
 
     // Queue the regeneration job to appropriate queue based on user plan
@@ -291,6 +308,11 @@ export class BatchesService {
       },
       {
         jobId: `regen-${newScript.id}`,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000, // 2s, 4s, 8s
+        },
       },
     );
 

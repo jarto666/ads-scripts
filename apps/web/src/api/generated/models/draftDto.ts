@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 import type { DraftDtoAnalysisData } from './draftDtoAnalysisData';
+import type { DraftDtoImportStatus } from './draftDtoImportStatus';
 import type { DraftFormDataDto } from './draftFormDataDto';
 import type { ExtractionDataDto } from './extractionDataDto';
 
@@ -15,7 +16,7 @@ export interface DraftDto {
   completedSteps: number[];
   sourceUrl?: string;
   importMethod: string;
-  importStatus?: 'pending' | 'importing' | 'completed' | 'failed';
+  importStatus?: DraftDtoImportStatus;
   importError?: string;
   formData: DraftFormDataDto;
   extractionData?: ExtractionDataDto;

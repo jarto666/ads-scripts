@@ -7,7 +7,6 @@
  */
 
 export * from './_adminUserDetailDtoCount';
-export * from './adminControllerApproveRequest201';
 export * from './adminControllerGetQueueJobsParams';
 export * from './adminControllerGetRequestsParams';
 export * from './adminUserDetailDto';
@@ -34,11 +33,14 @@ export * from './creditTransactionDtoType';
 export * from './deleteAccountResultDto';
 export * from './draftDto';
 export * from './draftDtoAnalysisData';
+export * from './draftDtoImportStatus';
 export * from './draftFormDataDto';
 export * from './exportResultDto';
 export * from './extractionDataDto';
 export * from './finalizeDraftDto';
 export * from './finalizeResultDto';
+export * from './generatedPersonaDto';
+export * from './generatePersonaDto';
 export * from './grantCreditsDto';
 export * from './grantCreditsDtoCreditType';
 export * from './grantCreditsResponseDto';

@@ -13,9 +13,9 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_BASE_URL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
 
 const MODELS = [
-  { id: 'anthropic/claude-3.5-haiku', name: 'Haiku 3.5', tier: 'standard' },
+  { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', tier: 'standard' },
   { id: 'anthropic/claude-haiku-4.5', name: 'Haiku 4.5', tier: 'standard' },
-  { id: 'anthropic/claude-3.5-sonnet', name: 'Sonnet 3.5', tier: 'premium' },
+  { id: 'google/gemini-3-pro-preview', name: 'Gemini 3 Pro', tier: 'premium' },
   { id: 'anthropic/claude-sonnet-4.5', name: 'Sonnet 4.5', tier: 'premium' },
 ];
 
@@ -45,9 +45,9 @@ const TEST_PROJECT = {
 
 const TEST_SETTINGS = {
   platform: 'tiktok',
-  angles: ['pain_agitation', 'transformation'],
+  angles: ['pain_agitation', 'transformation', 'social_proof'],
   durations: [30, 45],
-  count: 2,
+  count: 5,
 };
 
 // Platform prompt block (simplified for testing)
@@ -199,6 +199,120 @@ REQUIREMENTS:
 Return ONLY valid JSON.`;
 }
 
+// Quality scoring based on our StylePolicy criteria
+const BANNED_PATTERNS = [
+  /not\s+\w+[,.]?\s*not\s+\w+[,.]?\s*(just|only)\s+\w+/gi,  // "Not A, not B, just C"
+  /no\s+\w+[,.]?\s*no\s+\w+[,.]?\s*(just|only)/gi,          // "No X, no Y, just results"
+  /literally\s+\d+\s*(seconds?|minutes?)/gi,                 // "literally 10 seconds"
+  /in\s+just\s+\d+\s*(seconds?|minutes?)/gi,                 // "in just 5 seconds"
+];
+
+const BANNED_PHRASES = [
+  'game changer', 'game-changer', 'life changing', 'life-changing',
+  'wait for it', 'trust me on this', 'let that sink in', 'read that again',
+];
+
+const HARSH_WORDS = ['terrible', 'ugly', 'horrible', 'crappy', 'garbage', 'trash'];
+
+interface QualityScore {
+  total: number;
+  details: {
+    justCount: number;
+    literallyCount: number;
+    exclamationCount: number;
+    bannedPhraseHits: string[];
+    bannedPatternHits: string[];
+    harshWordHits: string[];
+    hookWordCount: number;
+    hookHasQuestion: boolean;
+    hookHasYou: boolean;
+  };
+}
+
+function scoreScript(script: any): QualityScore {
+  if (!script || script.error) {
+    return { total: 0, details: { justCount: 0, literallyCount: 0, exclamationCount: 0, bannedPhraseHits: [], bannedPatternHits: [], harshWordHits: [], hookWordCount: 0, hookHasQuestion: false, hookHasYou: false } };
+  }
+
+  const allText = [
+    script.hook || '',
+    ...(script.storyboard || []).map((s: any) => `${s.spoken || ''} ${s.onScreen || ''}`),
+    ...(script.ctaVariants || []),
+  ].join(' ');
+
+  const textLower = allText.toLowerCase();
+
+  // Count word occurrences
+  const justCount = (allText.match(/\bjust\b/gi) || []).length;
+  const literallyCount = (allText.match(/\bliterally\b/gi) || []).length;
+  const exclamationCount = (allText.match(/!/g) || []).length;
+
+  // Check banned phrases
+  const bannedPhraseHits: string[] = [];
+  for (const phrase of BANNED_PHRASES) {
+    if (textLower.includes(phrase.toLowerCase())) {
+      bannedPhraseHits.push(phrase);
+    }
+  }
+
+  // Check banned patterns
+  const bannedPatternHits: string[] = [];
+  for (const pattern of BANNED_PATTERNS) {
+    const matches = allText.match(pattern);
+    if (matches) {
+      bannedPatternHits.push(...matches);
+    }
+  }
+
+  // Check harsh words
+  const harshWordHits: string[] = [];
+  for (const word of HARSH_WORDS) {
+    if (textLower.includes(word)) {
+      harshWordHits.push(word);
+    }
+  }
+
+  // Hook analysis
+  const hook = script.hook || '';
+  const hookWordCount = hook.split(/\s+/).filter(Boolean).length;
+  const hookHasQuestion = hook.includes('?');
+  const hookHasYou = /\byou\b|\byour\b/i.test(hook);
+
+  // Calculate score (100 = perfect, deduct for issues)
+  let score = 100;
+
+  // Word limit violations
+  if (justCount > 1) score -= (justCount - 1) * 10;
+  if (literallyCount > 0) score -= literallyCount * 15;
+  if (exclamationCount > 2) score -= (exclamationCount - 2) * 5;
+
+  // Banned content
+  score -= bannedPhraseHits.length * 15;
+  score -= bannedPatternHits.length * 20;
+  score -= harshWordHits.length * 10;
+
+  // Hook quality bonuses/penalties
+  if (hookWordCount >= 6 && hookWordCount <= 14) score += 5;
+  else if (hookWordCount < 4 || hookWordCount > 20) score -= 10;
+  if (hookHasQuestion) score += 5;
+  if (hookHasYou) score += 5;
+
+  return {
+    total: Math.max(0, Math.min(100, score)),
+    details: {
+      justCount,
+      literallyCount,
+      exclamationCount,
+      bannedPhraseHits,
+      bannedPatternHits,
+      harshWordHits,
+      hookWordCount,
+      hookHasQuestion,
+      hookHasYou,
+    },
+  };
+}
+
 interface TestResult {
   model: string;
   modelName: string;
@@ -210,6 +324,8 @@ interface TestResult {
   };
   pass2: {
     scripts: any[];
+    scores: QualityScore[];
+    avgScore: number;
     tokens: { input: number; output: number };
     timeMs: number;
   };
@@ -299,6 +415,26 @@ async function testModel(model: typeof MODELS[0]): Promise<TestResult> {
   console.log(`  Generated ${scripts.length} scripts in ${pass2Time}ms`);
   console.log(`  Tokens: ${pass2Tokens.input} in / ${pass2Tokens.output} out`);
 
+  // Score all scripts
+  const scores = scripts.map(s => scoreScript(s));
+  const avgScore = scores.length > 0
+    ? Math.round(scores.reduce((sum, s) => sum + s.total, 0) / scores.length)
+    : 0;
+
+  console.log(`\n  Quality Scores:`);
+  scores.forEach((score, i) => {
+    const issues: string[] = [];
+    if (score.details.justCount > 1) issues.push(`just:${score.details.justCount}`);
+    if (score.details.literallyCount > 0) issues.push(`literally:${score.details.literallyCount}`);
+    if (score.details.exclamationCount > 2) issues.push(`!:${score.details.exclamationCount}`);
+    if (score.details.bannedPhraseHits.length > 0) issues.push(`clichés:${score.details.bannedPhraseHits.length}`);
+    if (score.details.bannedPatternHits.length > 0) issues.push(`patterns:${score.details.bannedPatternHits.length}`);
+    if (score.details.harshWordHits.length > 0) issues.push(`harsh:${score.details.harshWordHits.length}`);
+
+    console.log(`    Script ${i + 1}: ${score.total}/100 ${issues.length > 0 ? `(${issues.join(', ')})` : '✓'}`);
+  });
+  console.log(`  Average Score: ${avgScore}/100`);
+
   return {
     model: model.id,
     modelName: model.name,
@@ -310,6 +446,8 @@ async function testModel(model: typeof MODELS[0]): Promise<TestResult> {
     },
     pass2: {
       scripts,
+      scores,
+      avgScore,
       tokens: pass2Tokens,
       timeMs: pass2Time,
     },
@@ -341,7 +479,7 @@ async function main() {
         modelName: model.name,
         tier: model.tier,
         pass1: { plans: [], tokens: { input: 0, output: 0 }, timeMs: 0 },
-        pass2: { scripts: [], tokens: { input: 0, output: 0 }, timeMs: 0 },
+        pass2: { scripts: [], scores: [], avgScore: 0, tokens: { input: 0, output: 0 }, timeMs: 0 },
         totalTokens: { input: 0, output: 0 },
         totalTimeMs: 0,
       });
@@ -366,14 +504,14 @@ async function main() {
 
   // Pricing (per 1M tokens)
   const PRICING: Record<string, { input: number; output: number }> = {
-    'anthropic/claude-3.5-haiku': { input: 0.80, output: 4.00 },
+    'google/gemini-3-flash-preview': { input: 0.50, output: 3.00 },
     'anthropic/claude-haiku-4.5': { input: 1.00, output: 5.00 },
-    'anthropic/claude-3.5-sonnet': { input: 6.00, output: 30.00 },
+    'google/gemini-3-pro-preview': { input: 2.00, output: 12.00 },
     'anthropic/claude-sonnet-4.5': { input: 3.00, output: 15.00 },
   };
 
-  console.log('\n| Model | Tier | Time | Input Tokens | Output Tokens | Cost/Script |');
-  console.log('|-------|------|------|--------------|---------------|-------------|');
+  console.log('\n| Model | Tier | Time | Tokens (in/out) | Cost/Script | Quality |');
+  console.log('|-------|------|------|-----------------|-------------|---------|');
 
   for (const r of results) {
     const pricing = PRICING[r.model] || { input: 0, output: 0 };
@@ -383,11 +521,30 @@ async function main() {
     ) / TEST_SETTINGS.count;
 
     console.log(
-      `| ${r.modelName.padEnd(10)} | ${r.tier.padEnd(8)} | ${(r.totalTimeMs / 1000).toFixed(1)}s | ` +
-      `${r.totalTokens.input.toString().padStart(12)} | ${r.totalTokens.output.toString().padStart(13)} | ` +
-      `$${costPerScript.toFixed(4).padStart(10)} |`
+      `| ${r.modelName.padEnd(15)} | ${r.tier.padEnd(8)} | ${(r.totalTimeMs / 1000).toFixed(1).padStart(5)}s | ` +
+      `${r.totalTokens.input}/${r.totalTokens.output} | ` +
+      `$${costPerScript.toFixed(4).padStart(7)} | ` +
+      `${r.pass2.avgScore.toString().padStart(3)}/100 |`
     );
   }
+
+  // Ranking
+  const ranked = [...results]
+    .filter(r => r.pass2.avgScore > 0)
+    .sort((a, b) => b.pass2.avgScore - a.pass2.avgScore);
+
+  console.log('\n' + '='.repeat(80));
+  console.log('RANKING BY QUALITY');
+  console.log('='.repeat(80));
+  ranked.forEach((r, i) => {
+    const pricing = PRICING[r.model] || { input: 0, output: 0 };
+    const costPerScript = (
+      (r.totalTokens.input / 1_000_000) * pricing.input +
+      (r.totalTokens.output / 1_000_000) * pricing.output
+    ) / TEST_SETTINGS.count;
+
+    console.log(`${i + 1}. ${r.modelName} - Score: ${r.pass2.avgScore}/100, Cost: $${costPerScript.toFixed(4)}/script`);
+  });
 
   // Print sample scripts for quality comparison
   console.log('\n' + '='.repeat(80));
