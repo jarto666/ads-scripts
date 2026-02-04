@@ -35,6 +35,14 @@ interface ScriptContent {
   ctaVariants: string[];
 }
 
+/**
+ * Context for filtering (allowed promos, etc.)
+ */
+interface FilterContext {
+  /** Allowed promos from ProjectFacts - these should not trigger violations */
+  allowedPromos?: string[];
+}
+
 @Injectable()
 export class StyleFilterService {
   private readonly logger = new Logger(StyleFilterService.name);
@@ -69,11 +77,16 @@ export class StyleFilterService {
 
   /**
    * Filter a script against StylePolicy rules
+   * @param script - The script content to filter
+   * @param language - Language for policy lookup
+   * @param scope - Policy scope (default: 'global')
+   * @param context - Optional context with allowed promos, etc.
    */
   async filterScript(
     script: ScriptContent,
     language: string,
     scope = 'global',
+    context?: FilterContext,
   ): Promise<FilterResult> {
     const policy = await this.getPolicy(language, scope);
 
@@ -83,19 +96,28 @@ export class StyleFilterService {
       return { passed: true, violations: [], warnings: [] };
     }
 
-    return this.applyPolicy(script, policy);
+    return this.applyPolicy(script, policy, context);
   }
 
   /**
    * Apply policy rules to script content
    */
-  private applyPolicy(script: ScriptContent, policy: StylePolicy): FilterResult {
+  private applyPolicy(
+    script: ScriptContent,
+    policy: StylePolicy,
+    context?: FilterContext,
+  ): FilterResult {
     const violations: string[] = [];
     const warnings: string[] = [];
 
     // Extract all text from script
     const allText = this.extractText(script);
     const textLower = allText.toLowerCase();
+
+    // Normalize allowed promos for comparison
+    const allowedPromosLower = (context?.allowedPromos || []).map((p) =>
+      p.toLowerCase(),
+    );
 
     // 1. Check word limits
     const wordLimits = policy.wordLimits as unknown as WordLimits;
@@ -114,6 +136,10 @@ export class StyleFilterService {
     // 2. Check banned phrases (exact match)
     for (const phrase of policy.bannedPhrases) {
       if (textLower.includes(phrase.toLowerCase())) {
+        // Skip if the phrase is covered by an allowed promo
+        if (this.isCoveredByAllowedPromo(phrase, allowedPromosLower)) {
+          continue;
+        }
         violations.push(`Banned phrase: "${phrase}"`);
       }
     }
@@ -124,7 +150,14 @@ export class StyleFilterService {
         const regex = new RegExp(pattern, 'gi');
         const matches = allText.match(regex);
         if (matches && matches.length > 0) {
-          violations.push(`Banned pattern: "${matches[0]}" (matched: ${pattern.slice(0, 30)}...)`);
+          // Skip if the matched text is covered by an allowed promo
+          const matchLower = matches[0].toLowerCase();
+          if (this.isCoveredByAllowedPromo(matchLower, allowedPromosLower)) {
+            continue;
+          }
+          violations.push(
+            `Banned pattern: "${matches[0]}" (matched: ${pattern.slice(0, 30)}...)`,
+          );
         }
       } catch (e) {
         this.logger.error(`Invalid regex pattern: ${pattern}`, e);
@@ -150,6 +183,18 @@ export class StyleFilterService {
       violations,
       warnings,
     };
+  }
+
+  /**
+   * Check if a matched text is covered by an allowed promo
+   * e.g., if "50% off" is matched but "Buy 1 get 1 50% off" is allowed
+   */
+  private isCoveredByAllowedPromo(
+    matchedText: string,
+    allowedPromosLower: string[],
+  ): boolean {
+    const matchLower = matchedText.toLowerCase();
+    return allowedPromosLower.some((promo) => promo.includes(matchLower));
   }
 
   /**
@@ -216,6 +261,7 @@ export class StyleFilterService {
     scripts: ScriptContent[],
     language: string,
     scope = 'global',
+    context?: FilterContext,
   ): Promise<FilterResult[]> {
     const policy = await this.getPolicy(language, scope);
 
@@ -223,7 +269,7 @@ export class StyleFilterService {
       return scripts.map(() => ({ passed: true, violations: [], warnings: [] }));
     }
 
-    return scripts.map(script => this.applyPolicy(script, policy));
+    return scripts.map((script) => this.applyPolicy(script, policy, context));
   }
 
   /**

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { CLICHE_PATTERNS } from './cliche-patterns';
 
 interface ScriptOutput {
   angle: string;
@@ -108,14 +109,6 @@ const CTA_URGENCY_WORDS = [
   "don't miss", "don't wait", 'act now', 'right now',
 ];
 
-// Corporate/inauthentic phrases to avoid
-const CORPORATE_PHRASES = [
-  'leverage', 'synergy', 'optimize', 'utilize', 'facilitate',
-  'comprehensive solution', 'cutting-edge', 'state-of-the-art',
-  'industry-leading', 'best-in-class', 'world-class',
-  'revolutionary', 'groundbreaking', 'game-changing',
-  'paradigm shift', 'holistic approach', 'robust',
-];
 
 @Injectable()
 export class ScoringService {
@@ -447,8 +440,8 @@ export class ScoringService {
 
     let score = 5; // Start with full points
 
-    // Deduct for corporate speak
-    for (const phrase of CORPORATE_PHRASES) {
+    // Deduct for corporate/LLM-smell phrases
+    for (const phrase of CLICHE_PATTERNS.llmSmell) {
       if (allText.includes(phrase)) {
         score -= 1;
       }

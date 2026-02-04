@@ -548,13 +548,15 @@ OUTPUT CONTRACT:
         const filterResult = await this.styleFilter.filterScript(
           {
             hook: script.hook,
-            storyboard: script.storyboard.map(s => ({
+            storyboard: script.storyboard.map((s) => ({
               spoken: s.spoken,
               onScreen: s.onScreen,
             })),
             ctaVariants: script.ctaVariants,
           },
           batch.project.language || 'en',
+          'global',
+          { allowedPromos: facts?.promos || [] },
         );
 
         // Log filter results for analysis (internal only - not user-visible)
@@ -806,13 +808,15 @@ OUTPUT CONTRACT:
       const filterResult = await this.styleFilter.filterScript(
         {
           hook: scriptOutput.hook,
-          storyboard: scriptOutput.storyboard.map(s => ({
+          storyboard: scriptOutput.storyboard.map((s) => ({
             spoken: s.spoken,
             onScreen: s.onScreen,
           })),
           ctaVariants: scriptOutput.ctaVariants,
         },
         script.batch.project.language || 'en',
+        'global',
+        { allowedPromos: facts?.promos || [] },
       );
 
       // Log filter results for analysis (internal only - not user-visible)
@@ -895,6 +899,7 @@ OUTPUT CONTRACT:
         project: {
           include: {
             personas: true,
+            facts: true,
           },
         },
         scripts: true,
@@ -972,9 +977,11 @@ OUTPUT CONTRACT:
 
       // Step 3: Soft filter - check StylePolicy but keep ALL scripts
       // Scripts with violations get penalized in ranking but are never discarded
+      const allowedPromos = batch.project.facts?.promos || [];
       const filterResult = await this.softFilterScripts(
         generatedScripts,
         projectWithFilteredPersonas.language || 'en',
+        allowedPromos,
       );
 
       this.logger.log(
@@ -1313,6 +1320,7 @@ OUTPUT CONTRACT:
   private async softFilterScripts(
     scripts: ScriptOutput[],
     language: string,
+    allowedPromos: string[] = [],
   ): Promise<{ scripts: ScriptOutput[]; passedCount: number; failedCount: number }> {
     const result: ScriptOutput[] = [];
     let passedCount = 0;
@@ -1329,6 +1337,8 @@ OUTPUT CONTRACT:
           ctaVariants: script.ctaVariants,
         },
         language,
+        'global',
+        { allowedPromos },
       );
 
       if (filterResult.passed) {

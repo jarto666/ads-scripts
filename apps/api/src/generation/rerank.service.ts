@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Persona } from '@prisma/client';
+import { CLICHE_PATTERNS, CLICHE_PENALTIES } from './cliche-patterns';
 
 /**
  * Rerank scoring weights (must sum to 1.0)
@@ -61,35 +62,6 @@ interface ProductContext {
   productName?: string;
 }
 
-/**
- * Generic phrases that indicate non-specific content
- */
-const GENERIC_PHRASES = [
-  "you won't believe",
-  "here's why",
-  "here's how",
-  "the thing is",
-  "real talk",
-  "no cap",
-  "it's giving",
-  'this changed my life',
-  'you need this',
-  'best thing ever',
-  'so amazing',
-  'absolutely love',
-  'obsessed with',
-];
-
-/**
- * Soft patterns to penalize (not hard blocks, but reduce novelty score)
- */
-const SOFT_AVOID_PATTERNS = [
-  { pattern: /(?:^|\.\s+)so\s/i, name: 'starts with So...' },
-  { pattern: /\?.*\?.*\?/g, name: 'excessive questions' },
-  { pattern: /\byou guys\b.*\byou guys\b/i, name: 'repeated you guys' },
-  { pattern: /right\?\s*$/i, name: 'ends with Right?' },
-  { pattern: /^okay so\b/i, name: 'starts with Okay so' },
-];
 
 /**
  * Power words that make hooks stronger
@@ -111,24 +83,6 @@ const HOOK_POWER_WORDS = [
   'honest',
 ];
 
-/**
- * Cliché hook starters that are overused and should be penalized
- */
-const CLICHE_HOOK_STARTERS = [
-  "here's the thing",
-  "here's why",
-  "here's how",
-  'i kept seeing',
-  "everyone's been asking",
-  'pov: you finally',
-  'nobody talks about',
-  'stop scrolling if',
-  'this changed everything',
-  'game changer',
-  'life changer',
-  'wait until you see',
-  'you need to see this',
-];
 
 @Injectable()
 export class RerankService {
@@ -278,10 +232,10 @@ export class RerankService {
     let score = 0;
     const hookLower = hook.toLowerCase();
 
-    // 0. Penalize cliché hook starters (-15 each)
-    for (const cliche of CLICHE_HOOK_STARTERS) {
+    // 0. Penalize cliché hook starters
+    for (const cliche of CLICHE_PATTERNS.hookOpeners) {
       if (hookLower.startsWith(cliche) || hookLower.includes(cliche)) {
-        score -= 15;
+        score += CLICHE_PENALTIES.hookOpener;
         break; // Only penalize once
       }
     }
@@ -390,17 +344,36 @@ export class RerankService {
     const textLower = text.toLowerCase();
     let score = 100;
 
-    // Deduct for generic phrases
-    for (const phrase of GENERIC_PHRASES) {
+    // Deduct for generic filler phrases
+    for (const phrase of CLICHE_PATTERNS.genericFiller) {
       if (textLower.includes(phrase)) {
-        score -= 12;
+        score += CLICHE_PENALTIES.genericFiller;
       }
     }
 
-    // Deduct for soft-avoid patterns
-    for (const { pattern } of SOFT_AVOID_PATTERNS) {
+    // Deduct for LLM-smell phrases
+    for (const phrase of CLICHE_PATTERNS.llmSmell) {
+      if (textLower.includes(phrase)) {
+        score += CLICHE_PENALTIES.llmSmell;
+      }
+    }
+
+    // Deduct for structural patterns
+    for (const { pattern } of CLICHE_PATTERNS.structures) {
       if (pattern.test(text)) {
-        score -= 8;
+        score += CLICHE_PENALTIES.structure;
+      }
+    }
+
+    // Deduct for excessive word usage
+    for (const item of CLICHE_PATTERNS.excessive) {
+      const regex =
+        'word' in item
+          ? new RegExp(`\\b${item.word}\\b`, 'gi')
+          : item.pattern;
+      const count = (text.match(regex) || []).length;
+      if (count > item.max) {
+        score += (count - item.max) * item.penaltyPerExtra;
       }
     }
 
@@ -414,12 +387,6 @@ export class RerankService {
     const capsWords = (text.match(/\b[A-Z]{2,}\b/g) || []).length;
     if (capsWords > 2) {
       score -= (capsWords - 2) * 5;
-    }
-
-    // Deduct for excessive exclamation marks
-    const exclamations = (text.match(/!/g) || []).length;
-    if (exclamations > 3) {
-      score -= (exclamations - 3) * 5;
     }
 
     return Math.max(0, score);

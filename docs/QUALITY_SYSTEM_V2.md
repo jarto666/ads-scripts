@@ -160,88 +160,51 @@ interface GroundednessViolation {
 
 ## Phase 2: Scoring Calibration (Week 1-2)
 
-### 2.1 Persona Schema Upgrade
+### 2.1 Persona Schema Upgrade ✅
 
-**Add required fields to Persona:**
+**Added fields to Persona model:**
 
 ```prisma
 model Persona {
   // ... existing fields
 
-  // Structured fields (required for scoring)
-  painPoints    String[]   // 5-10 bullet phrases
-  desires       String[]   // 5-10 bullet phrases
-  objections    String[]   // 3-8 bullet phrases
-  vocabulary    String[]   // Optional slang/terms they use
+  // Structured fields for scoring
+  painPoints    String[] @default([])  // 4-6 specific problems
+  desires       String[] @default([])  // 4-6 outcomes/goals
+  objections    String[] @default([])  // 3-4 purchase hesitations
 }
 ```
 
-**Auto-generation fallback:**
+**Two AI generation modes (Pro feature):**
 
-If user provides only name/description:
-1. On persona create, trigger LLM extraction
-2. Generate painPoints, desires, objections from description
-3. Save immediately (user can edit later)
+1. **Full generation** (`POST /personas/:projectId/generate`)
+   - User provides natural language prompt describing target audience
+   - AI generates complete persona: name, description, demographics, painPoints, desires, objections
+   - Supports draft mode (no project yet) with optional productName/productDescription
 
-### 2.2 Expand Cliché Patterns
+2. **Selective enrichment** (`POST /personas/:projectId/enrich`)
+   - User fills basic persona info (name, description, demographics)
+   - User selects which fields to AI-generate: `painPoints`, `desires`, `objections`
+   - AI enriches only the requested fields based on persona context
 
-**Current:** 13 generic phrases + 5 soft patterns = ~18 checks
+### 2.2 Expand Cliché Patterns ✅
 
-**Target:** 100+ patterns organized by category
+**Implemented:** `apps/api/src/generation/cliche-patterns.ts`
 
-```typescript
-const CLICHE_PATTERNS = {
-  // Hook openers (overused)
-  hookOpeners: [
-    "here's the thing",
-    "here's why",
-    "here's how",
-    "i kept seeing",
-    "everyone's been asking",
-    "pov: you finally",
-    "nobody talks about",
-    "stop scrolling if",
-    "this changed everything",
-    "game changer",
-    "i found the easiest way",
-    "struggling with",
-    "you won't believe",
-    "wait until you see",
-    "okay so",
-    // ... 30+ more
-  ],
+**Pattern counts:**
+| Category | Count | Penalty |
+|----------|-------|---------|
+| `hookOpeners` | 47 | -15 pts (break after first) |
+| `llmSmell` | 46 | -12 pts each |
+| `genericFiller` | 38 | -10 pts each |
+| `structures` | 21 regex | -8 pts each |
+| `excessive` | 9 limits | variable per extra |
 
-  // LLM smell phrases
-  llmSmell: [
-    "comprehensive solution",
-    "seamless experience",
-    "elevate your",
-    "leverage the power",
-    "transform your",
-    "unlock the potential",
-    "revolutionize",
-    "cutting-edge",
-    "game-changing",
-    // ... 30+ more
-  ],
+**Total: 161 patterns** (up from ~49)
 
-  // Overused structures
-  structures: [
-    /not a[^,]+, not a[^,]+, just/i,  // "Not A, not B, just C"
-    /no[^,]+, no[^,]+, just/i,        // "No X, no Y, just Z"
-    /if you're (tired|sick|struggling)/i,
-    // ... 20+ more
-  ],
-
-  // Excessive patterns
-  excessive: [
-    { pattern: /just/gi, max: 2 },
-    { pattern: /literally/gi, max: 1 },
-    { pattern: /!/g, max: 3 },
-    { pattern: /\?/g, max: 3 },
-  ]
-};
-```
+**Integration:**
+- `rerank.service.ts` imports and uses for `scoreHookStrength()` and `scoreNovelty()`
+- `scoring.service.ts` imports `llmSmell` for `scoreAuthenticity()`
 
 ### 2.3 Grounded Specificity
 
@@ -422,8 +385,8 @@ export const MODEL_CONFIG = {
 - [x] **ProjectFacts UI (Wizard)** - Added to Step 2 (Brand & Facts) with AI generation ✓
 - [x] **ProjectFacts UI (Settings)** - GroundingFactsCard in Brand tab ✓
 - [x] **ProjectFacts AI generation** - Extracts facts + brandVoice + forbiddenClaims ✓
-- [ ] **Persona auto-generation** - LLM extraction on create
-- [ ] **Expand cliché patterns** - 100+ patterns organized by category
+- [x] **Persona AI generation** - Full generation + selective field enrichment (Pro feature) ✓
+- [x] **Expand cliché patterns** - 115+ patterns in 5 categories (cliche-patterns.ts) ✓
 - [ ] **Grounded specificity** - Replace old specificity scoring
 
 ### Week 2: Learning Loop + Cleanup
@@ -459,4 +422,5 @@ export const MODEL_CONFIG = {
 ---
 
 *Created: 2026-02-03*
-*Status: Planning*
+*Updated: 2026-02-04*
+*Status: In Progress (Week 1 near complete)*
