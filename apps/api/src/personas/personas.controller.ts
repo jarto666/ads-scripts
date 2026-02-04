@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { PersonasService } from './personas.service';
-import { CreatePersonaDto, UpdatePersonaDto, PersonaResponseDto, GeneratePersonaDto, GeneratedPersonaDto } from './dto';
+import { CreatePersonaDto, UpdatePersonaDto, PersonaResponseDto, GeneratePersonaDto, GeneratedPersonaDto, EnrichFieldsDto, EnrichedFieldsDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from '../auth/current-user.decorator';
 
@@ -71,6 +71,17 @@ export class PersonasController {
     @Body() dto: UpdatePersonaDto,
   ) {
     return this.personasService.update(user.id, id, dto);
+  }
+
+  @Post('projects/:projectId/personas/enrich')
+  @ApiOperation({ summary: 'Generate persona fields with AI (Pro feature)' })
+  @ApiResponse({ status: 200, type: EnrichedFieldsDto })
+  async enrichFields(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('projectId') projectId: string,
+    @Body() dto: EnrichFieldsDto,
+  ) {
+    return this.personasService.enrichFields(user.id, projectId, dto);
   }
 
   @Delete('personas/:id')

@@ -5,6 +5,7 @@ import {
   buildPass1Prompt,
   buildPass2Prompt,
   buildRepairPrompt,
+  buildRegenerationPrompt,
 } from './prompt-builder';
 import { getLanguageInstruction } from './language-utils';
 import { validateBeatCount, getBeatRange } from './platform-profiles';
@@ -693,12 +694,17 @@ OUTPUT CONTRACT:
    * @param instruction - User's modification instructions
    */
   async processRegeneration(scriptId: string, sourceScriptId: string, instruction: string): Promise<void> {
+    // Load script with full project context including personas
     const script = await this.prisma.script.findUnique({
       where: { id: scriptId },
       include: {
         batch: {
           include: {
-            project: true,
+            project: {
+              include: {
+                personas: true,
+              },
+            },
           },
         },
       },
@@ -717,6 +723,9 @@ OUTPUT CONTRACT:
       throw new Error('Source script not found or invalid');
     }
 
+    // Load grounding facts for quality parity with regular generation
+    const facts = await this.groundednessService.getProjectFacts(script.batch.project.id);
+
     try {
       // Update status to generating
       await this.prisma.script.update({
@@ -724,37 +733,27 @@ OUTPUT CONTRACT:
         data: { status: 'generating' },
       });
 
-      const languageBlock = getLanguageInstruction(
-        script.batch.project.language,
-        script.batch.project.region,
-      );
-
-      const prompt = `You are a UGC script writer. Modify the following script based on the instruction.
-
-## Original Script
-${JSON.stringify(sourceScript.storyboard, null, 2)}
-
-Hook: ${sourceScript.hook}
-CTAs: ${sourceScript.ctaVariants.join(', ')}
-
-## Modification Instruction
-${instruction}
-
-## Product Context
-${script.batch.project.productDescription}
-
-${languageBlock}Return the modified script in the same JSON format:
-{
-  "angle": "${sourceScript.angle}",
-  "duration": ${sourceScript.duration},
-  "hook": "...",
-  "storyboard": [...],
-  "ctaVariants": [...],
-  "filmingChecklist": [...],
-  "warnings": [...]
-}
-
-Return ONLY valid JSON.`;
+      // Build rich prompt with full context (same quality as regular generation)
+      const prompt = buildRegenerationPrompt({
+        sourceScript: {
+          angle: sourceScript.angle,
+          duration: sourceScript.duration,
+          hook: sourceScript.hook || '',
+          storyboard: sourceScript.storyboard as Array<{
+            t: string;
+            shot: string;
+            onScreen: string;
+            spoken: string;
+            broll?: string[];
+          }>,
+          ctaVariants: sourceScript.ctaVariants,
+        },
+        instruction,
+        project: script.batch.project,
+        facts,
+        language: script.batch.project.language,
+        region: script.batch.project.region,
+      });
 
       // Use model based on batch quality
       const model = getModelForQuality(script.batch.quality);
@@ -766,10 +765,10 @@ Return ONLY valid JSON.`;
         try {
           const response = await this.openRouter.chatCompletion(
             [
-              { role: 'system', content: 'You modify UGC scripts. Always respond with valid JSON.' },
+              { role: 'system', content: 'You improve UGC scripts based on feedback while maintaining brand voice and factual accuracy. Always respond with valid JSON.' },
               { role: 'user', content: prompt },
             ],
-            { model, temperature: 0.5, jsonMode: true },
+            { model, temperature: 0.6, jsonMode: true },
           );
 
           if (this.isLlmRefusal(response)) {
@@ -794,6 +793,9 @@ Return ONLY valid JSON.`;
       if (!scriptOutput) {
         throw new Error('Regeneration failed after all retries');
       }
+
+      // Validate groundedness and rewrite if needed (same as regular generation)
+      scriptOutput = await this.validateAndRewriteIfNeeded(scriptOutput, facts, script.batch);
 
       const { score, warnings } = this.scoringService.scoreScript(
         scriptOutput,

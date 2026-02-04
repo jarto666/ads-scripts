@@ -158,23 +158,24 @@ export class ScoringService {
       authenticityScore;
 
     // Generate warnings for low-scoring areas
+    // Format: user-friendly message that also works as regeneration instruction
     if (hookScore < 6) {
-      warnings.push('Hook could be stronger - try adding power words or a question');
+      warnings.push('Weak hook - add power words or a question to stop the scroll');
     }
     if (clarityScore < 10) {
-      warnings.push('Benefits not clearly communicated early in the script');
+      warnings.push('Benefits unclear - communicate value proposition earlier');
     }
     if (visualityScore < 10) {
-      warnings.push('Storyboard needs more specific, actionable shot descriptions');
+      warnings.push('Vague storyboard - add specific, actionable shot descriptions');
     }
     if (pacingScore < 5) {
-      warnings.push('Timing segments may not match target duration');
+      warnings.push('Pacing issues - timing segments may not fit target duration');
     }
     if (ctaScore < 5) {
-      warnings.push('CTAs could be more action-oriented or urgent');
+      warnings.push('Weak CTAs - make them more action-oriented and urgent');
     }
     if (script.storyboard.length < 3) {
-      warnings.push('Storyboard too short - needs more detail');
+      warnings.push('Storyboard too short - add more detail and scenes');
     }
     if (!script.filmingChecklist || script.filmingChecklist.length === 0) {
       warnings.push('Missing filming checklist');

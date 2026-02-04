@@ -5,6 +5,8 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
+  IsIn,
+  ArrayMinSize,
 } from 'class-validator';
 
 export class CreatePersonaDto {
@@ -151,4 +153,47 @@ export class PersonaResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+}
+
+// Enrich fields DTO - accepts persona data from form
+export class EnrichFieldsDto {
+  @ApiProperty({ description: 'Persona name' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(100)
+  name: string;
+
+  @ApiProperty({ description: 'Persona description' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(1000)
+  description: string;
+
+  @ApiPropertyOptional({ description: 'Demographics' })
+  @IsString()
+  @MaxLength(500)
+  @IsOptional()
+  demographics?: string;
+
+  @ApiProperty({
+    type: [String],
+    enum: ['painPoints', 'desires', 'objections'],
+    description: 'Fields to generate with AI',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
+  @IsIn(['painPoints', 'desires', 'objections'], { each: true })
+  fields: ('painPoints' | 'desires' | 'objections')[];
+}
+
+export class EnrichedFieldsDto {
+  @ApiPropertyOptional({ type: [String] })
+  painPoints?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  desires?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  objections?: string[];
 }

@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenRouterClient } from '../generation/openrouter.client';
-import { CreatePersonaDto, UpdatePersonaDto, GeneratePersonaDto, GeneratedPersonaDto } from './dto';
+import { CreatePersonaDto, UpdatePersonaDto, GeneratePersonaDto, GeneratedPersonaDto, EnrichedFieldsDto, EnrichFieldsDto } from './dto';
+import { Persona } from '@prisma/client';
 import { MODEL_CONFIG } from '../config';
 
 @Injectable()
@@ -173,6 +174,99 @@ Respond ONLY with valid JSON in this exact format:
       };
     } catch {
       throw new Error('Failed to parse persona generation response');
+    }
+  }
+
+  async enrichFields(
+    userId: string,
+    projectId: string,
+    dto: EnrichFieldsDto,
+  ): Promise<EnrichedFieldsDto> {
+    // Verify Pro user
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true },
+    });
+
+    if (user?.plan !== 'pro') {
+      throw new ForbiddenException('AI enrichment is a Pro feature');
+    }
+
+    // Verify project access and get product description
+    const project = await this.verifyProjectAccess(userId, projectId);
+
+    // Create pseudo-persona from form data
+    const personaData = {
+      name: dto.name,
+      description: dto.description,
+      demographics: dto.demographics || null,
+    } as Persona;
+
+    // Generate requested fields using form data
+    return this.generateFields(personaData, project.productDescription, dto.fields);
+  }
+
+  private async generateFields(
+    persona: Persona,
+    productDescription: string | null,
+    fields: ('painPoints' | 'desires' | 'objections')[],
+  ): Promise<EnrichedFieldsDto> {
+    const fieldInstructions = [];
+    if (fields.includes('painPoints')) {
+      fieldInstructions.push('- painPoints: 4-6 specific problems this persona faces related to the product');
+    }
+    if (fields.includes('desires')) {
+      fieldInstructions.push('- desires: 4-6 outcomes or goals this persona wants to achieve');
+    }
+    if (fields.includes('objections')) {
+      fieldInstructions.push('- objections: 3-4 reasons they might hesitate to buy or try the product');
+    }
+
+    const systemPrompt = `You are enriching a marketing persona with specific data fields.
+
+Persona: ${persona.name}
+Description: ${persona.description}
+${persona.demographics ? `Demographics: ${persona.demographics}` : ''}
+
+Product context: ${productDescription || 'Not provided'}
+
+Generate ONLY these fields:
+${fieldInstructions.join('\n')}
+
+Make each item specific and actionable, not generic. Focus on this persona's unique situation.
+
+Respond with JSON containing only the requested fields.`;
+
+    const response = await this.openRouterClient.chatCompletion(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: 'Generate the requested fields for this persona.' },
+      ],
+      {
+        model: MODEL_CONFIG.personaGeneration.model,
+        temperature: 0.7,
+        maxTokens: MODEL_CONFIG.personaGeneration.maxTokens,
+        jsonMode: true,
+      },
+    );
+
+    try {
+      const parsed = JSON.parse(response);
+      const result: EnrichedFieldsDto = {};
+
+      if (fields.includes('painPoints') && Array.isArray(parsed.painPoints)) {
+        result.painPoints = parsed.painPoints;
+      }
+      if (fields.includes('desires') && Array.isArray(parsed.desires)) {
+        result.desires = parsed.desires;
+      }
+      if (fields.includes('objections') && Array.isArray(parsed.objections)) {
+        result.objections = parsed.objections;
+      }
+
+      return result;
+    } catch {
+      throw new Error('Failed to parse AI enrichment response');
     }
   }
 }

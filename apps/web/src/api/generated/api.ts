@@ -41,6 +41,8 @@ import type {
   CreditsBalancesResponseDto,
   DeleteAccountResultDto,
   DraftDto,
+  EnrichFieldsDto,
+  EnrichedFieldsDto,
   ExportResultDto,
   FinalizeDraftDto,
   FinalizeResultDto,
@@ -1962,6 +1964,90 @@ export const usePersonasControllerDelete = <TError = unknown,
         TContext
       > => {
       return useMutation(getPersonasControllerDeleteMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Generate persona fields with AI (Pro feature)
+ */
+export type personasControllerEnrichFieldsResponse200 = {
+  data: EnrichedFieldsDto
+  status: 200
+}
+    
+export type personasControllerEnrichFieldsResponseSuccess = (personasControllerEnrichFieldsResponse200) & {
+  headers: Headers;
+};
+;
+
+export type personasControllerEnrichFieldsResponse = (personasControllerEnrichFieldsResponseSuccess)
+
+export const getPersonasControllerEnrichFieldsUrl = (projectId: string,) => {
+
+
+  
+
+  return `/projects/${projectId}/personas/enrich`
+}
+
+export const personasControllerEnrichFields = async (projectId: string,
+    enrichFieldsDto: EnrichFieldsDto, options?: RequestInit): Promise<personasControllerEnrichFieldsResponse> => {
+  
+  return customInstance<personasControllerEnrichFieldsResponse>(getPersonasControllerEnrichFieldsUrl(projectId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      enrichFieldsDto,)
+  }
+);}
+
+
+
+
+export const getPersonasControllerEnrichFieldsMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerEnrichFields>>, TError,{projectId: string;data: EnrichFieldsDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof personasControllerEnrichFields>>, TError,{projectId: string;data: EnrichFieldsDto}, TContext> => {
+
+const mutationKey = ['personasControllerEnrichFields'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof personasControllerEnrichFields>>, {projectId: string;data: EnrichFieldsDto}> = (props) => {
+          const {projectId,data} = props ?? {};
+
+          return  personasControllerEnrichFields(projectId,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PersonasControllerEnrichFieldsMutationResult = NonNullable<Awaited<ReturnType<typeof personasControllerEnrichFields>>>
+    export type PersonasControllerEnrichFieldsMutationBody = EnrichFieldsDto
+    export type PersonasControllerEnrichFieldsMutationError = unknown
+
+    /**
+ * @summary Generate persona fields with AI (Pro feature)
+ */
+export const usePersonasControllerEnrichFields = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof personasControllerEnrichFields>>, TError,{projectId: string;data: EnrichFieldsDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof personasControllerEnrichFields>>,
+        TError,
+        {projectId: string;data: EnrichFieldsDto},
+        TContext
+      > => {
+      return useMutation(getPersonasControllerEnrichFieldsMutationOptions(options), queryClient);
     }
     
 /**

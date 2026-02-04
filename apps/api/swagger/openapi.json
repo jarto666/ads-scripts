@@ -634,6 +634,47 @@
         ]
       }
     },
+    "/projects/{projectId}/personas/enrich": {
+      "post": {
+        "operationId": "PersonasController_enrichFields",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EnrichFieldsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrichedFieldsDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Generate persona fields with AI (Pro feature)",
+        "tags": [
+          "Personas"
+        ]
+      }
+    },
     "/scripts/recent": {
       "get": {
         "operationId": "BatchesController_getRecentScripts",
@@ -2395,6 +2436,63 @@
             "type": "string",
             "maxLength": 500
           },
+          "painPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "desires": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "objections": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EnrichFieldsDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Persona name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Persona description"
+          },
+          "demographics": {
+            "type": "string",
+            "description": "Demographics"
+          },
+          "fields": {
+            "type": "array",
+            "description": "Fields to generate with AI",
+            "items": {
+              "type": "string",
+              "enum": [
+                "painPoints",
+                "desires",
+                "objections"
+              ]
+            }
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "fields"
+        ]
+      },
+      "EnrichedFieldsDto": {
+        "type": "object",
+        "properties": {
           "painPoints": {
             "type": "array",
             "items": {

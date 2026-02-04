@@ -419,9 +419,9 @@ export const MODEL_CONFIG = {
 - [x] **Facts block in prompts** - Update prompt builders ✓
 - [x] **Groundedness validator** - New service with regex + fact-mapping ✓
 - [x] **Rewrite loop** - Integrate into generation pipeline ✓
-- [ ] **ProjectFacts UI (Wizard)** - Add to Step 2 (Brand & Facts) with AI generation option
-- [ ] **ProjectFacts UI (Settings)** - Add to project settings Brand/Guidelines tab
-- [ ] **ProjectFacts AI generation** - API endpoint to extract facts from product description
+- [x] **ProjectFacts UI (Wizard)** - Added to Step 2 (Brand & Facts) with AI generation ✓
+- [x] **ProjectFacts UI (Settings)** - GroundingFactsCard in Brand tab ✓
+- [x] **ProjectFacts AI generation** - Extracts facts + brandVoice + forbiddenClaims ✓
 - [ ] **Persona auto-generation** - LLM extraction on create
 - [ ] **Expand cliché patterns** - 100+ patterns organized by category
 - [ ] **Grounded specificity** - Replace old specificity scoring

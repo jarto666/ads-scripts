@@ -453,3 +453,103 @@ OUTPUT CONTRACT (must follow exactly):
 - Do NOT include trailing commas.
 If you include any characters before the first '{'/']' or after the final '}'/']', the output will be rejected.`;
 }
+
+interface StoryboardStep {
+  t: string;
+  shot: string;
+  onScreen: string;
+  spoken: string;
+  broll?: string[];
+}
+
+interface SourceScript {
+  angle: string;
+  duration: number;
+  hook: string;
+  storyboard: StoryboardStep[];
+  ctaVariants: string[];
+}
+
+/**
+ * Build prompt for script regeneration with full context.
+ * Includes all grounding facts, personas, and brand voice to maintain quality parity with regular generation.
+ */
+export function buildRegenerationPrompt(params: {
+  sourceScript: SourceScript;
+  instruction: string;
+  project: Project & { personas: Persona[] };
+  facts: ProjectFacts | null;
+  language: string;
+  region?: string | null;
+}): string {
+  const { sourceScript, instruction, project, facts, language, region } = params;
+
+  const languageBlock = getLanguageInstruction(language, region);
+
+  // Build persona context
+  const personaContext = project.personas.length > 0
+    ? project.personas.map(p => {
+        const parts = [`- ${p.name}: ${p.description}`];
+        if (p.painPoints.length) parts.push(`  Pain points: ${p.painPoints.join(', ')}`);
+        if (p.desires.length) parts.push(`  Desires: ${p.desires.join(', ')}`);
+        return parts.join('\n');
+      }).join('\n')
+    : 'General audience';
+
+  return `You are improving an existing UGC script based on specific feedback.
+
+## MODIFICATION REQUEST (PRIORITY)
+${instruction}
+
+Apply the requested changes while maintaining all quality standards below.
+
+## ORIGINAL SCRIPT
+Angle: ${sourceScript.angle}
+Duration: ${sourceScript.duration}s
+Hook: ${sourceScript.hook}
+
+Storyboard:
+${JSON.stringify(sourceScript.storyboard, null, 2)}
+
+CTAs: ${sourceScript.ctaVariants.join(', ')}
+
+## PRODUCT CONTEXT
+${project.productDescription}
+
+${project.brandVoice ? `## BRAND VOICE\n${project.brandVoice}\n` : ''}
+## TARGET AUDIENCE
+${personaContext}
+
+${buildFactsBlock(facts, project.forbiddenClaims)}
+
+${languageBlock}
+## REQUIREMENTS
+1. Apply the requested modification as the PRIMARY goal
+2. Maintain brand voice consistency
+3. Only use verified features and allowed stats from grounding facts
+4. Never use forbidden phrases
+5. Keep the script grounded in facts - do NOT invent claims
+6. Preserve the script structure (angle, duration) unless modification requires changing it
+7. Spoken lines must sound like natural speech, not marketing copy
+
+Return the improved script in this exact JSON format:
+{
+  "angle": "${sourceScript.angle}",
+  "duration": ${sourceScript.duration},
+  "hook": "...",
+  "storyboard": [
+    { "t": "0:00-0:03", "shot": "...", "onScreen": "...", "spoken": "...", "broll": [] }
+  ],
+  "ctaVariants": ["..."],
+  "filmingChecklist": ["..."],
+  "warnings": []
+}
+
+OUTPUT CONTRACT (must follow exactly):
+- Output must be valid JSON.
+- Output must start with '{' and end with '}'.
+- Do NOT wrap in markdown fences.
+- Do NOT include any explanation, comments, or extra text.
+- Do NOT include trailing commas.
+If you include any characters before the first '{' or after the final '}', the output will be rejected.`;
+}

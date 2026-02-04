@@ -36,6 +36,7 @@ import {
   Lock,
   ChevronRight,
   X,
+  Info,
 } from "lucide-react";
 import { getProjectGenSettingsAtom } from "@/lib/atoms";
 import { useAuth } from "@/lib/auth";
@@ -228,28 +229,33 @@ function VoiceoverModal({ storyboard }: { storyboard: Array<{ spoken?: string }>
   );
 }
 
-// Grounding Facts Card Component
-function GroundingFactsCard({
+// Brand & Facts Editor Component (unified)
+function BrandFactsEditor({
   projectId,
   productName,
   productDescription,
   isPro,
-  onBrandDataGenerated,
+  brandVoice,
+  forbiddenClaims,
+  onBrandChange,
+  onSave,
+  isSaving,
 }: {
   projectId: string;
   productName: string;
   productDescription: string;
   isPro: boolean;
-  onBrandDataGenerated?: (brandVoice: string, forbiddenClaims: string[]) => void;
+  brandVoice: string;
+  forbiddenClaims: string;
+  onBrandChange: (brandVoice: string, forbiddenClaims: string) => void;
+  onSave: () => void;
+  isSaving: boolean;
 }) {
   const { toast } = useToast();
-  const [facts, setFacts] = useState<ProjectFactsDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
-  // Local state for editing
+  // Facts state
   const [features, setFeatures] = useState<string[]>([]);
   const [workflowSteps, setWorkflowSteps] = useState<string[]>([]);
   const [pricing, setPricing] = useState("");
@@ -264,6 +270,9 @@ function GroundingFactsCard({
   const [newProof, setNewProof] = useState("");
   const [newHarshWord, setNewHarshWord] = useState("");
 
+  const [factsChanged, setFactsChanged] = useState(false);
+  const [isSavingFacts, setIsSavingFacts] = useState(false);
+
   const generateFactsMutation = useProjectsControllerGenerateFacts();
 
   // Load facts on mount
@@ -272,7 +281,6 @@ function GroundingFactsCard({
       try {
         const response = await projectsControllerGetFacts(projectId);
         if (response.data) {
-          setFacts(response.data);
           setFeatures(response.data.features || []);
           setWorkflowSteps(response.data.workflowSteps || []);
           setPricing(response.data.pricing || "");
@@ -281,7 +289,7 @@ function GroundingFactsCard({
           setHarshLabelsBan(response.data.harshLabelsBan || []);
         }
       } catch {
-        // No facts yet, that's ok
+        // No facts yet
       } finally {
         setIsLoading(false);
       }
@@ -289,9 +297,10 @@ function GroundingFactsCard({
     loadFacts();
   }, [projectId]);
 
-  const handleSave = async () => {
-    setIsSaving(true);
+  const handleSaveAll = async () => {
+    setIsSavingFacts(true);
     try {
+      // Save facts
       await projectsControllerUpsertFacts(projectId, {
         features,
         workflowSteps,
@@ -301,11 +310,14 @@ function GroundingFactsCard({
         allowedProof,
         harshLabelsBan,
       });
-      toast({ title: "Facts saved", description: "Grounding facts have been updated." });
+      // Save brand (via parent)
+      await onSave();
+      setFactsChanged(false);
+      toast({ title: "Saved", description: "Brand settings and facts have been updated." });
     } catch {
       toast({ title: "Save failed", variant: "destructive" });
     } finally {
-      setIsSaving(false);
+      setIsSavingFacts(false);
     }
   };
 
@@ -323,13 +335,17 @@ function GroundingFactsCard({
       setPromos(factsData.promos || []);
       setAllowedProof(factsData.allowedProof || []);
       setHarshLabelsBan(factsData.harshLabelsBan || []);
+      setFactsChanged(true);
 
-      // Also update brand voice and forbidden claims in parent form
-      if (onBrandDataGenerated && (factsData.brandVoice || factsData.forbiddenClaims?.length)) {
-        onBrandDataGenerated(factsData.brandVoice || "", factsData.forbiddenClaims || []);
+      // Also update brand voice and forbidden claims
+      if (factsData.brandVoice || factsData.forbiddenClaims?.length) {
+        onBrandChange(
+          factsData.brandVoice || brandVoice,
+          factsData.forbiddenClaims?.join("\n") || forbiddenClaims
+        );
       }
 
-      toast({ title: "Facts generated", description: "Review and save the extracted facts and brand guidelines." });
+      toast({ title: "Generated", description: "Review and save the extracted data." });
     } catch {
       toast({ title: "Generation failed", variant: "destructive" });
     } finally {
@@ -346,15 +362,19 @@ function GroundingFactsCard({
     if (value.trim() && !list.includes(value.trim())) {
       setList([...list, value.trim()]);
       setValue("");
+      setFactsChanged(true);
     }
   };
 
   const removeFromList = (list: string[], setList: (v: string[]) => void, item: string) => {
     setList(list.filter((i) => i !== item));
+    setFactsChanged(true);
   };
 
-  const ListEditor = ({
+  // Reusable list editor with InfoTip
+  const ListField = ({
     label,
+    tooltip,
     list,
     setList,
     newValue,
@@ -362,14 +382,18 @@ function GroundingFactsCard({
     placeholder,
   }: {
     label: string;
+    tooltip: string;
     list: string[];
     setList: (v: string[]) => void;
     newValue: string;
     setNewValue: (v: string) => void;
     placeholder: string;
   }) => (
-    <div className="space-y-2">
-      <Label className="text-sm">{label}</Label>
+    <div className="space-y-3">
+      <Label className="flex items-center text-sm">
+        {label}
+        <InfoTip>{tooltip}</InfoTip>
+      </Label>
       <div className="flex gap-2">
         <Input
           placeholder={placeholder}
@@ -381,18 +405,18 @@ function GroundingFactsCard({
               addToList(list, setList, newValue, setNewValue);
             }
           }}
-          className="text-sm"
         />
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
           onClick={() => addToList(list, setList, newValue, setNewValue)}
+          disabled={!newValue.trim()}
         >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
       {list.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 pt-1">
+        <div className="flex flex-wrap gap-1.5">
           {list.map((item) => (
             <Badge key={item} variant="secondary" className="text-xs gap-1 pr-1">
               {item}
@@ -409,45 +433,86 @@ function GroundingFactsCard({
     </div>
   );
 
+  // Workflow Steps with visual flow
+  const WorkflowStepsField = () => (
+    <div className="space-y-3">
+      <Label className="flex items-center text-sm">
+        Workflow Steps
+        <InfoTip>Correct order of steps to use your product. Scripts will mention these in the right sequence.</InfoTip>
+      </Label>
+      <div className="flex gap-2">
+        <Input
+          placeholder="e.g., Upload photo, Choose template..."
+          value={newStep}
+          onChange={(e) => setNewStep(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addToList(workflowSteps, setWorkflowSteps, newStep, setNewStep);
+            }
+          }}
+        />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => addToList(workflowSteps, setWorkflowSteps, newStep, setNewStep)}
+          disabled={!newStep.trim()}
+        >
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      {workflowSteps.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          {workflowSteps.map((step, index) => (
+            <div key={step} className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-bold">
+                  {index + 1}
+                </span>
+                <span className="text-xs text-foreground">{step}</span>
+                <button
+                  onClick={() => removeFromList(workflowSteps, setWorkflowSteps, step)}
+                  className="ml-1 text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              {index < workflowSteps.length - 1 && (
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Grounding Facts</CardTitle>
+          <CardTitle>Brand & Product Facts</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-40 w-full" />
         </CardContent>
       </Card>
     );
   }
 
-  const hasAnyFacts =
-    features.length > 0 ||
-    workflowSteps.length > 0 ||
-    pricing ||
-    promos.length > 0 ||
-    allowedProof.length > 0 ||
-    harshLabelsBan.length > 0;
+  const isAnySaving = isSaving || isSavingFacts;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Grounding Facts</span>
-          {hasAnyFacts && (
-            <Badge variant="outline" className="text-xs font-normal">
-              {features.length + workflowSteps.length + promos.length + allowedProof.length} facts
-            </Badge>
-          )}
-        </CardTitle>
+        <CardTitle>Brand & Product Facts</CardTitle>
         <CardDescription>
-          Factual data that prevents AI from making up information in scripts
+          Define your brand voice and factual product data to ensure accurate, on-brand scripts
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* AI Generation */}
-        {isPro && (
+      <CardContent className="space-y-6">
+        {/* AI Generation Button */}
+        {isPro ? (
           <Button
             variant="outline"
             className="w-full"
@@ -457,7 +522,7 @@ function GroundingFactsCard({
             {isGenerating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Extracting facts...
+                Extracting from description...
               </>
             ) : (
               <>
@@ -466,85 +531,126 @@ function GroundingFactsCard({
               </>
             )}
           </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="w-full">
+                <Button variant="outline" className="w-full pointer-events-none" disabled>
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Generate from Product Description
+                  <Crown className="h-3.5 w-3.5 ml-2 text-amber-500" />
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Upgrade to Pro to use AI generation</p>
+            </TooltipContent>
+          </Tooltip>
         )}
-        {!isPro && (
-          <Button variant="outline" className="w-full" disabled>
-            <Lock className="h-4 w-4 mr-2" />
-            AI Generation (Pro)
-          </Button>
-        )}
 
-        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full justify-between">
-              <span>{isExpanded ? "Hide" : "Show"} fact fields</span>
-              <ChevronRight
-                className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-              />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="pt-4 space-y-4">
-            <ListEditor
-              label="Verified Features"
-              list={features}
-              setList={setFeatures}
-              newValue={newFeature}
-              setNewValue={setNewFeature}
-              placeholder="e.g., AI-powered editing..."
-            />
+        <Separator />
 
-            <ListEditor
-              label="Workflow Steps (in order)"
-              list={workflowSteps}
-              setList={setWorkflowSteps}
-              newValue={newStep}
-              setNewValue={setNewStep}
-              placeholder="e.g., Upload photo..."
-            />
+        {/* Brand Voice Section */}
+        <div className="space-y-3">
+          <Label htmlFor="brandVoice" className="flex items-center text-sm">
+            Brand Voice
+            <InfoTip>Defines tone and style for all scripts. Examples: &quot;Friendly and casual&quot;, &quot;Professional but approachable&quot;.</InfoTip>
+          </Label>
+          <Textarea
+            id="brandVoice"
+            rows={3}
+            placeholder="Describe your brand's tone and style..."
+            value={brandVoice}
+            onChange={(e) => onBrandChange(e.target.value, forbiddenClaims)}
+          />
+        </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm">Pricing</Label>
-              <Input
-                placeholder="e.g., $9/month..."
-                value={pricing}
-                onChange={(e) => setPricing(e.target.value)}
-                className="text-sm"
-              />
-            </div>
+        {/* Forbidden Claims */}
+        <div className="space-y-3">
+          <Label htmlFor="forbiddenClaims" className="flex items-center text-sm">
+            Forbidden Claims
+            <InfoTip>Words or phrases the AI must never use. Scripts containing these are flagged. One per line.</InfoTip>
+          </Label>
+          <Textarea
+            id="forbiddenClaims"
+            rows={3}
+            placeholder="cure&#10;guaranteed results&#10;#1 in the world"
+            value={forbiddenClaims}
+            onChange={(e) => onBrandChange(brandVoice, e.target.value)}
+          />
+        </div>
 
-            <ListEditor
-              label="Allowed Promotions"
-              list={promos}
-              setList={setPromos}
-              newValue={newPromo}
-              setNewValue={setNewPromo}
-              placeholder="e.g., 30-day free trial..."
-            />
+        <Separator />
 
-            <ListEditor
-              label="Allowed Proof/Stats"
-              list={allowedProof}
-              setList={setAllowedProof}
-              newValue={newProof}
-              setNewValue={setNewProof}
-              placeholder="e.g., 50,000 users..."
-            />
+        {/* Features */}
+        <ListField
+          label="Verified Features"
+          tooltip="Product features that can be mentioned in scripts. Only these will be used."
+          list={features}
+          setList={setFeatures}
+          newValue={newFeature}
+          setNewValue={setNewFeature}
+          placeholder="e.g., AI-powered editing, cloud sync..."
+        />
 
-            <ListEditor
-              label="Banned Harsh Words"
-              list={harshLabelsBan}
-              setList={setHarshLabelsBan}
-              newValue={newHarshWord}
-              setNewValue={setNewHarshWord}
-              placeholder="e.g., ugly, terrible..."
-            />
-          </CollapsibleContent>
-        </Collapsible>
+        {/* Workflow Steps */}
+        <WorkflowStepsField />
 
-        <div className="flex justify-end pt-2 border-t">
-          <Button onClick={handleSave} disabled={isSaving} size="sm">
+        {/* Pricing */}
+        <div className="space-y-3">
+          <Label htmlFor="pricing" className="flex items-center text-sm">
+            Pricing
+            <InfoTip>Exact pricing info. Leave empty if pricing should not be mentioned in scripts.</InfoTip>
+          </Label>
+          <Input
+            id="pricing"
+            placeholder="e.g., $9/month, Free tier available..."
+            value={pricing}
+            onChange={(e) => {
+              setPricing(e.target.value);
+              setFactsChanged(true);
+            }}
+          />
+        </div>
+
+        {/* Allowed Promotions */}
+        <ListField
+          label="Allowed Promotions"
+          tooltip="Only these promotional offers can be mentioned. Leave empty to prevent any promo mentions."
+          list={promos}
+          setList={setPromos}
+          newValue={newPromo}
+          setNewValue={setNewPromo}
+          placeholder="e.g., 30-day free trial, 20% off first month..."
+        />
+
+        {/* Allowed Proof/Stats */}
+        <ListField
+          label="Allowed Proof & Stats"
+          tooltip="Statistics and testimonials that can be used in scripts."
+          list={allowedProof}
+          setList={setAllowedProof}
+          newValue={newProof}
+          setNewValue={setNewProof}
+          placeholder="e.g., 50,000 users, 4.8 star rating..."
+        />
+
+        {/* Banned Harsh Words */}
+        <ListField
+          label="Banned Harsh Words"
+          tooltip="Negative words to never use when addressing the audience in scripts."
+          list={harshLabelsBan}
+          setList={setHarshLabelsBan}
+          newValue={newHarshWord}
+          setNewValue={setNewHarshWord}
+          placeholder="e.g., ugly, terrible, stupid..."
+        />
+
+        {/* Save Button */}
+        <div className="flex justify-end pt-4 border-t">
+          <Button onClick={handleSaveAll} disabled={isAnySaving}>
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Facts"}
+            {isAnySaving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </CardContent>
@@ -559,6 +665,7 @@ function ScriptCard({
   isExpanded,
   onToggleExpand,
   onRegenerate,
+  onFixWarnings,
   getScoreVariant,
   isVersion = false,
   versionNumber,
@@ -571,6 +678,7 @@ function ScriptCard({
   isExpanded: boolean;
   onToggleExpand: () => void;
   onRegenerate: () => void;
+  onFixWarnings?: (warnings: string[]) => void;
   getScoreVariant: (score: number | null | undefined) => "success" | "warning" | "destructive" | "secondary";
   isVersion?: boolean;
   versionNumber?: number;
@@ -619,17 +727,19 @@ function ScriptCard({
                 {script.errorMessage || "An error occurred. Your credit has been refunded."}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRegenerate();
-              }}
-            >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Retry
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRegenerate();
+                }}
+              >
+                <RefreshCw className="h-4 w-4 mr-1" />
+                Retry
+              </Button>
+            )}
           </div>
         )}
 
@@ -679,7 +789,7 @@ function ScriptCard({
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {!isRegenerating && !isFailed && (
+              {!isRegenerating && !isFailed && isAdmin && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -799,19 +909,42 @@ function ScriptCard({
 
             {/* Warnings */}
             {script.warnings && script.warnings.length > 0 && (
-              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
-                  <h4 className="font-semibold text-warning">Warnings</h4>
+              <Collapsible defaultOpen={false} className="rounded-xl bg-warning/10 border border-warning/20 overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-center justify-between">
+                    <CollapsibleTrigger className="flex items-center gap-2 group cursor-pointer">
+                      <ChevronRight className="h-4 w-4 text-warning transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                      <AlertTriangle className="h-4 w-4 text-warning" />
+                      <h4 className="font-semibold text-warning">Tips</h4>
+                      <Badge variant="warning" className="text-xs ml-1">
+                        {script.warnings.length}
+                      </Badge>
+                    </CollapsibleTrigger>
+                    {isAdmin && onFixWarnings && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs border-warning/30 text-warning hover:bg-warning/10"
+                        onClick={() => onFixWarnings(script.warnings!)}
+                      >
+                        <Wand2 className="h-3 w-3 mr-1.5" />
+                        Fix with AI
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <ul className="space-y-1 list-disc list-inside marker:text-warning">
-                  {script.warnings.map((warning, i) => (
-                    <li key={i} className="text-sm text-warning/90">
-                      {warning}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                <CollapsibleContent>
+                  <div className="px-4 pb-4">
+                    <ul className="space-y-1 list-disc list-inside marker:text-warning">
+                      {script.warnings.map((warning, i) => (
+                        <li key={i} className="text-sm text-warning/90">
+                          {warning}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             )}
 
             {/* Admin Analytics Panel */}
@@ -940,6 +1073,16 @@ export default function ProjectDetailPage({
   // Calculate total scripts
   const totalScripts = genSettings.scriptsPerAngle * genSettings.angles.length;
   const totalCredits = totalScripts * CREDIT_COST_PER_SCRIPT;
+
+  // Calculate incomplete personas for warnings
+  const incompletePersonas = useMemo(() => {
+    if (!project) return [];
+    return project.personas.filter(p =>
+      (p.painPoints?.length || 0) < 3 ||
+      (p.desires?.length || 0) < 3 ||
+      (p.objections?.length || 0) < 3
+    );
+  }, [project]);
 
   const [filterAngle, setFilterAngle] = useState<string>("all");
   const [filterDuration, setFilterDuration] = useState<string>("all");
@@ -1228,17 +1371,17 @@ export default function ProjectDetailPage({
     name: string;
     description: string;
     demographics: string;
-    painPoints: string;
-    desires: string;
-    objections: string;
+    painPoints: string[];
+    desires: string[];
+    objections: string[];
   }) => {
     const payload = {
       name: formData.name,
       description: formData.description,
       demographics: formData.demographics || undefined,
-      painPoints: formData.painPoints.split("\n").map((s: string) => s.trim()).filter(Boolean),
-      desires: formData.desires.split("\n").map((s: string) => s.trim()).filter(Boolean),
-      objections: formData.objections.split("\n").map((s: string) => s.trim()).filter(Boolean),
+      painPoints: formData.painPoints,
+      desires: formData.desires,
+      objections: formData.objections,
     };
 
     if (editingPersona) {
@@ -1675,6 +1818,21 @@ export default function ProjectDetailPage({
 
         {/* Audience Tab */}
         <TabsContent value="audience" className="space-y-6">
+          {/* Incomplete personas warning */}
+          {incompletePersonas.length > 0 && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-amber-600">
+                  {incompletePersonas.length} of {project.personas.length} persona{project.personas.length !== 1 ? 's' : ''} {incompletePersonas.length === 1 ? 'has' : 'have'} incomplete data
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Personas with sparse pain points, desires, or objections may affect script targeting quality.
+                  Click edit on a persona to fill missing fields with AI.
+                </p>
+              </div>
+            </div>
+          )}
           <Card>
             <CardHeader className="flex flex-row items-start justify-between gap-4">
               <div className="space-y-1.5">
@@ -1733,81 +1891,22 @@ export default function ProjectDetailPage({
 
         {/* Brand Tab */}
         <TabsContent value="brand" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Brand Voice & Restrictions</CardTitle>
-              <CardDescription>
-                Define your brand&apos;s tone and any phrases or claims to
-                avoid.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="brandVoice" className="flex items-center">
-                  Brand Voice Guidelines
-                  <InfoTip>
-                    Defines tone and style for all scripts. Examples:
-                    &quot;Friendly and casual&quot;, &quot;Professional but not
-                    stuffy&quot;, &quot;Uses humor&quot;. The AI matches this
-                    voice.
-                  </InfoTip>
-                </Label>
-                <Textarea
-                  id="brandVoice"
-                  rows={4}
-                  placeholder="Describe your brand's tone and style. e.g., Friendly and approachable, professional but not stuffy, uses humor..."
-                  value={formData.brandVoice}
-                  onChange={(e) =>
-                    setFormData({ ...formData, brandVoice: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="forbiddenClaims" className="flex items-center">
-                  Forbidden Claims/Phrases (one per line)
-                  <InfoTip>
-                    Words or phrases the AI must never use. Scripts containing
-                    these are automatically flagged. Use for compliance (e.g.,
-                    &quot;cures&quot;, &quot;guaranteed&quot;).
-                  </InfoTip>
-                </Label>
-                <Textarea
-                  id="forbiddenClaims"
-                  rows={4}
-                  placeholder="cure&#10;guaranteed results&#10;#1 in the world&#10;doctor recommended"
-                  value={formData.forbiddenClaims}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      forbiddenClaims: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="flex justify-end pt-4 border-t">
-                <Button onClick={handleSave} disabled={isSaving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Grounding Facts Card */}
-          <GroundingFactsCard
+          <BrandFactsEditor
             projectId={id}
             productName={formData.name}
             productDescription={formData.productDescription}
             isPro={isPro}
-            onBrandDataGenerated={(brandVoice, forbiddenClaims) => {
+            brandVoice={formData.brandVoice}
+            forbiddenClaims={formData.forbiddenClaims}
+            onBrandChange={(brandVoice, forbiddenClaims) => {
               setFormData(prev => ({
                 ...prev,
-                brandVoice: brandVoice || prev.brandVoice,
-                forbiddenClaims: forbiddenClaims.length > 0
-                  ? forbiddenClaims.join("\n")
-                  : prev.forbiddenClaims,
+                brandVoice,
+                forbiddenClaims,
               }));
             }}
+            onSave={handleSave}
+            isSaving={isSaving}
           />
         </TabsContent>
 
@@ -1862,6 +1961,30 @@ export default function ProjectDetailPage({
 
         {/* Scripts Tab */}
         <TabsContent value="scripts" className="space-y-6">
+          {/* Recommendations for better scripts */}
+          {(project.personas.length === 0 || incompletePersonas.length > 0) && (
+            <Collapsible>
+              <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group w-full">
+                <Info className="h-4 w-4" />
+                <span>Recommendations for better scripts</span>
+                <ChevronDown className="h-4 w-4 ml-auto transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-2 text-sm pl-6">
+                {project.personas.length === 0 && (
+                  <div className="flex items-center gap-2 text-amber-600">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>No personas defined – scripts will use generic targeting</span>
+                  </div>
+                )}
+                {incompletePersonas.length > 0 && (
+                  <div className="flex items-center gap-2 text-amber-600">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span>{incompletePersonas.length} persona{incompletePersonas.length !== 1 ? 's' : ''} missing pain points, desires, or objections</span>
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
           {/* Generation Settings */}
           <Card>
             <CardHeader>
@@ -2406,6 +2529,11 @@ export default function ProjectDetailPage({
                             setRegenerateScriptId(script.id);
                             setRegenerateDialogOpen(true);
                           }}
+                          onFixWarnings={(warnings) => {
+                            setRegenerateScriptId(script.id);
+                            setRegenerateInstruction(`Fix these issues: ${warnings.join('; ')}`);
+                            setRegenerateDialogOpen(true);
+                          }}
                           getScoreVariant={getScoreVariant}
                           versionCount={versions.length}
                           isAdmin={isAdmin}
@@ -2424,6 +2552,11 @@ export default function ProjectDetailPage({
                                 onToggleExpand={() => setExpandedScript(expandedScript === version.id ? null : version.id)}
                                 onRegenerate={() => {
                                   setRegenerateScriptId(version.id);
+                                  setRegenerateDialogOpen(true);
+                                }}
+                                onFixWarnings={(warnings) => {
+                                  setRegenerateScriptId(version.id);
+                                  setRegenerateInstruction(`Fix these issues: ${warnings.join('; ')}`);
                                   setRegenerateDialogOpen(true);
                                 }}
                                 getScoreVariant={getScoreVariant}
@@ -2496,10 +2629,12 @@ export default function ProjectDetailPage({
                 </Button>
               ))}
             </div>
-            <Input
+            <Textarea
               placeholder="Or enter custom instructions..."
               value={regenerateInstruction}
               onChange={(e) => setRegenerateInstruction(e.target.value)}
+              rows={3}
+              className="resize-none"
             />
             {/* Cost indicator */}
             <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border">

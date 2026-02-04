@@ -1378,9 +1378,9 @@ function StepPersonas({
     name: string;
     description: string;
     demographics: string;
-    painPoints: string;
-    desires: string;
-    objections: string;
+    painPoints: string[];
+    desires: string[];
+    objections: string[];
   }) => {
     if (editingPersona) {
       // Update existing persona
@@ -1389,9 +1389,9 @@ function StepPersonas({
         name: personaData.name,
         description: personaData.description,
         demographics: personaData.demographics || undefined,
-        painPoints: personaData.painPoints.split('\n').map(s => s.trim()).filter(Boolean),
-        desires: personaData.desires.split('\n').map(s => s.trim()).filter(Boolean),
-        objections: personaData.objections.split('\n').map(s => s.trim()).filter(Boolean),
+        painPoints: personaData.painPoints,
+        desires: personaData.desires,
+        objections: personaData.objections,
       };
       onChange({
         ...formData,
@@ -1407,9 +1407,9 @@ function StepPersonas({
         name: personaData.name,
         description: personaData.description,
         demographics: personaData.demographics || undefined,
-        painPoints: personaData.painPoints.split('\n').map(s => s.trim()).filter(Boolean),
-        desires: personaData.desires.split('\n').map(s => s.trim()).filter(Boolean),
-        objections: personaData.objections.split('\n').map(s => s.trim()).filter(Boolean),
+        painPoints: personaData.painPoints,
+        desires: personaData.desires,
+        objections: personaData.objections,
       };
       onChange({
         ...formData,
