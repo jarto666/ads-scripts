@@ -60,6 +60,14 @@ interface ScriptContent {
 interface ProductContext {
   productDescription: string;
   productName?: string;
+  /** ProjectFacts for grounded specificity scoring */
+  facts?: {
+    features: string[];
+    workflowSteps: string[];
+    allowedProof: string[];
+    promos: string[];
+    pricing?: string | null;
+  } | null;
 }
 
 
@@ -288,14 +296,113 @@ export class RerankService {
   }
 
   /**
-   * Specificity: How much the script uses actual product details
-   * Uses productDescription keywords as proxy until ProjectFacts exists
+   * Specificity: How much the script uses verified product facts
+   * Uses ProjectFacts for grounded scoring, falls back to keywords if no facts
    */
   private scoreSpecificity(
     script: ScriptContent,
     productContext: ProductContext,
   ): number {
     const text = this.extractText(script).toLowerCase();
+    const facts = productContext.facts;
+
+    // If we have ProjectFacts, use grounded specificity scoring
+    if (facts && this.hasGroundingFacts(facts)) {
+      return this.scoreGroundedSpecificity(text, facts, productContext);
+    }
+
+    // Fallback: keyword-based scoring from product description
+    return this.scoreKeywordSpecificity(text, productContext);
+  }
+
+  /**
+   * Check if facts have meaningful grounding content
+   */
+  private hasGroundingFacts(facts: NonNullable<ProductContext['facts']>): boolean {
+    return (
+      facts.features.length > 0 ||
+      facts.workflowSteps.length > 0 ||
+      facts.allowedProof.length > 0 ||
+      facts.promos.length > 0 ||
+      !!facts.pricing
+    );
+  }
+
+  /**
+   * Score specificity based on verified ProjectFacts
+   * Only rewards fact-backed details, not hallucinations
+   */
+  private scoreGroundedSpecificity(
+    text: string,
+    facts: NonNullable<ProductContext['facts']>,
+    productContext: ProductContext,
+  ): number {
+    let score = 0;
+
+    // Reward: mentions of verified features (+10 each, max 40)
+    let featureMatches = 0;
+    for (const feature of facts.features) {
+      if (this.textContainsConcept(text, feature)) {
+        featureMatches++;
+      }
+    }
+    score += Math.min(40, featureMatches * 10);
+
+    // Reward: correct workflow references (+8 each, max 24)
+    let workflowMatches = 0;
+    for (const step of facts.workflowSteps) {
+      if (this.textContainsConcept(text, step)) {
+        workflowMatches++;
+      }
+    }
+    score += Math.min(24, workflowMatches * 8);
+
+    // Reward: allowed proof usage (+12 each, max 24)
+    let proofMatches = 0;
+    for (const proof of facts.allowedProof) {
+      if (this.textContainsConcept(text, proof)) {
+        proofMatches++;
+      }
+    }
+    score += Math.min(24, proofMatches * 12);
+
+    // Reward: allowed promo usage (+8 each, max 16)
+    let promoMatches = 0;
+    for (const promo of facts.promos) {
+      if (this.textContainsConcept(text, promo)) {
+        promoMatches++;
+      }
+    }
+    score += Math.min(16, promoMatches * 8);
+
+    // Reward: pricing mention (+10)
+    if (facts.pricing && this.textContainsConcept(text, facts.pricing)) {
+      score += 10;
+    }
+
+    // Bonus for product name mention (+10)
+    if (productContext.productName) {
+      const productNameLower = productContext.productName.toLowerCase();
+      if (text.includes(productNameLower)) {
+        score += 10;
+      }
+    }
+
+    // If no facts matched at all, give a base score
+    if (score === 0) {
+      score = 30; // Base score for having facts but no matches
+    }
+
+    return Math.min(100, score);
+  }
+
+  /**
+   * Fallback: score specificity based on product description keywords
+   */
+  private scoreKeywordSpecificity(
+    text: string,
+    productContext: ProductContext,
+  ): number {
     const productDesc = productContext.productDescription.toLowerCase();
 
     // Extract significant keywords from product description
@@ -323,8 +430,14 @@ export class RerankService {
     }
 
     // Bonus for specific numbers/metrics from product (0-20)
-    const productNumbers = productDesc.match(/\d+(?:\.\d+)?(?:\s*[%xX]|\s*(?:minutes?|seconds?|hours?|days?))?/g) || [];
-    const scriptNumbers = text.match(/\d+(?:\.\d+)?(?:\s*[%xX]|\s*(?:minutes?|seconds?|hours?|days?))?/g) || [];
+    const productNumbers =
+      productDesc.match(
+        /\d+(?:\.\d+)?(?:\s*[%xX]|\s*(?:minutes?|seconds?|hours?|days?))?/g,
+      ) || [];
+    const scriptNumbers =
+      text.match(
+        /\d+(?:\.\d+)?(?:\s*[%xX]|\s*(?:minutes?|seconds?|hours?|days?))?/g,
+      ) || [];
 
     for (const num of scriptNumbers) {
       if (productNumbers.some((pn) => pn.includes(num) || num.includes(pn))) {
@@ -334,6 +447,34 @@ export class RerankService {
     }
 
     return Math.min(100, score);
+  }
+
+  /**
+   * Check if text contains a concept (fuzzy match on key words)
+   * Extracts significant words from the concept and checks if they appear
+   */
+  private textContainsConcept(text: string, concept: string): boolean {
+    const conceptLower = concept.toLowerCase();
+
+    // Direct inclusion check first
+    if (text.includes(conceptLower)) {
+      return true;
+    }
+
+    // Extract key words from concept (3+ chars, not stopwords)
+    const conceptKeywords = this.extractKeywords(conceptLower);
+    if (conceptKeywords.length === 0) return false;
+
+    // Check if majority of keywords appear
+    let matches = 0;
+    for (const kw of conceptKeywords) {
+      if (text.includes(kw)) {
+        matches++;
+      }
+    }
+
+    // Require at least half of keywords to match
+    return matches >= Math.ceil(conceptKeywords.length / 2);
   }
 
   /**

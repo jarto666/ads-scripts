@@ -996,6 +996,7 @@ OUTPUT CONTRACT:
         {
           productDescription: projectWithFilteredPersonas.productDescription,
           productName: projectWithFilteredPersonas.name,
+          facts: batch.project.facts,
         },
         filteredPersonas,
       );

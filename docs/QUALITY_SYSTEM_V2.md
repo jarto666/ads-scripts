@@ -206,44 +206,27 @@ model Persona {
 - `rerank.service.ts` imports and uses for `scoreHookStrength()` and `scoreNovelty()`
 - `scoring.service.ts` imports `llmSmell` for `scoreAuthenticity()`
 
-### 2.3 Grounded Specificity
+### 2.3 Grounded Specificity ✅
 
-**Current:** Rewards any concrete detail (including hallucinations)
+**Implemented:** `apps/api/src/generation/rerank.service.ts`
 
-**New:** Only reward fact-backed details
+**Scoring breakdown (when ProjectFacts available):**
+| Source | Points | Max |
+|--------|--------|-----|
+| Features | +10 each | 40 |
+| Workflow steps | +8 each | 24 |
+| Allowed proof | +12 each | 24 |
+| Allowed promos | +8 each | 16 |
+| Pricing mention | +10 | 10 |
+| Product name | +10 | 10 |
 
-```typescript
-function scoreGroundedSpecificity(script: Script, facts: ProjectFacts): number {
-  let score = 0;
-  const text = extractAllText(script);
+**Fallback:** If no ProjectFacts, uses keyword matching from product description (legacy behavior).
 
-  // Reward: mentions of verified features
-  for (const feature of facts.features) {
-    if (textContainsConcept(text, feature)) {
-      score += 10;
-    }
-  }
-
-  // Reward: correct workflow references
-  for (const step of facts.workflowSteps) {
-    if (textContainsConcept(text, step)) {
-      score += 8;
-    }
-  }
-
-  // Reward: allowed proof usage
-  for (const proof of facts.allowedProof) {
-    if (textContainsConcept(text, proof)) {
-      score += 12;
-    }
-  }
-
-  // NO reward for unverified specifics
-  // (those are handled by groundedness penalty)
-
-  return Math.min(100, score);
-}
-```
+**Key methods:**
+- `scoreSpecificity()` - Entry point, routes to grounded or keyword scoring
+- `scoreGroundedSpecificity()` - Fact-backed scoring
+- `scoreKeywordSpecificity()` - Fallback keyword matching
+- `textContainsConcept()` - Fuzzy concept matching (majority of keywords)
 
 ### 2.4 Updated Scoring Weights
 
@@ -387,7 +370,7 @@ export const MODEL_CONFIG = {
 - [x] **ProjectFacts AI generation** - Extracts facts + brandVoice + forbiddenClaims ✓
 - [x] **Persona AI generation** - Full generation + selective field enrichment (Pro feature) ✓
 - [x] **Expand cliché patterns** - 115+ patterns in 5 categories (cliche-patterns.ts) ✓
-- [ ] **Grounded specificity** - Replace old specificity scoring
+- [x] **Grounded specificity** - Fact-backed scoring in rerank.service.ts ✓
 
 ### Week 2: Learning Loop + Cleanup
 
@@ -423,4 +406,4 @@ export const MODEL_CONFIG = {
 
 *Created: 2026-02-03*
 *Updated: 2026-02-04*
-*Status: In Progress (Week 1 near complete)*
+*Status: Week 1 Complete - Ready for Week 2 (Learning Loop)*
