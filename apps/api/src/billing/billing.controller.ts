@@ -40,18 +40,46 @@ export class BillingController {
   ) {
     const rawBody = req.rawBody?.toString();
 
+    // Always log receipt so we can debug missing signature/body issues.
+    this.logger.log(
+      `Webhook received: ip=${req.ip} ua=${req.headers['user-agent'] || 'unknown'} ` +
+        `sig=${signature ? signature.slice(0, 8) + '…' : 'missing'} ` +
+        `bytes=${rawBody ? rawBody.length : 0}`,
+    );
+
     if (!rawBody) {
+      this.logger.warn('Webhook missing raw body');
       throw new BadRequestException('Missing request body');
     }
 
     if (!signature) {
+      this.logger.warn('Webhook missing signature header');
       throw new BadRequestException('Missing signature');
+    }
+
+    // Try to parse early for better debugging (even if signature fails).
+    let parsedEventName: string | undefined;
+    let parsedEventId: string | undefined;
+    try {
+      const parsed = JSON.parse(rawBody);
+      parsedEventName = parsed?.meta?.event_name;
+      parsedEventId = parsed?.data?.id;
+      if (parsedEventName) {
+        this.logger.log(
+          `Webhook parsed: event=${parsedEventName}${parsedEventId ? ` id=${parsedEventId}` : ''}`,
+        );
+      }
+    } catch (err) {
+      this.logger.warn(`Webhook JSON parse failed: ${(err as Error)?.message || String(err)}`);
+      throw new BadRequestException('Invalid JSON');
     }
 
     // Verify webhook signature
     const isValid = this.billingService.verifyWebhookSignature(rawBody, signature);
     if (!isValid) {
-      this.logger.warn('Invalid webhook signature');
+      this.logger.warn(
+        `Invalid webhook signature${parsedEventName ? ` (event=${parsedEventName})` : ''}`,
+      );
       throw new BadRequestException('Invalid signature');
     }
 

@@ -147,8 +147,20 @@ export class BillingService {
    */
   async handleWebhook(event: LemonSqueezyWebhookEvent): Promise<void> {
     const eventName = event.meta.event_name;
-    this.logger.log(`Processing LemonSqueezy webhook: ${eventName}`);
-    this.logger.log(`Webhook payload: ${JSON.stringify(event, null, 2)}`);
+    const userId = event.meta.custom_data?.user_id;
+    const attrs = event.data?.attributes;
+    this.logger.log(
+      `Processing LemonSqueezy webhook: ${eventName} ` +
+        `id=${event.data?.id} type=${event.data?.type} ` +
+        `userId=${userId || "n/a"} email=${attrs?.user_email || "n/a"} ` +
+        `status=${attrs?.status || "n/a"} variant=${attrs?.variant_id || "n/a"}`
+    );
+
+    const shouldLogPayload =
+      this.configService.get<string>("LS_WEBHOOK_LOG_PAYLOAD") === "true";
+    if (shouldLogPayload) {
+      this.logger.log(`Webhook payload: ${JSON.stringify(event, null, 2)}`);
+    }
 
     switch (eventName) {
       // Subscription events
@@ -432,13 +444,17 @@ export class BillingService {
 
     const nextBillingDate = attributes.renews_at || attributes.ends_at;
 
-    // Update subscription status
+    // Update subscription status.
+    // subscription_payment_success sends an invoice object that lacks renews_at/ends_at,
+    // so only overwrite subscriptionEndsAt when we actually have a date value.
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         plan: "pro",
         subscriptionStatus: "active",
-        subscriptionEndsAt: nextBillingDate ? new Date(nextBillingDate) : null,
+        ...(nextBillingDate
+          ? { subscriptionEndsAt: new Date(nextBillingDate) }
+          : {}),
       },
     });
 
