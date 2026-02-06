@@ -4,6 +4,9 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Terms & Conditions",
   description: "Klippli Terms and Conditions of Service.",
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {
