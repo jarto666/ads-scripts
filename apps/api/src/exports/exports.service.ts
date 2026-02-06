@@ -176,7 +176,6 @@ export class ExportsService {
   private buildAnalyticsReport(
     batch: {
       id: string;
-      quality: string;
       platform: string;
       angles: string[];
       durations: number[];
@@ -196,6 +195,7 @@ export class ExportsService {
       warnings: unknown;
       analyticsData: unknown;
       storyboard: unknown;
+      hookVariants: unknown;
       ctaVariants: unknown;
       filmingChecklist: unknown;
     }>,
@@ -209,6 +209,7 @@ export class ExportsService {
         angle: script.angle,
         duration: script.duration,
         storyboard: script.storyboard,
+        hookVariants: script.hookVariants,
         ctaVariants: script.ctaVariants,
         filmingChecklist: script.filmingChecklist,
         filmabilityScore: script.score,
@@ -266,7 +267,6 @@ export class ExportsService {
       batchInfo: {
         batchId: batch.id,
         projectName: batch.project.name,
-        quality: batch.quality,
         platform: batch.platform,
         angles: batch.angles,
         durations: batch.durations,

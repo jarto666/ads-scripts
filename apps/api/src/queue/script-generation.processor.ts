@@ -17,7 +17,7 @@ export interface ScriptGenerationJobData {
   instruction?: string;
 }
 
-// Free/standard users processor (lower concurrency)
+// Free users processor (lower concurrency)
 @Processor(SCRIPT_GENERATION_QUEUE, { concurrency: 2 })
 export class ScriptGenerationProcessor extends WorkerHost {
   private readonly logger = new Logger(ScriptGenerationProcessor.name);

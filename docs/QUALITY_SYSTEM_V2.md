@@ -372,6 +372,16 @@ export const MODEL_CONFIG = {
 - [x] **Expand cliché patterns** - 115+ patterns in 5 categories (cliche-patterns.ts) ✓
 - [x] **Grounded specificity** - Fact-backed scoring in rerank.service.ts ✓
 
+### Week 1.5: Hook A/B/C Variants + CTA Expansion (2026-02-06)
+
+- [x] **Hook variants schema** - Added `hookVariants Json?` to Script model ✓
+- [x] **Runner-up hook tracking** - Modified stratified selection to save 2 runner-ups per hook ✓
+- [x] **HookVariantService** - Gemini Flash beat adaptation for variant hooks (~$0.002/script) ✓
+- [x] **Pipeline integration** - Step 5.5 generates A/B/C variants in parallel after reranking ✓
+- [x] **CTA expansion** - Increased from 3 to 5 CTAs per script ✓
+- [x] **Frontend variant tabs** - Pill-style A/B/C tabs with storyboard switching ✓
+- [x] **Export support** - PDF shows labeled Hook A/B/C, CSV has Hook A/B/C columns, analytics JSON includes variants ✓
+
 ### Week 2: Learning Loop + Cleanup
 
 - [ ] **Feedback schema** - Prisma model + migration
@@ -380,8 +390,8 @@ export const MODEL_CONFIG = {
 - [ ] **Feedback → rules** - Processing pipeline
 - [ ] **Winners storage** - Schema + CRUD
 - [ ] **Winners in prompts** - Few-shot injection
-- [ ] **Remove quality tiers** - Code cleanup
-- [ ] **Single model config** - Simplify model selection
+- [x] **Remove quality tiers** - Flattened to single Pro model, removed quality branching ✓
+- [x] **Single model config** - All scripts use Gemini 3 Pro ✓
 
 ### Week 3: Polish + Testing
 
@@ -405,5 +415,5 @@ export const MODEL_CONFIG = {
 ---
 
 *Created: 2026-02-03*
-*Updated: 2026-02-04*
-*Status: Week 1 Complete - Ready for Week 2 (Learning Loop)*
+*Updated: 2026-02-06*
+*Status: Week 2 In Progress - Quality tiers removed, hook variants shipped. Next: Learning Loop.*

@@ -1,10 +1,10 @@
 /**
  * Centralized model configuration for all AI features
  *
+ * Single tier: all scripts use Gemini 3 Pro for best quality.
  * Based on benchmark results (2026-01-30):
- * - Gemini 3 Pro: 88/100 quality, best for premium
- * - Gemini 3 Flash: 68/100 quality, best cost/performance for standard
- * - Sonnet 4.5: 49/100 quality (overuses "just/literally") - NOT RECOMMENDED
+ * - Gemini 3 Pro: 88/100 quality
+ * - Gemini 3 Flash: used for hooks, personas, adaptation (fast tasks)
  */
 
 /**
@@ -32,29 +32,23 @@ export const QUALITY_THRESHOLDS = {
 } as const;
 
 /**
- * Overgeneration ratios by quality tier
+ * Overgeneration ratios
  * - scripts: how many scripts to generate vs requested
  * - hooks: how many hooks to generate vs scripts
  */
-const OVERGEN_RATIOS = {
-  standard: { scripts: 1.3, hooks: 1.5 },
-  premium: { scripts: 1.6, hooks: 1.5 },
-} as const;
+const OVERGEN_RATIO = { scripts: 1.6, hooks: 1.5 } as const;
 
 /**
  * Calculate dynamic overgeneration counts based on requested scripts
  */
 export function calculateOvergeneration(
   totalRequested: number,
-  quality: 'standard' | 'premium',
 ): { hooksToGenerate: number; scriptsToGenerate: number } {
-  const ratio = OVERGEN_RATIOS[quality];
-
   const scriptsToGenerate = Math.min(
     BATCH_LIMITS.maxScriptsToGenerate,
     Math.max(
       BATCH_LIMITS.minScriptsToGenerate,
-      Math.ceil(totalRequested * ratio.scripts),
+      Math.ceil(totalRequested * OVERGEN_RATIO.scripts),
     ),
   );
 
@@ -62,7 +56,7 @@ export function calculateOvergeneration(
     BATCH_LIMITS.maxHooks,
     Math.max(
       BATCH_LIMITS.minHooks,
-      Math.ceil(scriptsToGenerate * ratio.hooks),
+      Math.ceil(scriptsToGenerate * OVERGEN_RATIO.hooks),
     ),
   );
 
@@ -74,15 +68,11 @@ export function calculateOvergeneration(
  * This ensures we have enough hooks per angle to select from after filtering.
  *
  * @param scriptsPerAngle - Number of scripts requested per angle
- * @param quality - Quality tier (affects overgeneration ratio)
  * @returns Number of hooks to generate per angle
  */
 export function calculateHooksPerAngle(
   scriptsPerAngle: number,
-  quality: 'standard' | 'premium',
 ): number {
-  const ratio = OVERGEN_RATIOS[quality];
-
   // Generate enough hooks per angle to have selection buffer after filtering
   // We multiply by both the script and hook ratios to account for:
   // 1. Some hooks being filtered out
@@ -91,7 +81,7 @@ export function calculateHooksPerAngle(
     BATCH_LIMITS.maxHooksPerAngle,
     Math.max(
       BATCH_LIMITS.minHooksPerAngle,
-      Math.ceil(scriptsPerAngle * ratio.hooks * ratio.scripts),
+      Math.ceil(scriptsPerAngle * OVERGEN_RATIO.hooks * OVERGEN_RATIO.scripts),
     ),
   );
 }
@@ -126,19 +116,12 @@ export function validateBatchRequest(
 
 export const MODEL_CONFIG = {
   /**
-   * Script generation models
+   * Script generation model (Gemini 3 Pro for all scripts)
    */
   scriptGeneration: {
-    standard: {
-      model: 'google/gemini-3-flash-preview',
-      temperature: 0.7,
-      maxTokens: 4096,
-    },
-    premium: {
-      model: 'google/gemini-3-pro-preview',
-      temperature: 0.7,
-      maxTokens: 4096,
-    },
+    model: 'google/gemini-3-pro-preview',
+    temperature: 0.7,
+    maxTokens: 4096,
   },
 
   /**
@@ -193,9 +176,3 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
   'anthropic/claude-sonnet-4.5': { input: 3.0, output: 15.0 },
 };
 
-/**
- * Helper to get the appropriate script generation model based on quality tier
- */
-export function getScriptModel(quality: 'standard' | 'premium') {
-  return MODEL_CONFIG.scriptGeneration[quality];
-}

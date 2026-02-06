@@ -9,6 +9,14 @@ interface StoryboardStep {
   broll?: string[];
 }
 
+interface HookVariant {
+  label: string;
+  hook: string;
+  score: number;
+  adaptedBeats: StoryboardStep[];
+  adaptedBeatCount: number;
+}
+
 @Injectable()
 export class CsvExportService {
   generateCsv(scripts: Script[]): string {
@@ -16,7 +24,9 @@ export class CsvExportService {
       '#',
       'Angle',
       'Duration (s)',
-      'Hook',
+      'Hook A',
+      'Hook B',
+      'Hook C',
       'Full Script',
       'Storyboard',
       'CTA Variants',
@@ -28,6 +38,12 @@ export class CsvExportService {
       .filter((s) => s.status === 'completed')
       .map((script, index) => {
         const storyboard = script.storyboard as StoryboardStep[] | null;
+        const hookVariants = script.hookVariants as HookVariant[] | null;
+
+        // Hook variants — extract B and C hooks if available
+        const hookA = script.hook || '';
+        const hookB = hookVariants?.find((v) => v.label === 'B')?.hook || '';
+        const hookC = hookVariants?.find((v) => v.label === 'C')?.hook || '';
 
         // Full spoken script — all spoken lines concatenated
         const fullScript = storyboard
@@ -57,7 +73,9 @@ export class CsvExportService {
           (index + 1).toString(),
           script.angle,
           script.duration.toString(),
-          script.hook || '',
+          hookA,
+          hookB,
+          hookC,
           fullScript,
           storyboardText,
           ctaVariants,

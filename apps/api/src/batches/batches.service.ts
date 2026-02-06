@@ -96,8 +96,6 @@ export class BatchesService {
       );
     }
 
-    // Default to premium quality (single tier - all scripts use best models)
-    const quality = dto.quality || 'premium';
     const creditCost = CREDIT_COST_PER_SCRIPT * requestedCount;
 
     // Check if user has enough credits
@@ -119,7 +117,6 @@ export class BatchesService {
         angles: dto.angles,
         durations: dto.durations,
         personaIds: dto.personaIds || [],
-        quality,
         status: 'pending',
       },
     });
@@ -129,7 +126,7 @@ export class BatchesService {
       userId,
       creditCost,
       batch.id,
-      `Generated ${requestedCount} ${quality} scripts`,
+      `Generated ${requestedCount} scripts`,
     );
 
     // Add job to appropriate queue based on user plan

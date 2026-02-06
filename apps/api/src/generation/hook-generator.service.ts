@@ -78,14 +78,13 @@ export class HookGeneratorService {
     settings: {
       platform: string;
       angles: string[];
-      quality: 'standard' | 'premium';
       scriptsPerAngle: number;
     },
   ): Promise<HookGenerationResult> {
-    const hooksPerAngle = calculateHooksPerAngle(settings.scriptsPerAngle, settings.quality);
+    const hooksPerAngle = calculateHooksPerAngle(settings.scriptsPerAngle);
 
     this.logger.log(
-      `Generating ${hooksPerAngle} hooks per angle for ${settings.angles.length} angles (${settings.quality} tier)`,
+      `Generating ${hooksPerAngle} hooks per angle for ${settings.angles.length} angles`,
     );
 
     // Get banned phrases from StylePolicy for prompt

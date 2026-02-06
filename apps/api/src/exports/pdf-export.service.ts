@@ -9,6 +9,14 @@ interface StoryboardStep {
   broll?: string[];
 }
 
+interface HookVariant {
+  label: string;
+  hook: string;
+  score: number;
+  adaptedBeats: StoryboardStep[];
+  adaptedBeatCount: number;
+}
+
 type ProjectWithPersonas = Project & { personas: Persona[] };
 
 @Injectable()
@@ -212,6 +220,42 @@ export class PdfExportService {
               border-radius: 4px;
               page-break-after: avoid;
             }
+            .hook-variants {
+              margin-bottom: 10px;
+            }
+            .hook-variant {
+              margin-bottom: 8px;
+              border: 1px solid #e5e7eb;
+              border-radius: 4px;
+              overflow: hidden;
+              page-break-inside: avoid;
+            }
+            .hook-variant-label {
+              font-size: 9px;
+              font-weight: bold;
+              padding: 3px 8px;
+              background: #f3f4f6;
+              border-bottom: 1px solid #e5e7eb;
+              color: #374151;
+            }
+            .hook-variant-label.primary {
+              background: #fff3cd;
+            }
+            .hook-variant-text {
+              font-size: 11px;
+              font-weight: bold;
+              padding: 6px 8px;
+            }
+            .adapted-beats {
+              padding: 4px 8px 6px;
+              border-top: 1px dashed #e5e7eb;
+              font-size: 8px;
+              color: #6b7280;
+            }
+            .adapted-beats-title {
+              font-weight: bold;
+              margin-bottom: 2px;
+            }
             .storyboard {
               margin-bottom: 10px;
             }
@@ -320,6 +364,34 @@ export class PdfExportService {
 
   private renderScriptCard(script: Script): string {
     const storyboard = script.storyboard as StoryboardStep[] | null;
+    const hookVariants = script.hookVariants as HookVariant[] | null;
+    const hasVariants = hookVariants && hookVariants.length > 1;
+
+    // Hook section — single or A/B/C variants
+    let hookHtml: string;
+    if (hasVariants) {
+      hookHtml = `
+        <div class="hook-variants">
+          ${hookVariants.map((variant) => {
+            const adaptedHtml = variant.adaptedBeatCount > 0 && variant.adaptedBeats?.length
+              ? `<div class="adapted-beats">
+                  <div class="adapted-beats-title">Adapted opening (${variant.adaptedBeatCount} beat${variant.adaptedBeatCount > 1 ? 's' : ''}):</div>
+                  ${variant.adaptedBeats.map((beat) => `"${beat.spoken}"`).join(' → ')}
+                </div>`
+              : '';
+            return `
+              <div class="hook-variant">
+                <div class="hook-variant-label${variant.label === 'A' ? ' primary' : ''}">Hook ${variant.label}</div>
+                <div class="hook-variant-text">${variant.hook}</div>
+                ${adaptedHtml}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    } else {
+      hookHtml = `<div class="hook">${script.hook || "No hook"}</div>`;
+    }
 
     const storyboardHtml = storyboard
       ? storyboard
@@ -380,7 +452,7 @@ export class PdfExportService {
           </div>
         </div>
         <div class="script-body">
-          <div class="hook">${script.hook || "No hook"}</div>
+          ${hookHtml}
           <div class="storyboard">
             <h4>Storyboard</h4>
             ${storyboardHtml}

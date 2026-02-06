@@ -56,11 +56,6 @@ export class CreateBatchDto {
   @IsOptional()
   personaIds?: string[];
 
-  @ApiPropertyOptional({ enum: ['standard', 'premium'], default: 'standard' })
-  @IsString()
-  @IsIn(['standard', 'premium'])
-  @IsOptional()
-  quality?: 'standard' | 'premium';
 }
 
 export class RegenerateDto {
@@ -180,9 +175,6 @@ export class BatchDto {
 
   @ApiProperty({ type: [String] })
   personaIds: string[];
-
-  @ApiProperty({ enum: ['standard', 'premium'] })
-  quality: 'standard' | 'premium';
 
   @ApiPropertyOptional()
   pdfUrl?: string;

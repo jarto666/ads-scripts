@@ -170,7 +170,6 @@ model Batch {
   angles         String[]
   durations      Int[]    // 15, 30, 45
   personaIds     String[] @default([]) // Empty = all personas
-  quality        String   @default("standard") // "standard" | "premium"
   pdfUrl         String?
   csvUrl         String?
   errorMessage   String?

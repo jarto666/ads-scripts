@@ -18,13 +18,7 @@ import { GroundednessService } from './groundedness.service';
 import { CreditsService } from '../credits/credits.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { Project, Persona, Batch, Prisma, ProjectFacts } from '@prisma/client';
-import { getScriptModel, validateBatchRequest, QUALITY_THRESHOLDS } from '../config';
-
-// Legacy mapping for backward compatibility - now uses config
-const getModelForQuality = (quality: string) => {
-  const config = getScriptModel(quality === 'premium' ? 'premium' : 'standard');
-  return config.model;
-};
+import { validateBatchRequest, QUALITY_THRESHOLDS, MODEL_CONFIG } from '../config';
 
 // Credit cost per script (single tier - 1 credit = 1 script)
 const CREDIT_COST_PER_SCRIPT = 1;
@@ -238,8 +232,8 @@ export class ScriptGeneratorService {
       facts,
     );
 
-    const model = getModelForQuality(batch.quality);
-    this.logger.log(`Using model ${model} for batch ${batch.id} (quality: ${batch.quality})`);
+    const model = MODEL_CONFIG.scriptGeneration.model;
+    this.logger.log(`Using model ${model} for batch ${batch.id}`);
 
     const response = await this.openRouter.chatCompletion(
       [
@@ -288,7 +282,7 @@ export class ScriptGeneratorService {
     facts?: ProjectFacts | null,
   ): Promise<ScriptOutput> {
     const prompt = buildPass2Prompt(batch.project, plan, batch.platform, facts);
-    const model = getModelForQuality(batch.quality);
+    const model = MODEL_CONFIG.scriptGeneration.model;
 
     for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
       try {
@@ -371,7 +365,7 @@ export class ScriptGeneratorService {
           { role: 'user', content: rewritePrompt },
         ],
         {
-          model: getModelForQuality(batch.quality),
+          model: MODEL_CONFIG.scriptGeneration.model,
           temperature: 0.3, // Lower temperature for more consistent fixes
           jsonMode: true,
         },
@@ -761,8 +755,7 @@ OUTPUT CONTRACT:
         region: script.batch.project.region,
       });
 
-      // Use model based on batch quality
-      const model = getModelForQuality(script.batch.quality);
+      const model = MODEL_CONFIG.scriptGeneration.model;
       this.logger.log(`Regenerating script ${scriptId} with model ${model}`);
 
       let scriptOutput: ScriptOutput | null = null;
@@ -919,7 +912,6 @@ OUTPUT CONTRACT:
       return;
     }
 
-    const quality = (batch.quality as 'standard' | 'premium') || 'standard';
     const totalRequested = batch.requestedCount;
     const anglesCount = Math.max(batch.angles.length, 1);
     const scriptsPerAngle = Math.ceil(totalRequested / anglesCount);
@@ -948,7 +940,7 @@ OUTPUT CONTRACT:
       };
 
       this.logger.log(
-        `[Overgen] Starting for batch ${batchId} (${quality} tier: ${scriptsPerAngle} scripts per angle × ${anglesCount} angles = ${totalRequested} final)`,
+        `[Overgen] Starting for batch ${batchId} (${scriptsPerAngle} scripts per angle × ${anglesCount} angles = ${totalRequested} final)`,
       );
 
       // Step 1: Generate and select hooks (stratified by angle)
@@ -957,7 +949,6 @@ OUTPUT CONTRACT:
         {
           platform: batch.platform,
           angles: batch.angles,
-          quality,
           scriptsPerAngle,
         },
       );
@@ -1172,7 +1163,7 @@ OUTPUT CONTRACT:
     project: Project & { personas: Persona[] },
   ): Promise<ScriptOutput[]> {
     const results: ScriptOutput[] = [];
-    const model = getModelForQuality(batch.quality);
+    const model = MODEL_CONFIG.scriptGeneration.model;
     const totalCount = hooks.length;
     let completedCount = 0;
 
