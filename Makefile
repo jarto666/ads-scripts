@@ -28,8 +28,5 @@ build:
 db-migrate:
 	cd apps/api && pnpm exec prisma migrate dev
 
-db-push:
-	cd apps/api && pnpm exec prisma db push
-
 api-generate:
 	pnpm --filter web api:generate
