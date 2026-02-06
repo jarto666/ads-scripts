@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Mail,
@@ -21,35 +21,35 @@ import {
   Crown,
   Coins,
   ChevronRight,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
 import {
   authControllerMe,
   adminControllerGetStats,
@@ -63,12 +63,12 @@ import {
   adminControllerToggleAdmin,
   adminControllerUpdateUserPlan,
   adminControllerGenerateMagicLink,
-} from '@/api/generated/api';
+} from "@/api/generated/api";
 
 interface AccessRequest {
   id: string;
   email: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   createdAt: string;
 }
 
@@ -76,7 +76,7 @@ interface AdminUser {
   id: string;
   email: string;
   isAdmin: boolean;
-  plan: 'free' | 'pro';
+  plan: "free" | "pro";
   createdAt: string;
   _count: {
     projects: number;
@@ -97,14 +97,16 @@ export default function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [requests, setRequests] = useState<AccessRequest[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [activeTab, setActiveTab] = useState('requests');
+  const [activeTab, setActiveTab] = useState("requests");
 
-  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState("");
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   const [magicLinkDialog, setMagicLinkDialog] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState('');
-  const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(null);
+  const [generatedLink, setGeneratedLink] = useState("");
+  const [generatingLinkFor, setGeneratingLinkFor] = useState<string | null>(
+    null
+  );
 
   const { toast } = useToast();
   const router = useRouter();
@@ -118,13 +120,13 @@ export default function AdminPage() {
       const result = await authControllerMe();
       const user = result.data;
       if (!user.isAdmin) {
-        router.push('/projects');
+        router.push("/projects");
         return;
       }
       setIsAdmin(true);
       await Promise.all([fetchStats(), fetchRequests(), fetchUsers()]);
     } catch {
-      router.push('/');
+      router.push("/");
     } finally {
       setIsLoading(false);
     }
@@ -135,7 +137,7 @@ export default function AdminPage() {
       const result = await adminControllerGetStats();
       setStats(result.data as unknown as AdminStats);
     } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      console.error("Failed to fetch stats:", error);
     }
   };
 
@@ -144,7 +146,7 @@ export default function AdminPage() {
       const result = await adminControllerGetRequests({});
       setRequests(result.data as unknown as AccessRequest[]);
     } catch (error) {
-      console.error('Failed to fetch requests:', error);
+      console.error("Failed to fetch requests:", error);
     }
   };
 
@@ -153,16 +155,19 @@ export default function AdminPage() {
       const result = await adminControllerGetUsers();
       setUsers(result.data as unknown as AdminUser[]);
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error("Failed to fetch users:", error);
     }
   };
 
   const handleApprove = async (requestId: string) => {
     try {
       const response = await adminControllerApproveRequest(requestId);
-      const result = response.data as unknown as { user: { email: string }; created: boolean };
+      const result = response.data as unknown as {
+        user: { email: string };
+        created: boolean;
+      };
       toast({
-        title: 'Request approved',
+        title: "Request approved",
         description: result.created
           ? `User ${result.user.email} created`
           : `User ${result.user.email} already exists`,
@@ -170,9 +175,9 @@ export default function AdminPage() {
       await Promise.all([fetchStats(), fetchRequests(), fetchUsers()]);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to approve request',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to approve request",
+        variant: "destructive",
       });
     }
   };
@@ -180,13 +185,13 @@ export default function AdminPage() {
   const handleReject = async (requestId: string) => {
     try {
       await adminControllerRejectRequest(requestId);
-      toast({ title: 'Request rejected' });
+      toast({ title: "Request rejected" });
       await Promise.all([fetchStats(), fetchRequests()]);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to reject request',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to reject request",
+        variant: "destructive",
       });
     }
   };
@@ -194,13 +199,13 @@ export default function AdminPage() {
   const handleDeleteRequest = async (requestId: string) => {
     try {
       await adminControllerDeleteRequest(requestId);
-      toast({ title: 'Request deleted' });
+      toast({ title: "Request deleted" });
       await Promise.all([fetchStats(), fetchRequests()]);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to delete request',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete request",
+        variant: "destructive",
       });
     }
   };
@@ -211,14 +216,14 @@ export default function AdminPage() {
     setIsCreatingUser(true);
     try {
       await adminControllerCreateUser();
-      toast({ title: 'User created', description: newUserEmail });
-      setNewUserEmail('');
+      toast({ title: "User created", description: newUserEmail });
+      setNewUserEmail("");
       await Promise.all([fetchStats(), fetchUsers()]);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to create user',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to create user",
+        variant: "destructive",
       });
     } finally {
       setIsCreatingUser(false);
@@ -228,13 +233,13 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string) => {
     try {
       await adminControllerDeleteUser(userId);
-      toast({ title: 'User deleted' });
+      toast({ title: "User deleted" });
       await Promise.all([fetchStats(), fetchUsers()]);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to delete user',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
       });
     }
   };
@@ -242,35 +247,38 @@ export default function AdminPage() {
   const handleToggleAdmin = async (userId: string) => {
     try {
       const response = await adminControllerToggleAdmin(userId);
-      const updated = response.data as unknown as { email: string; isAdmin: boolean };
+      const updated = response.data as unknown as {
+        email: string;
+        isAdmin: boolean;
+      };
       toast({
-        title: updated.isAdmin ? 'Admin granted' : 'Admin revoked',
+        title: updated.isAdmin ? "Admin granted" : "Admin revoked",
         description: updated.email,
       });
       await fetchUsers();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to update admin status',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update admin status",
+        variant: "destructive",
       });
     }
   };
 
-  const handleUpdatePlan = async (userId: string, plan: 'free' | 'pro') => {
+  const handleUpdatePlan = async (userId: string, plan: "free" | "pro") => {
     try {
       const response = await adminControllerUpdateUserPlan(userId, { plan });
       const updated = response.data as unknown as { email: string };
       toast({
-        title: 'Plan updated',
+        title: "Plan updated",
         description: `${updated.email} is now on ${plan} plan`,
       });
       await fetchUsers();
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to update plan',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to update plan",
+        variant: "destructive",
       });
     }
   };
@@ -284,9 +292,9 @@ export default function AdminPage() {
       setMagicLinkDialog(true);
     } catch {
       toast({
-        title: 'Error',
-        description: 'Failed to generate magic link',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to generate magic link",
+        variant: "destructive",
       });
     } finally {
       setGeneratingLinkFor(null);
@@ -295,21 +303,21 @@ export default function AdminPage() {
 
   const copyToClipboard = async () => {
     await navigator.clipboard.writeText(generatedLink);
-    toast({ title: 'Copied to clipboard' });
+    toast({ title: "Copied to clipboard" });
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
-  const processedRequests = requests.filter((r) => r.status !== 'pending');
+  const pendingRequests = requests.filter((r) => r.status === "pending");
+  const processedRequests = requests.filter((r) => r.status !== "pending");
 
   if (isLoading) {
     return (
@@ -499,7 +507,7 @@ export default function AdminPage() {
                       className="flex items-center justify-between p-3 rounded-lg bg-secondary/20"
                     >
                       <div className="flex items-center gap-3">
-                        {request.status === 'approved' ? (
+                        {request.status === "approved" ? (
                           <CheckCircle2 className="h-4 w-4 text-success" />
                         ) : (
                           <XCircle className="h-4 w-4 text-destructive" />
@@ -514,9 +522,9 @@ export default function AdminPage() {
                       <div className="flex items-center gap-2">
                         <Badge
                           variant={
-                            request.status === 'approved'
-                              ? 'success'
-                              : 'destructive'
+                            request.status === "approved"
+                              ? "success"
+                              : "destructive"
                           }
                           className="text-xs"
                         >
@@ -558,7 +566,7 @@ export default function AdminPage() {
                     placeholder="email@example.com"
                     value={newUserEmail}
                     onChange={(e) => setNewUserEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateUser()}
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateUser()}
                   />
                 </div>
                 <Button
@@ -568,7 +576,7 @@ export default function AdminPage() {
                   {isCreatingUser ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    'Create'
+                    "Create"
                   )}
                 </Button>
               </div>
@@ -607,7 +615,7 @@ export default function AdminPage() {
                               Admin
                             </Badge>
                           )}
-                          {user.plan === 'pro' && (
+                          {user.plan === "pro" && (
                             <Badge variant="warning" className="text-xs gap-1">
                               <Crown className="h-3 w-3" />
                               Pro
@@ -615,7 +623,7 @@ export default function AdminPage() {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {user._count.projects} projects · Joined{' '}
+                          {user._count.projects} projects · Joined{" "}
                           {formatDate(user.createdAt)}
                         </p>
                       </div>
@@ -633,7 +641,7 @@ export default function AdminPage() {
                       </Button>
                       <Select
                         value={user.plan}
-                        onValueChange={(value: 'free' | 'pro') =>
+                        onValueChange={(value: "free" | "pro") =>
                           handleUpdatePlan(user.id, value)
                         }
                       >
@@ -666,12 +674,12 @@ export default function AdminPage() {
                       </Button>
                       <Button
                         size="sm"
-                        variant={user.isAdmin ? 'secondary' : 'outline'}
+                        variant={user.isAdmin ? "secondary" : "outline"}
                         onClick={() => handleToggleAdmin(user.id)}
                         className="gap-1"
                       >
                         <Shield className="h-4 w-4" />
-                        {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                        {user.isAdmin ? "Remove Admin" : "Make Admin"}
                       </Button>
                       <Button
                         size="icon"

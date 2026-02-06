@@ -19,7 +19,12 @@ export function useAuth() {
       staleTime: 0, // Always consider stale so refetchOnWindowFocus works
       refetchOnWindowFocus: true, // Refetch when tab regains focus
       refetchOnMount: true, // Refetch when component mounts
-      retry: false, // Don't retry on auth errors
+      retry: (failureCount, err) => {
+        // Don't retry on auth errors (401/403), but retry once on network/server errors
+        const status = (err as { status?: number })?.status;
+        if (status === 401 || status === 403) return false;
+        return failureCount < 1;
+      },
     },
   });
 
@@ -43,20 +48,30 @@ export function useAuth() {
     return queryClient.invalidateQueries({ queryKey: getAuthControllerMeQueryKey() });
   }, [queryClient]);
 
-  return { user, isLoading, logout, refreshUser, refetch };
+  // Distinguish auth failure (401) from API unavailable (network/5xx)
+  const isAuthError =
+    !!error &&
+    (error as { status?: number })?.status !== undefined &&
+    ((error as { status?: number }).status === 401 ||
+      (error as { status?: number }).status === 403);
+  const isApiUnavailable = !!error && !isAuthError;
+
+  return { user, isLoading, error, isAuthError, isApiUnavailable, logout, refreshUser, refetch };
 }
 
 export function useRequireAuth() {
-  const { user, isLoading, logout, refreshUser, refetch } = useAuth();
+  const { user, isLoading, error, isAuthError, isApiUnavailable, logout, refreshUser, refetch } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    // Only redirect to landing if it's a genuine auth failure (401/403),
+    // not when the API is unavailable (network error, 5xx, etc.)
+    if (!isLoading && !user && !isApiUnavailable) {
       router.push('/');
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, isApiUnavailable, router]);
 
-  return { user, isLoading, logout, refreshUser, refetch };
+  return { user, isLoading, isApiUnavailable, logout, refreshUser, refetch };
 }
 
 // Standalone function to refresh user from anywhere (e.g., after webhook processing)
