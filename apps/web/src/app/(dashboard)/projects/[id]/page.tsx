@@ -40,6 +40,8 @@ import {
 } from "lucide-react";
 import { getProjectGenSettingsAtom } from "@/lib/atoms";
 import { useAuth } from "@/lib/auth";
+import { ApiError } from "@/api/customInstance";
+import { UpsellModal } from "@/components/upsell-modal";
 import { Credits, CreditsCost } from "@/components/ui/credits";
 import { InfoTip } from "@/components/ui/info-block";
 import { Button } from "@/components/ui/button";
@@ -1023,6 +1025,7 @@ export default function ProjectDetailPage({
   const isAdmin = user?.isAdmin ?? false;
   const isPro = user?.plan === "pro";
   const queryClient = useQueryClient();
+  const [upsellOpen, setUpsellOpen] = useState(false);
 
   const [project, setProject] = useState<ProjectData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -1489,11 +1492,22 @@ export default function ProjectDetailPage({
       // Short cooldown to prevent accidental double-clicks, then re-enable button
       setTimeout(() => setGenerateCooldown(false), 1500);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to start generation",
-        variant: "destructive",
-      });
+      if (
+        error instanceof ApiError &&
+        error.data &&
+        typeof (error.data as { message?: string }).message === "string" &&
+        (error.data as { message: string }).message
+          .toLowerCase()
+          .includes("insufficient credits")
+      ) {
+        setUpsellOpen(true);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to start generation",
+          variant: "destructive",
+        });
+      }
       setIsGenerating(false);
       setGenerateCooldown(false);
     }
@@ -1521,11 +1535,22 @@ export default function ProjectDetailPage({
         description: "A new version is being generated",
       });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to regenerate script",
-        variant: "destructive",
-      });
+      if (
+        error instanceof ApiError &&
+        error.data &&
+        typeof (error.data as { message?: string }).message === "string" &&
+        (error.data as { message: string }).message
+          .toLowerCase()
+          .includes("insufficient credits")
+      ) {
+        setUpsellOpen(true);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to regenerate script",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsRegenerating(false);
     }
@@ -2676,6 +2701,13 @@ export default function ProjectDetailPage({
         onSave={handleSavePersona}
         editingPersona={editingPersona}
         projectId={id}
+      />
+
+      {/* Upsell Modal */}
+      <UpsellModal
+        open={upsellOpen}
+        onOpenChange={setUpsellOpen}
+        isPro={isPro}
       />
     </div>
   );
