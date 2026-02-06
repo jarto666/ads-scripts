@@ -697,7 +697,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="py-12 border-t border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col items-center gap-6">
             <div className="flex items-baseline">
               <span className="text-lg font-black tracking-tight text-foreground">Klipp</span>
               <span className="text-lg font-black tracking-tight text-primary">li</span>
