@@ -28,6 +28,13 @@ export interface SelectedHook {
 }
 
 /**
+ * Selected hook with runner-up hooks for A/B/C variant generation
+ */
+export interface SelectedHookWithRunnerUps extends SelectedHook {
+  runnerUps: Array<{ hook: string; score: number }>;
+}
+
+/**
  * Hooks organized by angle from LLM response
  */
 export interface HooksPerAngle {
@@ -38,7 +45,7 @@ export interface HooksPerAngle {
  * Result of hook generation with per-angle stats
  */
 export interface HookGenerationResult {
-  selectedHooks: SelectedHook[];
+  selectedHooks: SelectedHookWithRunnerUps[];
   allHooks: ScoredHook[];
   stats: {
     generated: number;
@@ -195,7 +202,8 @@ export class HookGeneratorService {
 
     // Step 3: Stratified selection - top scriptsPerAngle from each angle
     // Only select hooks that meet minimum quality threshold
-    const selectedHooks: SelectedHook[] = [];
+    // Also collect runner-up hooks for A/B/C variant generation
+    const selectedHooks: SelectedHookWithRunnerUps[] = [];
 
     for (const angle of settings.angles) {
       const scored = scoredByAngle[angle] || [];
@@ -242,11 +250,21 @@ export class HookGeneratorService {
 
       selectedPerAngle[angle] = topN.length;
 
+      // Collect runner-up hooks for variant generation (hooks not selected)
+      const selectedHookTexts = new Set(topN.map((h) => h.hook));
+      const runnerUpPool = scored
+        .filter((h) => !selectedHookTexts.has(h.hook))
+        .sort((a, b) => b.score - a.score);
+
       selectedHooks.push(
-        ...topN.map((h) => ({
+        ...topN.map((h, i) => ({
           hook: h.hook,
           angle: h.angle,
           score: h.score,
+          // Each selected hook gets up to 2 runner-ups from the pool
+          runnerUps: runnerUpPool
+            .slice(i * 2, i * 2 + 2)
+            .map((r) => ({ hook: r.hook, score: r.score })),
         })),
       );
     }

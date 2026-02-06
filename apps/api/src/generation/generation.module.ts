@@ -4,6 +4,7 @@ import { ScriptGeneratorService } from './script-generator.service';
 import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
 import { HookGeneratorService } from './hook-generator.service';
+import { HookVariantService } from './hook-variant.service';
 import { RerankService } from './rerank.service';
 import { GroundednessService } from './groundedness.service';
 import { CreditsModule } from '../credits/credits.module';
@@ -16,6 +17,7 @@ import { CreditsModule } from '../credits/credits.module';
     ScoringService,
     StyleFilterService,
     HookGeneratorService,
+    HookVariantService,
     RerankService,
     GroundednessService,
   ],
@@ -25,6 +27,7 @@ import { CreditsModule } from '../credits/credits.module';
     ScoringService,
     StyleFilterService,
     HookGeneratorService,
+    HookVariantService,
     RerankService,
     GroundednessService,
   ],

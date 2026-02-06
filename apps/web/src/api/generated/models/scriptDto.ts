@@ -5,6 +5,7 @@
  * API for UGC Script Factory
  * OpenAPI spec version: 1.0
  */
+import type { HookVariantDto } from './hookVariantDto';
 import type { ScriptDtoAnalyticsData } from './scriptDtoAnalyticsData';
 import type { ScriptDtoStatus } from './scriptDtoStatus';
 import type { StoryboardStepDto } from './storyboardStepDto';
@@ -16,6 +17,8 @@ export interface ScriptDto {
   duration: number;
   hook?: string;
   storyboard?: StoryboardStepDto[];
+  /** Hook A/B/C variants with adapted beats */
+  hookVariants?: HookVariantDto[];
   ctaVariants: string[];
   filmingChecklist: string[];
   warnings: string[];

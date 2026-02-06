@@ -87,6 +87,23 @@ export class StoryboardStepDto {
   broll?: string[];
 }
 
+export class HookVariantDto {
+  @ApiProperty()
+  label: string;
+
+  @ApiProperty()
+  hook: string;
+
+  @ApiProperty()
+  score: number;
+
+  @ApiProperty({ type: [StoryboardStepDto] })
+  adaptedBeats: StoryboardStepDto[];
+
+  @ApiProperty()
+  adaptedBeatCount: number;
+}
+
 export class ScriptDto {
   @ApiProperty()
   id: string;
@@ -105,6 +122,9 @@ export class ScriptDto {
 
   @ApiPropertyOptional({ type: [StoryboardStepDto] })
   storyboard?: StoryboardStepDto[];
+
+  @ApiPropertyOptional({ type: [HookVariantDto], description: 'Hook A/B/C variants with adapted beats' })
+  hookVariants?: HookVariantDto[];
 
   @ApiProperty({ type: [String] })
   ctaVariants: string[];

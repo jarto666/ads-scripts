@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AdminControllerApproveRequest201,
   AdminControllerGetQueueJobsParams,
   AdminControllerGetRequestsParams,
   AdminUserDetailDto,
@@ -1973,8 +1974,13 @@ export type personasControllerEnrichFieldsResponse200 = {
   data: EnrichedFieldsDto
   status: 200
 }
+
+export type personasControllerEnrichFieldsResponse201 = {
+  data: EnrichedFieldsDto
+  status: 201
+}
     
-export type personasControllerEnrichFieldsResponseSuccess = (personasControllerEnrichFieldsResponse200) & {
+export type personasControllerEnrichFieldsResponseSuccess = (personasControllerEnrichFieldsResponse200 | personasControllerEnrichFieldsResponse201) & {
   headers: Headers;
 };
 ;
@@ -3044,7 +3050,7 @@ export function useAdminControllerGetRequests<TData = Awaited<ReturnType<typeof 
 
 
 export type adminControllerApproveRequestResponse201 = {
-  data: void
+  data: AdminControllerApproveRequest201
   status: 201
 }
     
@@ -4535,8 +4541,13 @@ export type billingControllerCreateCheckoutResponse200 = {
   data: CheckoutUrlDto
   status: 200
 }
+
+export type billingControllerCreateCheckoutResponse201 = {
+  data: void
+  status: 201
+}
     
-export type billingControllerCreateCheckoutResponseSuccess = (billingControllerCreateCheckoutResponse200) & {
+export type billingControllerCreateCheckoutResponseSuccess = (billingControllerCreateCheckoutResponse200 | billingControllerCreateCheckoutResponse201) & {
   headers: Headers;
 };
 ;
@@ -4617,8 +4628,13 @@ export type billingControllerCreatePackCheckoutResponse200 = {
   data: CheckoutUrlDto
   status: 200
 }
+
+export type billingControllerCreatePackCheckoutResponse201 = {
+  data: void
+  status: 201
+}
     
-export type billingControllerCreatePackCheckoutResponseSuccess = (billingControllerCreatePackCheckoutResponse200) & {
+export type billingControllerCreatePackCheckoutResponseSuccess = (billingControllerCreatePackCheckoutResponse200 | billingControllerCreatePackCheckoutResponse201) & {
   headers: Headers;
 };
 ;

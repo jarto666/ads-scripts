@@ -290,7 +290,7 @@ Write a complete PAID AD script following this EXACT JSON structure:
       "broll": ["B-roll idea 1", "B-roll idea 2"]
     }
   ],
-  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3"],
+  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3", "CTA option 4", "CTA option 5"],
   "filmingChecklist": ["Filming instruction 1", "Props needed", "Lighting note"],
   "warnings": ["Any compliance warnings"]
 }
@@ -433,6 +433,50 @@ OUTPUT CONTRACT:
 - Do NOT wrap in markdown fences
 - Do NOT include any explanation
 - Each hook should be a plain string`;
+}
+
+/**
+ * Build prompt for adapting storyboard beats to match a variant hook.
+ * Used during A/B/C hook variant generation.
+ */
+export function buildHookAdaptationPrompt(params: {
+  originalHook: string;
+  variantHook: string;
+  beats: StoryboardStep[];
+}): string {
+  const { originalHook, variantHook, beats } = params;
+
+  return `You are adapting the opening of a UGC video ad script to match a new hook.
+
+## Original Hook
+"${originalHook}"
+
+## New Hook
+"${variantHook}"
+
+## Original First ${beats.length} Beat(s)
+${JSON.stringify(beats, null, 2)}
+
+## Task
+Rewrite ONLY the beat(s) above so they flow naturally from the new hook.
+- Keep the same timing ("t" values), structure, and tone
+- Only change content that directly references or builds on the original hook's setup
+- The "spoken" field for the first beat MUST use the new hook text
+- If the second beat doesn't reference the hook at all, return it unchanged
+- Keep "broll" suggestions relevant to the new hook
+
+Return JSON:
+{
+  "adaptedBeats": [
+    { "t": "...", "shot": "...", "onScreen": "...", "spoken": "...", "broll": [...] }
+  ],
+  "adaptedBeatCount": ${beats.length}
+}
+
+OUTPUT CONTRACT:
+- Output must be valid JSON starting with '{' and ending with '}'
+- Do NOT wrap in markdown fences
+- Do NOT include explanation`;
 }
 
 export function buildRepairPrompt(rawOutput: string, error: string): string {

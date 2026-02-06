@@ -691,6 +691,20 @@ function ScriptCard({
   const isRegenerating = script.status === "pending" || script.status === "generating";
   const isFailed = script.status === "failed";
 
+  const [activeVariant, setActiveVariant] = useState(0);
+  const hasVariants = script.hookVariants && script.hookVariants.length > 1;
+
+  const activeHook = hasVariants
+    ? script.hookVariants![activeVariant]?.hook ?? script.hook
+    : script.hook;
+
+  const displayStoryboard = useMemo(() => {
+    if (!hasVariants || activeVariant === 0 || !script.storyboard) return script.storyboard;
+    const variant = script.hookVariants![activeVariant];
+    if (!variant?.adaptedBeatCount || !variant.adaptedBeats?.length) return script.storyboard;
+    return [...variant.adaptedBeats, ...script.storyboard.slice(variant.adaptedBeatCount)];
+  }, [hasVariants, activeVariant, script.hookVariants, script.storyboard]);
+
   return (
     <Card
       id={`script-${script.id}`}
@@ -784,11 +798,35 @@ function ScriptCard({
                   </Badge>
                 )}
               </div>
-              <p className={`font-medium text-lg leading-snug ${
-                isRegenerating || isFailed ? "text-muted-foreground" : "text-foreground"
-              }`}>
-                {isRegenerating ? "Generating new version..." : isFailed ? "Generation failed" : (script.hook || "No hook")}
-              </p>
+              {!isRegenerating && !isFailed && hasVariants ? (
+                <div>
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <span className="text-[11px] font-medium text-muted-foreground mr-0.5">Hook</span>
+                    {script.hookVariants!.map((v, i) => (
+                      <button
+                        key={v.label}
+                        onClick={(e) => { e.stopPropagation(); setActiveVariant(i); }}
+                        className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-all ${
+                          i === activeVariant
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }`}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="font-medium text-lg leading-snug text-foreground">
+                    {activeHook || "No hook"}
+                  </p>
+                </div>
+              ) : (
+                <p className={`font-medium text-lg leading-snug ${
+                  isRegenerating || isFailed ? "text-muted-foreground" : "text-foreground"
+                }`}>
+                  {isRegenerating ? "Generating new version..." : isFailed ? "Generation failed" : (script.hook || "No hook")}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {!isRegenerating && !isFailed && isAdmin && (
@@ -816,7 +854,7 @@ function ScriptCard({
         </div>
 
         {/* Expanded Content */}
-        {isExpanded && script.storyboard && (
+        {isExpanded && displayStoryboard && (
           <div className="mt-6 pt-6 border-t border-border space-y-6">
             {/* Storyboard */}
             <div>
@@ -825,10 +863,10 @@ function ScriptCard({
                   <Camera className="h-4 w-4 text-primary" />
                   <h4 className="font-semibold text-foreground">Storyboard</h4>
                 </div>
-                <VoiceoverModal storyboard={script.storyboard} />
+                <VoiceoverModal storyboard={displayStoryboard} />
               </div>
               <div className="space-y-3">
-                {script.storyboard.map((step, i) => (
+                {displayStoryboard.map((step, i) => (
                   <div
                     key={i}
                     className="relative pl-6 pb-3 border-l-2 border-border last:border-l-0"

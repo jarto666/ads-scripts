@@ -192,6 +192,7 @@ model Script {
   duration         Int
   hook             String?  @db.Text
   storyboard       Json?    // Array of storyboard steps
+  hookVariants     Json?    // Array of hook A/B/C variants with adapted beats
   ctaVariants      String[] @default([])
   filmingChecklist String[] @default([])
   warnings         String[] @default([])

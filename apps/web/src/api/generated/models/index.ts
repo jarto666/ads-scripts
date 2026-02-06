@@ -7,6 +7,7 @@
  */
 
 export * from './_adminUserDetailDtoCount';
+export * from './adminControllerApproveRequest201';
 export * from './adminControllerGetQueueJobsParams';
 export * from './adminControllerGetRequestsParams';
 export * from './adminUserDetailDto';
@@ -50,6 +51,7 @@ export * from './generatePersonaDto';
 export * from './grantCreditsDto';
 export * from './grantCreditsDtoCreditType';
 export * from './grantCreditsResponseDto';
+export * from './hookVariantDto';
 export * from './importResultDto';
 export * from './importResultDtoErrorCode';
 export * from './importUrlDto';

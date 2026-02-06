@@ -162,6 +162,17 @@ export const MODEL_CONFIG = {
   },
 
   /**
+   * Hook variant adaptation (A/B/C variant generation)
+   * Adapts first 1-2 storyboard beats to match runner-up hooks
+   * Low temperature for consistency with original script tone
+   */
+  hookAdaptation: {
+    model: 'google/gemini-3-flash-preview',
+    temperature: 0.5,
+    maxTokens: 1024,
+  },
+
+  /**
    * URL import analysis
    * Lower temperature for accuracy in content understanding
    */

@@ -11,7 +11,8 @@ import { getLanguageInstruction } from './language-utils';
 import { validateBeatCount, getBeatRange } from './platform-profiles';
 import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
-import { HookGeneratorService, SelectedHook } from './hook-generator.service';
+import { HookGeneratorService, SelectedHook, SelectedHookWithRunnerUps } from './hook-generator.service';
+import { HookVariantService } from './hook-variant.service';
 import { RerankService, RerankScores } from './rerank.service';
 import { GroundednessService } from './groundedness.service';
 import { CreditsService } from '../credits/credits.service';
@@ -59,6 +60,8 @@ interface ScriptOutput {
   warnings?: string[];
   // Soft filter violations (script is kept but penalized in ranking)
   filterViolations?: string[];
+  // Transient: runner-up hooks for A/B/C variant generation (not persisted)
+  _runnerUpHooks?: Array<{ hook: string; score: number }>;
 }
 
 @Injectable()
@@ -71,6 +74,7 @@ export class ScriptGeneratorService {
     private scoringService: ScoringService,
     private styleFilter: StyleFilterService,
     private hookGenerator: HookGeneratorService,
+    private hookVariantService: HookVariantService,
     private rerankService: RerankService,
     private groundednessService: GroundednessService,
     private creditsService: CreditsService,
@@ -1027,6 +1031,51 @@ OUTPUT CONTRACT:
         `[Overgen] Returning top ${targetCount} scripts. Score range: ${topScripts[0]?.scores.final} - ${topScripts[topScripts.length - 1]?.scores.final}`,
       );
 
+      // Step 5.5: Generate hook variants (A/B/C) for each selected script
+      // Uses runner-up hooks from overgeneration + Gemini Flash to adapt opening beats
+      const variantsByIndex: Map<number, any[]> = new Map();
+      const scriptsWithRunnerUps = topScripts.filter(
+        ({ script }) => script._runnerUpHooks && script._runnerUpHooks.length > 0,
+      );
+
+      if (scriptsWithRunnerUps.length > 0) {
+        this.logger.log(
+          `[Overgen] Generating hook variants for ${scriptsWithRunnerUps.length}/${topScripts.length} scripts`,
+        );
+
+        const variantPromises = topScripts.map(async ({ script }, index) => {
+          if (!script._runnerUpHooks || script._runnerUpHooks.length === 0) {
+            return { index, variants: null };
+          }
+
+          try {
+            const variants = await this.hookVariantService.generateVariants({
+              originalHook: script.hook,
+              originalScore: this.rerankService.scoreHookStrength(script.hook),
+              runnerUps: script._runnerUpHooks,
+              storyboard: script.storyboard,
+              angle: script.angle,
+              duration: script.duration,
+            });
+            return { index, variants };
+          } catch (error) {
+            this.logger.warn(`[Overgen] Failed to generate variants for script ${index}: ${error}`);
+            return { index, variants: null };
+          }
+        });
+
+        const variantResults = await Promise.all(variantPromises);
+        for (const { index, variants } of variantResults) {
+          if (variants) {
+            variantsByIndex.set(index, variants);
+          }
+        }
+
+        this.logger.log(
+          `[Overgen] Generated variants for ${variantsByIndex.size} scripts`,
+        );
+      }
+
       // Save selected scripts to database
       for (let i = 0; i < topScripts.length; i++) {
         const { script, scores } = topScripts[i];
@@ -1058,6 +1107,9 @@ OUTPUT CONTRACT:
           script.filterViolations,
         );
 
+        // Get hook variants if generated
+        const hookVariants = variantsByIndex.get(i) || null;
+
         await this.prisma.script.create({
           data: {
             batchId,
@@ -1066,6 +1118,7 @@ OUTPUT CONTRACT:
             duration: script.duration,
             hook: script.hook,
             storyboard: script.storyboard,
+            hookVariants: hookVariants as any,
             ctaVariants: script.ctaVariants,
             filmingChecklist: script.filmingChecklist,
             warnings: [
@@ -1114,7 +1167,7 @@ OUTPUT CONTRACT:
    * Each hook now includes its angle, so we use that instead of round-robin.
    */
   private async generateScriptsFromHooks(
-    hooks: SelectedHook[],
+    hooks: (SelectedHook | SelectedHookWithRunnerUps)[],
     batch: Batch,
     project: Project & { personas: Persona[] },
   ): Promise<ScriptOutput[]> {
@@ -1147,7 +1200,7 @@ OUTPUT CONTRACT:
       }
     };
 
-    const generateFromHook = async (selectedHook: SelectedHook, index: number): Promise<ScriptOutput | null> => {
+    const generateFromHook = async (selectedHook: SelectedHook | SelectedHookWithRunnerUps, index: number): Promise<ScriptOutput | null> => {
       await acquireSemaphore();
 
       try {
@@ -1163,6 +1216,9 @@ OUTPUT CONTRACT:
           beatRange,
           platform: batch.platform,
         });
+
+        // Carry runner-ups through to the script output for variant generation
+        const runnerUps = 'runnerUps' in selectedHook ? selectedHook.runnerUps : [];
 
         for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
           try {
@@ -1181,6 +1237,7 @@ OUTPUT CONTRACT:
             try {
               const cleaned = this.stripMarkdown(response);
               const script = JSON.parse(cleaned) as ScriptOutput;
+              script._runnerUpHooks = runnerUps;
 
               // Emit progress during generation (not just during save)
               completedCount++;
@@ -1199,6 +1256,7 @@ OUTPUT CONTRACT:
               this.logger.warn(`Failed to parse script for hook ${index + 1}, attempting repair`);
               const repaired = await this.repairJson(response, 'JSON parse error');
               const script = JSON.parse(repaired) as ScriptOutput;
+              script._runnerUpHooks = runnerUps;
 
               // Emit progress for repaired scripts too
               completedCount++;
@@ -1296,7 +1354,7 @@ Return this EXACT JSON structure:
       "broll": ["B-roll idea 1", "B-roll idea 2"]
     }
   ],
-  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3"],
+  "ctaVariants": ["CTA option 1", "CTA option 2", "CTA option 3", "CTA option 4", "CTA option 5"],
   "filmingChecklist": ["Filming instruction 1", "Props needed"],
   "warnings": []
 }
