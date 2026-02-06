@@ -16,7 +16,11 @@
       "mcp__ide__getDiagnostics",
       "Bash(xargs -I {} bash -c \"echo ''=== {} ==='' && head -40 {}\")",
       "Bash(pnpm build:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(tree:*)",
+      "Bash(sed:*)"
     ]
   }
 }
