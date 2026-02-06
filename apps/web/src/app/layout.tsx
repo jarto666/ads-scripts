@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Providers } from '@/lib/query-client';
@@ -123,6 +124,7 @@ export default function RootLayout({
           <Toaster />
         </Providers>
       </body>
+      <GoogleAnalytics gaId="G-X7JX9QJ45S" />
     </html>
   );
 }
