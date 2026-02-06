@@ -39,7 +39,7 @@ export class EmailService {
         body: JSON.stringify({
           from: fromEmail,
           to: email,
-          subject: 'Your Magic Link - UGC Script Factory',
+          subject: 'Sign in to Klippli',
           html: this.getMagicLinkEmailHtml(magicLink),
         }),
       });
@@ -70,23 +70,88 @@ export class EmailService {
       <html>
         <head>
           <meta charset="utf-8">
-          <title>Magic Link</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta name="color-scheme" content="dark">
+          <meta name="supported-color-schemes" content="dark">
+          <title>Sign in to Klippli</title>
         </head>
-        <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #333; font-size: 24px;">Sign in to UGC Script Factory</h1>
-          <p style="color: #666; font-size: 16px; line-height: 1.5;">
-            Click the button below to sign in. This link will expire in 15 minutes.
-          </p>
-          <a href="${magicLink}" style="display: inline-block; background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500; margin: 20px 0;">
-            Sign In
-          </a>
-          <p style="color: #999; font-size: 14px;">
-            If you didn't request this email, you can safely ignore it.
-          </p>
-          <p style="color: #999; font-size: 12px; margin-top: 40px;">
-            Or copy and paste this URL into your browser:<br>
-            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px; word-break: break-all;">${magicLink}</code>
-          </p>
+        <body style="margin: 0; padding: 0; background-color: #0d0e14; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #0d0e14; min-height: 100vh;">
+            <tr>
+              <td align="center" style="padding: 48px 24px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px;">
+
+                  <!-- Logo -->
+                  <tr>
+                    <td align="center" style="padding-bottom: 40px;">
+                      <span style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #f0f2f4;">Klipp</span><span style="font-size: 24px; font-weight: 900; letter-spacing: -0.5px; color: #00bcd4;">li</span>
+                    </td>
+                  </tr>
+
+                  <!-- Card -->
+                  <tr>
+                    <td style="background-color: #161825; border-radius: 12px; border: 1px solid #1e2030; padding: 40px 36px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding-bottom: 16px;">
+                            <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #f0f2f4; letter-spacing: -0.3px;">Sign in to your account</h1>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding-bottom: 28px;">
+                            <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #7a7f9a;">
+                              Click the button below to securely sign in. This link expires in 15 minutes and can only be used once.
+                            </p>
+                          </td>
+                        </tr>
+
+                        <!-- Button -->
+                        <tr>
+                          <td align="center" style="padding-bottom: 28px;">
+                            <a href="${magicLink}" style="display: inline-block; background-color: #00bcd4; color: #0d0e14; padding: 14px 36px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; letter-spacing: 0.2px;">
+                              Sign in to Klippli
+                            </a>
+                          </td>
+                        </tr>
+
+                        <!-- Divider -->
+                        <tr>
+                          <td style="padding-bottom: 20px;">
+                            <div style="height: 1px; background-color: #1e2030;"></div>
+                          </td>
+                        </tr>
+
+                        <!-- Fallback link -->
+                        <tr>
+                          <td>
+                            <p style="margin: 0 0 8px 0; font-size: 12px; color: #4a4f6a;">
+                              Or copy this link into your browser:
+                            </p>
+                            <p style="margin: 0; font-size: 12px; line-height: 1.5; word-break: break-all;">
+                              <a href="${magicLink}" style="color: #00bcd4; text-decoration: none;">${magicLink}</a>
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td align="center" style="padding-top: 32px;">
+                      <p style="margin: 0; font-size: 12px; color: #3a3f5a; line-height: 1.5;">
+                        If you didn&rsquo;t request this email, you can safely ignore it.
+                      </p>
+                      <p style="margin: 12px 0 0 0; font-size: 11px; color: #2a2f4a;">
+                        &copy; ${new Date().getFullYear()} Klippli &middot; AI UGC Script Generator
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+          </table>
         </body>
       </html>
     `;
