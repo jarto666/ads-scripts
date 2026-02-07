@@ -409,6 +409,12 @@ Currently overgeneration only happens at the hook level (generate 2.4x hooks, se
 - Requires: hook generator returns more selected hooks than `requestedCount`
 - Status flow would become: `generating → generated → completed | rejected`
 
+### Infra: Production Seed Data
+
+- [x] **Seed via migration** - English StylePolicy seeded in migration `20260207153948_seed_english_style_policy` with `ON CONFLICT DO NOTHING` ✓
+- [x] **Removed seed.ts** - Seed data now lives in migration history, runs automatically with `prisma migrate deploy` ✓
+- [ ] **Verify StylePolicy active** - After deploying, confirm style filter catches banned phrases on generated scripts
+
 ### Week 3: Polish + Testing
 
 - [ ] **Calibration testing** - Generate batches, verify scores match quality
