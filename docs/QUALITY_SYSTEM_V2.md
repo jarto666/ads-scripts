@@ -375,9 +375,8 @@ export const MODEL_CONFIG = {
 ### Week 1.5: Hook A/B/C Variants + CTA Expansion (2026-02-06)
 
 - [x] **Hook variants schema** - Added `hookVariants Json?` to Script model ✓
-- [x] **Runner-up hook tracking** - Modified stratified selection to save 2 runner-ups per hook ✓
-- [x] **HookVariantService** - Gemini Flash beat adaptation for variant hooks (~$0.002/script) ✓
-- [x] **Pipeline integration** - Step 5.5 generates A/B/C variants in parallel after reranking ✓
+- [x] **HookVariantService** - Gemini Flash generates 2 hook rewrites + adapted beats per script (single LLM call) ✓
+- [x] **Pipeline integration** - Step 6.5 generates A/B/C variants in parallel after reranking ✓
 - [x] **CTA expansion** - Increased from 3 to 5 CTAs per script ✓
 - [x] **Frontend variant tabs** - Pill-style A/B/C tabs with storyboard switching ✓
 - [x] **Export support** - PDF shows labeled Hook A/B/C, CSV has Hook A/B/C columns, analytics JSON includes variants ✓
@@ -399,7 +398,7 @@ export const MODEL_CONFIG = {
 - [x] **Crash recovery** - Detects existing scripts on restart, skips to rerank or restarts clean ✓
 - [x] **DB-backed progress** - Progress computed from real DB counts, survives page refresh ✓
 - [x] **Credit refunds** - Auto-refund for under-delivery (failed scripts) ✓
-- [x] **Runner-up pool fix** - Every hook gets top 2 non-self runner-ups (no pool depletion) ✓
+- [x] **LLM-generated hook variants** - Replaced pool runner-ups with Gemini Flash rewrites of the original hook (same intent, different approach). Single call per script generates 2 variants + adapted beats ✓
 
 ### Future: Script-Level Overgeneration
 
