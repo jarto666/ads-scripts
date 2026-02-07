@@ -91,7 +91,6 @@ import {
   projectsControllerUpsertFacts,
   useProjectsControllerGenerateFacts,
   batchesControllerFindAllByProject,
-  batchesControllerFindOne,
   batchesControllerGetScripts,
   batchesControllerCreate,
   batchesControllerRegenerateScript,
@@ -1159,8 +1158,13 @@ export default function ProjectDetailPage({
         if (b.id !== event.batchId) return b;
 
         // Only accept forward progress (monotonic) to prevent jumping
-        const newProgress = Math.max(b.progress ?? 0, event.progress);
-        const newCompleted = Math.max(b.completedCount ?? 0, event.completedCount);
+        // Cap at 99% during generation (100% only on batch completion)
+        // Cap completedCount at requestedCount to hide overgeneration
+        const newProgress = Math.min(99, Math.max(b.progress ?? 0, event.progress));
+        const newCompleted = Math.min(
+          b.requestedCount,
+          Math.max(b.completedCount ?? 0, event.completedCount),
+        );
 
         return {
           ...b,
@@ -1206,15 +1210,6 @@ export default function ProjectDetailPage({
     fetchBatches();
   }, [id]);
 
-  // Poll for updates when a batch is generating (fallback for WebSocket)
-  useEffect(() => {
-    if (isBatchGenerating) {
-      const interval = setInterval(() => {
-        refreshSelectedBatch();
-      }, 5000); // Poll every 5s as fallback (WebSocket handles real-time updates)
-      return () => clearInterval(interval);
-    }
-  }, [isBatchGenerating, selectedBatchId]);
 
   // Clear isGenerating when batch finishes generating
   useEffect(() => {
@@ -1238,7 +1233,7 @@ export default function ProjectDetailPage({
     if (!initialTabSet && batchesList.length > 0) {
       const totalScripts = batchesList.reduce(
         (sum, batch) =>
-          sum + (batch._count?.scripts || batch.scriptsCount || 0),
+          sum + (batch.completedCount || 0),
         0,
       );
       if (totalScripts > 0) {
@@ -1336,7 +1331,14 @@ export default function ProjectDetailPage({
   const fetchBatches = async () => {
     try {
       const result = await batchesControllerFindAllByProject(id);
-      const batchList = result.data;
+      const batchList = result.data.map((batch: BatchDto) => ({
+        ...batch,
+        progress: batch.status === 'completed' || batch.status === 'failed'
+          ? 100
+          : (batch.completedCount && batch.requestedCount
+            ? Math.min(99, Math.round((batch.completedCount / batch.requestedCount) * 100))
+            : batch.progress ?? 0),
+      }));
       setBatchesList(batchList);
       // Auto-select the latest batch if none selected
       if (batchList.length > 0 && !selectedBatchId) {
@@ -1344,20 +1346,6 @@ export default function ProjectDetailPage({
       }
     } catch (error) {
       console.error("Failed to fetch batches:", error);
-    }
-  };
-
-  const refreshSelectedBatch = async () => {
-    if (!selectedBatchId) return;
-    try {
-      const result = await batchesControllerFindOne(selectedBatchId);
-      const batch = result.data;
-      // Update the batch in the list
-      setBatchesList((prev) =>
-        prev.map((b) => (b.id === batch.id ? batch : b)),
-      );
-    } catch (error) {
-      console.error("Failed to refresh batch:", error);
     }
   };
 
@@ -2297,7 +2285,7 @@ export default function ProjectDetailPage({
                         Generating scripts...
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedBatch.completedCount || 0} of{" "}
+                        {Math.min(selectedBatch.completedCount || 0, selectedBatch.requestedCount)} of{" "}
                         {selectedBatch.requestedCount} scripts completed
                       </p>
                     </div>
@@ -2376,8 +2364,7 @@ export default function ProjectDetailPage({
                                   variant="outline"
                                   className="text-[10px] px-1.5 py-0"
                                 >
-                                  {batch._count?.scripts ||
-                                    batch.scriptsCount ||
+                                  {batch.completedCount ||
                                     batch.requestedCount}{" "}
                                   scripts
                                 </Badge>

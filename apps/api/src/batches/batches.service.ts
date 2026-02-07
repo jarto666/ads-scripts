@@ -147,49 +147,41 @@ export class BatchesService {
   async findOne(userId: string, batchId: string) {
     const batch = await this.verifyBatchAccess(userId, batchId);
 
-    const scriptsCount = await this.prisma.script.count({
-      where: { batchId },
-    });
-
     const completedCount = await this.prisma.script.count({
-      where: { batchId, status: 'completed' },
+      where: { batchId, status: { in: ['generated', 'completed'] } },
     });
 
-    const generatingCount = await this.prisma.script.count({
-      where: { batchId, status: 'generating' },
-    });
-
-    return {
-      ...batch,
-      scriptsCount,
-      completedCount,
-      generatingCount,
-      progress:
-        batch.requestedCount > 0
-          ? Math.round((completedCount / batch.requestedCount) * 100)
-          : 0,
-    };
+    return { ...batch, completedCount };
   }
 
   async findAllByProject(userId: string, projectId: string) {
     await this.verifyProjectAccess(userId, projectId);
 
-    return this.prisma.batch.findMany({
+    const batches = await this.prisma.batch.findMany({
       where: { projectId },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
           select: { scripts: true },
         },
+        scripts: {
+          where: { status: { in: ['generated', 'completed'] } },
+          select: { id: true },
+        },
       },
     });
+
+    return batches.map(({ scripts, ...batch }) => ({
+      ...batch,
+      completedCount: scripts.length,
+    }));
   }
 
   async getScripts(userId: string, batchId: string) {
     await this.verifyBatchAccess(userId, batchId);
 
     return this.prisma.script.findMany({
-      where: { batchId },
+      where: { batchId, status: { in: ['completed', 'failed'] } },
       orderBy: [{ score: 'desc' }, { createdAt: 'desc' }],
     });
   }

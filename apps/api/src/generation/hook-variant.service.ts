@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OpenRouterClient } from './openrouter.client';
-import { buildHookAdaptationPrompt } from './prompt-builder';
+import { buildHookVariantPrompt } from './prompt-builder';
 import { MODEL_CONFIG } from '../config';
 
 interface StoryboardStep {
@@ -26,27 +26,41 @@ export class HookVariantService {
   constructor(private openRouter: OpenRouterClient) {}
 
   /**
-   * Adapt the first 1-2 storyboard beats for a variant hook.
-   * Uses Gemini Flash at low temperature for consistency.
+   * Generate 2 hook variants (B and C) via a single Gemini Flash call.
+   * Each variant gets a new hook + adapted opening beats.
+   * Returns [Variant A (original), Variant B, Variant C].
    */
-  async adaptBeatsForHook(params: {
+  async generateVariants(params: {
     originalHook: string;
-    variantHook: string;
+    originalScore: number;
     storyboard: StoryboardStep[];
     angle: string;
     duration: number;
-  }): Promise<{ adaptedBeats: StoryboardStep[]; adaptedBeatCount: number }> {
-    const { originalHook, variantHook, storyboard } = params;
+    productName: string;
+  }): Promise<HookVariant[]> {
+    const { originalHook, originalScore, storyboard, angle, productName } = params;
+
+    // Variant A is always the original
+    const variants: HookVariant[] = [
+      {
+        label: 'A',
+        hook: originalHook,
+        score: originalScore,
+        adaptedBeats: storyboard.slice(0, 2),
+        adaptedBeatCount: 0,
+      },
+    ];
 
     if (!storyboard || storyboard.length === 0) {
-      return { adaptedBeats: [], adaptedBeatCount: 0 };
+      return variants;
     }
 
     const beatsToAdapt = storyboard.slice(0, 2);
-    const prompt = buildHookAdaptationPrompt({
+    const prompt = buildHookVariantPrompt({
       originalHook,
-      variantHook,
       beats: beatsToAdapt,
+      angle,
+      productName,
     });
 
     try {
@@ -55,7 +69,7 @@ export class HookVariantService {
           {
             role: 'system',
             content:
-              'You adapt storyboard beats for hook variants. Always respond with valid JSON.',
+              'You generate hook variants for UGC video ads. Always respond with valid JSON.',
           },
           { role: 'user', content: prompt },
         ],
@@ -70,72 +84,27 @@ export class HookVariantService {
       const cleaned = response.trim().replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
       const parsed = JSON.parse(cleaned);
 
-      const adaptedBeats: StoryboardStep[] = parsed.adaptedBeats || parsed;
-      const adaptedBeatCount = Array.isArray(adaptedBeats) ? adaptedBeats.length : 0;
+      const generatedVariants = parsed.variants || [];
+      const labels = ['B', 'C'];
 
-      return { adaptedBeats, adaptedBeatCount };
+      for (let i = 0; i < Math.min(generatedVariants.length, 2); i++) {
+        const v = generatedVariants[i];
+        variants.push({
+          label: labels[i],
+          hook: v.hook || '',
+          score: 0, // No pre-computed score for LLM-generated variants
+          adaptedBeats: v.adaptedBeats || beatsToAdapt,
+          adaptedBeatCount: v.adaptedBeatCount || beatsToAdapt.length,
+        });
+      }
+
+      this.logger.log(
+        `Generated ${variants.length} hook variants for angle ${angle} (hooks: ${variants.map((v) => `${v.label}="${v.hook.slice(0, 30)}..."`).join(', ')})`,
+      );
     } catch (error) {
-      this.logger.warn(`Failed to adapt beats for variant hook: ${error}`);
-      // Graceful fallback: return original beats unchanged
-      return { adaptedBeats: beatsToAdapt, adaptedBeatCount: 0 };
+      this.logger.warn(`Failed to generate hook variants: ${error}`);
+      // Graceful fallback: return only variant A
     }
-  }
-
-  /**
-   * Generate hook variants for a script using its runner-up hooks.
-   * Returns array of HookVariant objects including the original as variant A.
-   */
-  async generateVariants(params: {
-    originalHook: string;
-    originalScore: number;
-    runnerUps: Array<{ hook: string; score: number }>;
-    storyboard: StoryboardStep[];
-    angle: string;
-    duration: number;
-  }): Promise<HookVariant[]> {
-    const { originalHook, originalScore, runnerUps, storyboard, angle, duration } = params;
-
-    // Variant A is always the original
-    const variants: HookVariant[] = [
-      {
-        label: 'A',
-        hook: originalHook,
-        score: originalScore,
-        adaptedBeats: storyboard.slice(0, 2),
-        adaptedBeatCount: 0,
-      },
-    ];
-
-    if (runnerUps.length === 0) {
-      return variants;
-    }
-
-    // Adapt beats for runner-ups B and C in parallel
-    const labels = ['B', 'C'];
-    const adaptPromises = runnerUps.slice(0, 2).map(async (runnerUp, i) => {
-      const adapted = await this.adaptBeatsForHook({
-        originalHook,
-        variantHook: runnerUp.hook,
-        storyboard,
-        angle,
-        duration,
-      });
-
-      return {
-        label: labels[i],
-        hook: runnerUp.hook,
-        score: runnerUp.score,
-        adaptedBeats: adapted.adaptedBeats,
-        adaptedBeatCount: adapted.adaptedBeatCount,
-      };
-    });
-
-    const adaptedVariants = await Promise.all(adaptPromises);
-    variants.push(...adaptedVariants);
-
-    this.logger.log(
-      `Generated ${variants.length} hook variants for angle ${angle} (scores: ${variants.map((v) => `${v.label}=${v.score}`).join(', ')})`,
-    );
 
     return variants;
   }

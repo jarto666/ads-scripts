@@ -436,41 +436,66 @@ OUTPUT CONTRACT:
 }
 
 /**
- * Build prompt for adapting storyboard beats to match a variant hook.
+ * Build prompt for generating 2 hook variants + adapted beats in a single call.
  * Used during A/B/C hook variant generation.
  */
-export function buildHookAdaptationPrompt(params: {
+export function buildHookVariantPrompt(params: {
   originalHook: string;
-  variantHook: string;
   beats: StoryboardStep[];
+  angle: string;
+  productName: string;
 }): string {
-  const { originalHook, variantHook, beats } = params;
+  const { originalHook, beats, angle, productName } = params;
 
-  return `You are adapting the opening of a UGC video ad script to match a new hook.
+  return `You are generating alternative hooks for a UGC video ad script.
 
-## Original Hook
+## Product
+${productName}
+
+## Angle
+${angle}
+
+## Original Hook (Hook A)
 "${originalHook}"
-
-## New Hook
-"${variantHook}"
 
 ## Original First ${beats.length} Beat(s)
 ${JSON.stringify(beats, null, 2)}
 
 ## Task
-Rewrite ONLY the beat(s) above so they flow naturally from the new hook.
-- Keep the same timing ("t" values), structure, and tone
-- Only change content that directly references or builds on the original hook's setup
+Generate 2 alternative hooks (B and C) for the same product and angle.
+Then for each, rewrite the beat(s) above so they flow naturally from the new hook.
+
+HOOK RULES:
+- Same angle and intent as the original, but different approach or wording
+- Each variant should feel distinct (e.g., question vs statement, emotional vs factual)
+- Keep hooks punchy and scroll-stopping (under 15 words)
+- Do NOT just rephrase the original — change the approach
+
+BEAT ADAPTATION RULES:
+- Keep the same timing ("t" values) and structure
 - The "spoken" field for the first beat MUST use the new hook text
-- If the second beat doesn't reference the hook at all, return it unchanged
+- Only change content that directly references or builds on the original hook
+- If the second beat doesn't reference the hook, return it unchanged
 - Keep "broll" suggestions relevant to the new hook
 
 Return JSON:
 {
-  "adaptedBeats": [
-    { "t": "...", "shot": "...", "onScreen": "...", "spoken": "...", "broll": [...] }
-  ],
-  "adaptedBeatCount": ${beats.length}
+  "variants": [
+    {
+      "hook": "Hook B text...",
+      "adaptedBeats": [
+        { "t": "...", "shot": "...", "onScreen": "...", "spoken": "...", "broll": [...] }
+      ],
+      "adaptedBeatCount": ${beats.length}
+    },
+    {
+      "hook": "Hook C text...",
+      "adaptedBeats": [
+        { "t": "...", "shot": "...", "onScreen": "...", "spoken": "...", "broll": [...] }
+      ],
+      "adaptedBeatCount": ${beats.length}
+    }
+  ]
 }
 
 OUTPUT CONTRACT:

@@ -103,7 +103,7 @@ export class ScriptDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ enum: ['pending', 'generating', 'completed', 'failed'] })
+  @ApiProperty({ enum: ['pending', 'generating', 'generated', 'completed', 'failed'] })
   status: string;
 
   @ApiProperty()
@@ -192,13 +192,7 @@ export class BatchDto {
   updatedAt: Date;
 
   @ApiPropertyOptional()
-  scriptsCount?: number;
-
-  @ApiPropertyOptional()
   completedCount?: number;
-
-  @ApiPropertyOptional()
-  progress?: number;
 
   @ApiPropertyOptional({ type: BatchScriptsCountDto })
   _count?: BatchScriptsCountDto;

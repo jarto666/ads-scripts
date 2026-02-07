@@ -393,6 +393,23 @@ export const MODEL_CONFIG = {
 - [x] **Remove quality tiers** - Flattened to single Pro model, removed quality branching ✓
 - [x] **Single model config** - All scripts use Gemini 3 Pro ✓
 
+### Week 2.5: Incremental Persistence + Crash Recovery (2026-02-07)
+
+- [x] **Incremental DB persistence** - Scripts saved as `generating` → `generated` during pipeline ✓
+- [x] **Crash recovery** - Detects existing scripts on restart, skips to rerank or restarts clean ✓
+- [x] **DB-backed progress** - Progress computed from real DB counts, survives page refresh ✓
+- [x] **Credit refunds** - Auto-refund for under-delivery (failed scripts) ✓
+- [x] **Runner-up pool fix** - Every hook gets top 2 non-self runner-ups (no pool depletion) ✓
+
+### Future: Script-Level Overgeneration
+
+Currently overgeneration only happens at the hook level (generate 2.4x hooks, select top N). Script generation is 1:1 with selected hooks. Adding script-level overgeneration would:
+- Generate `requestedCount * OVERGEN_RATIO.scripts` (1.6x) scripts
+- Rerank all, keep top `requestedCount`, mark rest as `rejected`
+- Improve quality by giving the reranker more candidates to choose from
+- Requires: hook generator returns more selected hooks than `requestedCount`
+- Status flow would become: `generating → generated → completed | rejected`
+
 ### Week 3: Polish + Testing
 
 - [ ] **Calibration testing** - Generate batches, verify scores match quality
@@ -415,5 +432,5 @@ export const MODEL_CONFIG = {
 ---
 
 *Created: 2026-02-03*
-*Updated: 2026-02-06*
-*Status: Week 2 In Progress - Quality tiers removed, hook variants shipped. Next: Learning Loop.*
+*Updated: 2026-02-07*
+*Status: Week 2.5 - Incremental persistence + crash recovery shipped. Next: Learning Loop, then script-level overgeneration.*

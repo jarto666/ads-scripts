@@ -11,7 +11,7 @@ import { getLanguageInstruction } from './language-utils';
 import { validateBeatCount, getBeatRange } from './platform-profiles';
 import { ScoringService } from './scoring.service';
 import { StyleFilterService } from './style-filter.service';
-import { HookGeneratorService, SelectedHook, SelectedHookWithRunnerUps } from './hook-generator.service';
+import { HookGeneratorService, SelectedHook } from './hook-generator.service';
 import { HookVariantService } from './hook-variant.service';
 import { RerankService, RerankScores } from './rerank.service';
 import { GroundednessService } from './groundedness.service';
@@ -54,8 +54,6 @@ interface ScriptOutput {
   warnings?: string[];
   // Soft filter violations (script is kept but penalized in ranking)
   filterViolations?: string[];
-  // Transient: runner-up hooks for A/B/C variant generation (not persisted)
-  _runnerUpHooks?: Array<{ hook: string; score: number }>;
 }
 
 @Injectable()
@@ -162,12 +160,6 @@ export class ScriptGeneratorService {
         facts,
       );
 
-      // Update batch status
-      await this.prisma.batch.update({
-        where: { id: batchId },
-        data: { status: 'completed' },
-      });
-
       // Emit batch completed event
       const finalCounts = await this.prisma.script.groupBy({
         by: ['status'],
@@ -176,6 +168,12 @@ export class ScriptGeneratorService {
       });
 
       const completedScripts = finalCounts.find(c => c.status === 'completed')?._count || 0;
+
+      // Update batch status
+      await this.prisma.batch.update({
+        where: { id: batchId },
+        data: { status: 'completed' },
+      });
       const failedScripts = finalCounts.find(c => c.status === 'failed')?._count || 0;
 
       // Refund credits for failed scripts
@@ -628,20 +626,24 @@ OUTPUT CONTRACT:
    * Get current script counts for progress tracking
    */
   private async getScriptCounts(batchId: string, totalCount: number) {
-    const [completedCount, generatingCount] = await Promise.all([
+    const [doneCount, generatingCount] = await Promise.all([
       this.prisma.script.count({
-        where: { batchId, status: 'completed' },
+        where: { batchId, status: { in: ['generated', 'completed'] } },
       }),
       this.prisma.script.count({
         where: { batchId, status: 'generating' },
       }),
     ]);
 
+    // Cap at totalCount to prevent >100% if stale scripts exist in DB
+    const cappedDone = Math.min(doneCount, totalCount);
+
     return {
-      completedCount,
+      completedCount: cappedDone,
       generatingCount,
       totalCount,
-      progress: totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0,
+      // Cap at 99% during generation — 100% only via emitBatchCompleted
+      progress: totalCount > 0 ? Math.min(99, Math.round((cappedDone / totalCount) * 100)) : 0,
     };
   }
 
@@ -899,7 +901,6 @@ OUTPUT CONTRACT:
             facts: true,
           },
         },
-        scripts: true,
       },
     });
 
@@ -922,6 +923,50 @@ OUTPUT CONTRACT:
       throw new Error(validation.error);
     }
 
+    // --- Crash Recovery: check existing script state ---
+    const existingCounts = await this.prisma.script.groupBy({
+      by: ['status'],
+      where: { batchId },
+      _count: true,
+    });
+    const statusCounts: Record<string, number> = {};
+    for (const row of existingCounts) {
+      statusCounts[row.status] = row._count;
+    }
+
+    // If completed scripts exist, reranking already done → mark batch complete
+    if ((statusCounts['completed'] || 0) > 0) {
+      this.logger.log(`[Overgen] Batch ${batchId} already has completed scripts, marking done`);
+      await this.prisma.batch.update({
+        where: { id: batchId },
+        data: { status: 'completed' },
+      });
+      return;
+    }
+
+    // Clean up zombie 'generating' rows (no content, process died mid-call)
+    if ((statusCounts['generating'] || 0) > 0) {
+      this.logger.warn(`[Overgen] Deleting ${statusCounts['generating']} zombie 'generating' scripts`);
+      await this.prisma.script.deleteMany({
+        where: { batchId, status: 'generating' },
+      });
+    }
+
+    const generatedCount = statusCounts['generated'] || 0;
+    const failedCount = statusCounts['failed'] || 0;
+    const skipGeneration = generatedCount >= totalRequested;
+
+    if (skipGeneration) {
+      this.logger.log(`[Overgen] Crash recovery: ${generatedCount} scripts already generated, skipping to rerank`);
+    } else if (generatedCount > 0 || failedCount > 0) {
+      // Not enough to skip to rerank — clean up partial results before restarting
+      // These scripts are from different hooks (hooks are re-generated), so they can't be mixed
+      this.logger.warn(`[Overgen] Cleaning up ${generatedCount} generated + ${failedCount} failed scripts before restart`);
+      await this.prisma.script.deleteMany({
+        where: { batchId, status: { in: ['generated', 'failed'] } },
+      });
+    }
+
     try {
       await this.prisma.batch.update({
         where: { id: batchId },
@@ -939,42 +984,61 @@ OUTPUT CONTRACT:
         personas: filteredPersonas,
       };
 
-      this.logger.log(
-        `[Overgen] Starting for batch ${batchId} (${scriptsPerAngle} scripts per angle × ${anglesCount} angles = ${totalRequested} final)`,
-      );
+      if (!skipGeneration) {
+        this.logger.log(
+          `[Overgen] Starting for batch ${batchId} (${scriptsPerAngle} scripts per angle × ${anglesCount} angles = ${totalRequested} final)`,
+        );
 
-      // Step 1: Generate and select hooks (stratified by angle)
-      const hookResult = await this.hookGenerator.generateHooks(
-        projectWithFilteredPersonas,
-        {
-          platform: batch.platform,
-          angles: batch.angles,
-          scriptsPerAngle,
-        },
-      );
+        // Step 1: Generate and select hooks (stratified by angle)
+        const hookResult = await this.hookGenerator.generateHooks(
+          projectWithFilteredPersonas,
+          {
+            platform: batch.platform,
+            angles: batch.angles,
+            scriptsPerAngle,
+          },
+        );
 
-      this.logger.log(
-        `[Overgen] Hook stats: ${hookResult.stats.generated} generated, ${hookResult.stats.passedFilter} passed filter, ${hookResult.stats.selected} selected`,
-      );
+        this.logger.log(
+          `[Overgen] Hook stats: ${hookResult.stats.generated} generated, ${hookResult.stats.passedFilter} passed filter, ${hookResult.stats.selected} selected`,
+        );
 
-      if (hookResult.selectedHooks.length === 0) {
-        throw new Error('No hooks survived filtering');
+        if (hookResult.selectedHooks.length === 0) {
+          throw new Error('No hooks survived filtering');
+        }
+
+        // Step 2: Generate scripts from selected hooks (persisted incrementally to DB)
+        const generatedIds = await this.generateScriptsFromHooks(
+          hookResult.selectedHooks,
+          batch,
+          projectWithFilteredPersonas,
+        );
+
+        this.logger.log(`[Overgen] Generated ${generatedIds.length} scripts to DB`);
       }
 
-      // Step 2: Generate scripts from selected hooks (each hook has its angle)
-      const generatedScripts = await this.generateScriptsFromHooks(
-        hookResult.selectedHooks,
-        batch,
-        projectWithFilteredPersonas,
-      );
+      // Step 3: Load 'generated' scripts from DB for reranking
+      const dbScripts = await this.prisma.script.findMany({
+        where: { batchId, status: 'generated' },
+      });
 
-      this.logger.log(`[Overgen] Generated ${generatedScripts.length} scripts`);
+      const scriptsForReranking: (ScriptOutput & { _dbId: string })[] = dbScripts.map(s => ({
+        _dbId: s.id,
+        angle: s.angle,
+        duration: s.duration,
+        hook: s.hook || '',
+        storyboard: (s.storyboard as ScriptOutput['storyboard']) || [],
+        ctaVariants: s.ctaVariants || [],
+        filmingChecklist: s.filmingChecklist || [],
+        warnings: s.warnings || [],
+      }));
 
-      // Step 3: Soft filter - check StylePolicy but keep ALL scripts
-      // Scripts with violations get penalized in ranking but are never discarded
+      this.logger.log(`[Overgen] Loaded ${scriptsForReranking.length} scripts for reranking`);
+
+      // Step 4: Soft filter - check StylePolicy but keep ALL scripts
       const allowedPromos = batch.project.facts?.promos || [];
       const filterResult = await this.softFilterScripts(
-        generatedScripts,
+        scriptsForReranking,
         projectWithFilteredPersonas.language || 'en',
         allowedPromos,
       );
@@ -983,9 +1047,9 @@ OUTPUT CONTRACT:
         `[Overgen] Style filter: ${filterResult.passedCount} clean, ${filterResult.failedCount} with violations (all kept)`,
       );
 
-      const filteredScripts = filterResult.scripts;
+      const filteredScripts = filterResult.scripts as (ScriptOutput & { _dbId: string })[];
 
-      // Step 4: Rerank by quality scores
+      // Step 5: Rerank by quality scores
       const rankedScripts = this.rerankService.rerankScripts(
         filteredScripts,
         {
@@ -996,8 +1060,7 @@ OUTPUT CONTRACT:
         filteredPersonas,
       );
 
-      // Step 5: Log quality statistics (no filtering - users paid for all scripts)
-      // Scores are used for RANKING only, not elimination
+      // Log quality statistics
       const lowScoring = rankedScripts.filter(
         (s) => s.scores.final < QUALITY_THRESHOLDS.minFinalScore,
       );
@@ -1007,8 +1070,7 @@ OUTPUT CONTRACT:
         );
       }
 
-      // Step 6: Select top N and save to database
-      // IMPORTANT: Always return requestedCount - users paid for these scripts
+      // Step 6: Select top N (currently 1:1 with hooks, no script-level overgen yet)
       const targetCount = Math.min(batch.requestedCount, rankedScripts.length);
       const topScripts = rankedScripts.slice(0, targetCount);
 
@@ -1022,54 +1084,47 @@ OUTPUT CONTRACT:
         `[Overgen] Returning top ${targetCount} scripts. Score range: ${topScripts[0]?.scores.final} - ${topScripts[topScripts.length - 1]?.scores.final}`,
       );
 
-      // Step 5.5: Generate hook variants (A/B/C) for each selected script
-      // Uses runner-up hooks from overgeneration + Gemini Flash to adapt opening beats
-      const variantsByIndex: Map<number, any[]> = new Map();
-      const scriptsWithRunnerUps = topScripts.filter(
-        ({ script }) => script._runnerUpHooks && script._runnerUpHooks.length > 0,
+      // Step 6.5: Generate hook variants (A/B/C) for all top scripts via Gemini Flash
+      const variantsByDbId: Map<string, any[]> = new Map();
+
+      this.logger.log(
+        `[Overgen] Generating hook variants for ${topScripts.length} scripts`,
       );
 
-      if (scriptsWithRunnerUps.length > 0) {
-        this.logger.log(
-          `[Overgen] Generating hook variants for ${scriptsWithRunnerUps.length}/${topScripts.length} scripts`,
-        );
+      const variantPromises = topScripts.map(async ({ script }) => {
+        const dbId = (script as ScriptOutput & { _dbId: string })._dbId;
 
-        const variantPromises = topScripts.map(async ({ script }, index) => {
-          if (!script._runnerUpHooks || script._runnerUpHooks.length === 0) {
-            return { index, variants: null };
-          }
-
-          try {
-            const variants = await this.hookVariantService.generateVariants({
-              originalHook: script.hook,
-              originalScore: this.rerankService.scoreHookStrength(script.hook),
-              runnerUps: script._runnerUpHooks,
-              storyboard: script.storyboard,
-              angle: script.angle,
-              duration: script.duration,
-            });
-            return { index, variants };
-          } catch (error) {
-            this.logger.warn(`[Overgen] Failed to generate variants for script ${index}: ${error}`);
-            return { index, variants: null };
-          }
-        });
-
-        const variantResults = await Promise.all(variantPromises);
-        for (const { index, variants } of variantResults) {
-          if (variants) {
-            variantsByIndex.set(index, variants);
-          }
+        try {
+          const variants = await this.hookVariantService.generateVariants({
+            originalHook: script.hook,
+            originalScore: this.rerankService.scoreHookStrength(script.hook),
+            storyboard: script.storyboard,
+            angle: script.angle,
+            duration: script.duration,
+            productName: projectWithFilteredPersonas.name,
+          });
+          return { dbId, variants };
+        } catch (error) {
+          this.logger.warn(`[Overgen] Failed to generate variants for script ${dbId}: ${error}`);
+          return { dbId, variants: null };
         }
+      });
 
-        this.logger.log(
-          `[Overgen] Generated variants for ${variantsByIndex.size} scripts`,
-        );
+      const variantResults = await Promise.all(variantPromises);
+      for (const { dbId, variants } of variantResults) {
+        if (variants) {
+          variantsByDbId.set(dbId, variants);
+        }
       }
 
-      // Save selected scripts to database
+      this.logger.log(
+        `[Overgen] Generated variants for ${variantsByDbId.size} scripts`,
+      );
+
+      // Step 7: Update top N scripts to 'completed' with hookVariants + analytics
       for (let i = 0; i < topScripts.length; i++) {
         const { script, scores } = topScripts[i];
+        const dbId = (script as ScriptOutput & { _dbId: string })._dbId;
 
         // Score with existing scoring service for filmability score
         const { score: filmabilityScore, warnings } = this.scoringService.scoreScript(
@@ -1092,35 +1147,40 @@ OUTPUT CONTRACT:
         const analyticsData = this.buildAnalyticsData(
           script,
           scores,
-          i + 1, // batchPosition (1-indexed)
-          generatedScripts.length,
+          i + 1,
+          scriptsForReranking.length,
           filteredScripts.length,
           script.filterViolations,
         );
 
-        // Get hook variants if generated
-        const hookVariants = variantsByIndex.get(i) || null;
+        const hookVariants = variantsByDbId.get(dbId) || null;
 
-        await this.prisma.script.create({
+        await this.prisma.script.update({
+          where: { id: dbId },
           data: {
-            batchId,
             status: 'completed',
-            angle: script.angle,
-            duration: script.duration,
-            hook: script.hook,
-            storyboard: script.storyboard,
-            hookVariants: hookVariants as any,
-            ctaVariants: script.ctaVariants,
-            filmingChecklist: script.filmingChecklist,
+            hookVariants: hookVariants ?? undefined,
             warnings: [
               ...(script.warnings || []),
               ...warnings,
             ],
             score: filmabilityScore,
             analyticsData,
-          },
+          } as any,
         });
-        // Progress already emitted during generation, no need to emit again during save
+      }
+
+      // Step 8: Refund credits if fewer scripts delivered than requested
+      const deliveredCount = topScripts.length;
+      const refundable = Math.max(0, batch.requestedCount - deliveredCount);
+      if (refundable > 0) {
+        await this.creditsService.refund(
+          batch.project.userId,
+          refundable * CREDIT_COST_PER_SCRIPT,
+          batchId,
+          `Refund for ${refundable} undelivered script(s)`,
+        );
+        this.logger.log(`[Overgen] Refunded ${refundable} credits for under-delivery in batch ${batchId}`);
       }
 
       // Mark batch complete
@@ -1155,17 +1215,17 @@ OUTPUT CONTRACT:
 
   /**
    * Generate full scripts from selected hooks (parallel with concurrency control).
-   * Each hook now includes its angle, so we use that instead of round-robin.
+   * Each hook is persisted to DB incrementally (generating → generated).
+   * Returns IDs of successfully generated scripts.
    */
   private async generateScriptsFromHooks(
-    hooks: (SelectedHook | SelectedHookWithRunnerUps)[],
+    hooks: SelectedHook[],
     batch: Batch,
     project: Project & { personas: Persona[] },
-  ): Promise<ScriptOutput[]> {
-    const results: ScriptOutput[] = [];
+  ): Promise<string[]> {
+    const generatedIds: string[] = [];
     const model = MODEL_CONFIG.scriptGeneration.model;
     const totalCount = hooks.length;
-    let completedCount = 0;
 
     // Simple semaphore for concurrency control
     let activeCount = 0;
@@ -1191,15 +1251,33 @@ OUTPUT CONTRACT:
       }
     };
 
-    const generateFromHook = async (selectedHook: SelectedHook | SelectedHookWithRunnerUps, index: number): Promise<ScriptOutput | null> => {
+    const generateFromHook = async (selectedHook: SelectedHook, index: number): Promise<void> => {
       await acquireSemaphore();
 
-      try {
-        // Use the angle from the hook (stratified selection ensures proper distribution)
-        const duration = batch.durations[index % batch.durations.length];
-        const angle = selectedHook.angle;
-        const beatRange = getBeatRange(duration);
+      // Create script record with 'generating' status before LLM call
+      const duration = batch.durations[index % batch.durations.length];
+      const angle = selectedHook.angle;
+      const scriptRecord = await this.prisma.script.create({
+        data: {
+          batchId: batch.id,
+          status: 'generating',
+          angle,
+          duration,
+          hook: selectedHook.hook,
+        },
+      });
 
+      // Emit progress for script starting
+      const startCounts = await this.getScriptCounts(batch.id, totalCount);
+      this.notifications.emitScriptProgress({
+        batchId: batch.id,
+        scriptId: scriptRecord.id,
+        status: 'generating',
+        ...startCounts,
+      });
+
+      try {
+        const beatRange = getBeatRange(duration);
         const prompt = this.buildScriptFromHookPrompt(project, {
           hook: selectedHook.hook,
           angle,
@@ -1208,8 +1286,7 @@ OUTPUT CONTRACT:
           platform: batch.platform,
         });
 
-        // Carry runner-ups through to the script output for variant generation
-        const runnerUps = 'runnerUps' in selectedHook ? selectedHook.runnerUps : [];
+        let script: ScriptOutput | null = null;
 
         for (let attempt = 1; attempt <= MAX_SCRIPT_RETRIES; attempt++) {
           try {
@@ -1227,42 +1304,13 @@ OUTPUT CONTRACT:
 
             try {
               const cleaned = this.stripMarkdown(response);
-              const script = JSON.parse(cleaned) as ScriptOutput;
-              script._runnerUpHooks = runnerUps;
-
-              // Emit progress during generation (not just during save)
-              completedCount++;
-              this.notifications.emitScriptProgress({
-                batchId: batch.id,
-                scriptId: `generating-${index}`,
-                status: 'generating',
-                completedCount,
-                generatingCount: activeCount - 1, // -1 because this one just finished
-                totalCount,
-                progress: Math.round((completedCount / totalCount) * 100),
-              });
-
-              return script;
+              script = JSON.parse(cleaned) as ScriptOutput;
             } catch {
               this.logger.warn(`Failed to parse script for hook ${index + 1}, attempting repair`);
               const repaired = await this.repairJson(response, 'JSON parse error');
-              const script = JSON.parse(repaired) as ScriptOutput;
-              script._runnerUpHooks = runnerUps;
-
-              // Emit progress for repaired scripts too
-              completedCount++;
-              this.notifications.emitScriptProgress({
-                batchId: batch.id,
-                scriptId: `generating-${index}`,
-                status: 'generating',
-                completedCount,
-                generatingCount: activeCount - 1,
-                totalCount,
-                progress: Math.round((completedCount / totalCount) * 100),
-              });
-
-              return script;
+              script = JSON.parse(repaired) as ScriptOutput;
             }
+            break; // Success
           } catch (retryError) {
             if (attempt === MAX_SCRIPT_RETRIES) {
               throw retryError;
@@ -1270,27 +1318,62 @@ OUTPUT CONTRACT:
             this.logger.warn(`Hook script attempt ${attempt} failed, retrying: ${retryError instanceof Error ? retryError.message : 'Unknown error'}`);
           }
         }
-        return null; // Should not reach here
+
+        if (!script) {
+          throw new Error('Script generation failed after all retries');
+        }
+
+        // Persist to DB with 'generated' status
+        await this.prisma.script.update({
+          where: { id: scriptRecord.id },
+          data: {
+            status: 'generated',
+            storyboard: script.storyboard,
+            ctaVariants: script.ctaVariants,
+            filmingChecklist: script.filmingChecklist,
+            warnings: script.warnings || [],
+          },
+        });
+
+        generatedIds.push(scriptRecord.id);
+
+        // Emit progress for script generated
+        const doneCounts = await this.getScriptCounts(batch.id, totalCount);
+        this.notifications.emitScriptProgress({
+          batchId: batch.id,
+          scriptId: scriptRecord.id,
+          status: 'generated',
+          ...doneCounts,
+        });
       } catch (error) {
         this.logger.error(`Failed to generate script from hook ${index + 1}: ${error}`);
-        return null;
+
+        // Mark as failed in DB
+        await this.prisma.script.update({
+          where: { id: scriptRecord.id },
+          data: {
+            status: 'failed',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
+
+        // Emit progress for failure
+        const failCounts = await this.getScriptCounts(batch.id, totalCount);
+        this.notifications.emitScriptProgress({
+          batchId: batch.id,
+          scriptId: scriptRecord.id,
+          status: 'failed',
+          ...failCounts,
+        });
       } finally {
         releaseSemaphore();
       }
     };
 
-    // Generate all scripts in parallel
-    const scriptPromises = hooks.map((hook, index) => generateFromHook(hook, index));
-    const scriptResults = await Promise.all(scriptPromises);
+    // Generate all scripts in parallel (semaphore controls concurrency)
+    await Promise.all(hooks.map((hook, index) => generateFromHook(hook, index)));
 
-    // Filter out nulls (failed generations)
-    for (const script of scriptResults) {
-      if (script) {
-        results.push(script);
-      }
-    }
-
-    return results;
+    return generatedIds;
   }
 
   /**

@@ -1,4 +1,4 @@
-.PHONY: help install dev build db-migrate db-push api-generate
+.PHONY: help install dev build db-migrate db-push db-generate api-generate
 
 help:
 	@echo "Available commands:"
@@ -7,6 +7,7 @@ help:
 	@echo "  make build        - Build API and Web for production"
 	@echo "  make db-migrate   - Run Prisma migrations (dev)"
 	@echo "  make db-push      - Push schema to database (no migration)"
+	@echo "  make db-generate  - Regenerate Prisma client"
 	@echo "  make api-generate - Generate API client from OpenAPI spec"
 
 install:
@@ -27,6 +28,9 @@ build:
 
 db-migrate:
 	cd apps/api && pnpm exec prisma migrate dev
+
+db-generate:
+	cd apps/api && pnpm exec prisma generate
 
 api-generate:
 	pnpm --filter web api:generate

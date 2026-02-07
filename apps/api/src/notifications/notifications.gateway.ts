@@ -10,7 +10,7 @@ import { Logger } from '@nestjs/common';
 export interface ScriptProgressEvent {
   batchId: string;
   scriptId: string;
-  status: 'generating' | 'completed' | 'failed';
+  status: 'generating' | 'generated' | 'completed' | 'failed';
   completedCount: number;
   generatingCount: number;
   totalCount: number;
