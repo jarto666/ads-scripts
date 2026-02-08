@@ -5,9 +5,10 @@ import { AdminGuard } from './admin.guard';
 import { QueueModule } from '../queue/queue.module';
 import { CreditsModule } from '../credits/credits.module';
 import { AuthModule } from '../auth/auth.module';
+import { GenerationModule } from '../generation/generation.module';
 
 @Module({
-  imports: [QueueModule, CreditsModule, AuthModule],
+  imports: [QueueModule, CreditsModule, AuthModule, GenerationModule],
   controllers: [AdminController],
   providers: [AdminService, AdminGuard],
   exports: [AdminService, AdminGuard],

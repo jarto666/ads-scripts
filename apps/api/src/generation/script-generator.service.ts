@@ -332,7 +332,7 @@ export class ScriptGeneratorService {
     }
 
     // Check groundedness
-    const groundednessResult = this.groundednessService.checkGroundedness(
+    const groundednessResult = await this.groundednessService.checkGroundedness(
       {
         hook: script.hook,
         storyboard: script.storyboard.map(s => ({
@@ -342,6 +342,7 @@ export class ScriptGeneratorService {
         ctaVariants: script.ctaVariants,
       },
       facts,
+      batch.project.language || 'en',
     );
 
     // If no violations, return as-is
@@ -373,7 +374,7 @@ export class ScriptGeneratorService {
       const rewrittenScript = JSON.parse(cleaned) as ScriptOutput;
 
       // Validate the rewrite
-      const rewriteGroundedness = this.groundednessService.checkGroundedness(
+      const rewriteGroundedness = await this.groundednessService.checkGroundedness(
         {
           hook: rewrittenScript.hook,
           storyboard: rewrittenScript.storyboard.map(s => ({
@@ -383,6 +384,7 @@ export class ScriptGeneratorService {
           ctaVariants: rewrittenScript.ctaVariants,
         },
         facts,
+        batch.project.language || 'en',
       );
 
       // Use rewrite if it's better (fewer violations or passed)
@@ -535,9 +537,10 @@ OUTPUT CONTRACT:
         script = await this.validateAndRewriteIfNeeded(script, facts, batch);
 
         // Score the script
-        const { score, warnings } = this.scoringService.scoreScript(
+        const { score, warnings } = await this.scoringService.scoreScript(
           script,
           forbiddenClaims,
+          batch.project.language || 'en',
         );
 
         // Apply style filter (language-based quality rules)
@@ -551,7 +554,6 @@ OUTPUT CONTRACT:
             ctaVariants: script.ctaVariants,
           },
           batch.project.language || 'en',
-          'global',
           { allowedPromos: facts?.promos || [] },
         );
 
@@ -798,9 +800,10 @@ OUTPUT CONTRACT:
       // Validate groundedness and rewrite if needed (same as regular generation)
       scriptOutput = await this.validateAndRewriteIfNeeded(scriptOutput, facts, script.batch);
 
-      const { score, warnings } = this.scoringService.scoreScript(
+      const { score, warnings } = await this.scoringService.scoreScript(
         scriptOutput,
         script.batch.project.forbiddenClaims,
+        script.batch.project.language || 'en',
       );
 
       // Apply style filter
@@ -814,7 +817,6 @@ OUTPUT CONTRACT:
           ctaVariants: scriptOutput.ctaVariants,
         },
         script.batch.project.language || 'en',
-        'global',
         { allowedPromos: facts?.promos || [] },
       );
 
@@ -1050,11 +1052,12 @@ OUTPUT CONTRACT:
       const filteredScripts = filterResult.scripts as (ScriptOutput & { _dbId: string })[];
 
       // Step 5: Rerank by quality scores
-      const rankedScripts = this.rerankService.rerankScripts(
+      const rankedScripts = await this.rerankService.rerankScripts(
         filteredScripts,
         {
           productDescription: projectWithFilteredPersonas.productDescription,
           productName: projectWithFilteredPersonas.name,
+          language: projectWithFilteredPersonas.language || 'en',
           facts: batch.project.facts,
         },
         filteredPersonas,
@@ -1086,6 +1089,7 @@ OUTPUT CONTRACT:
 
       // Step 6.5: Generate hook variants (A/B/C) for all top scripts via Gemini Flash
       const variantsByDbId: Map<string, any[]> = new Map();
+      const hookScoringPolicy = await this.styleFilter.getPolicy(projectWithFilteredPersonas.language || 'en');
 
       this.logger.log(
         `[Overgen] Generating hook variants for ${topScripts.length} scripts`,
@@ -1097,7 +1101,7 @@ OUTPUT CONTRACT:
         try {
           const variants = await this.hookVariantService.generateVariants({
             originalHook: script.hook,
-            originalScore: this.rerankService.scoreHookStrength(script.hook),
+            originalScore: this.rerankService.scoreHookStrength(script.hook, hookScoringPolicy),
             storyboard: script.storyboard,
             angle: script.angle,
             duration: script.duration,
@@ -1127,9 +1131,10 @@ OUTPUT CONTRACT:
         const dbId = (script as ScriptOutput & { _dbId: string })._dbId;
 
         // Score with existing scoring service for filmability score
-        const { score: filmabilityScore, warnings } = this.scoringService.scoreScript(
+        const { score: filmabilityScore, warnings } = await this.scoringService.scoreScript(
           script,
           batch.project.forbiddenClaims,
+          batch.project.language || 'en',
         );
 
         // Validate beat count
@@ -1470,7 +1475,6 @@ OUTPUT CONTRACT:
           ctaVariants: script.ctaVariants,
         },
         language,
-        'global',
         { allowedPromos },
       );
 

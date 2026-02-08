@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Put,
   Patch,
   Delete,
   Param,
@@ -13,7 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiBody } from '@nestjs/s
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from './admin.guard';
-import { AdminUserDetailDto, GrantCreditsDto, GrantCreditsResponseDto, UpdateUserPlanDto } from './dto';
+import { AdminUserDetailDto, GrantCreditsDto, GrantCreditsResponseDto, UpdateUserPlanDto, UpsertStylePolicyDto, StylePolicySummaryDto } from './dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, AdminGuard)
@@ -118,5 +119,34 @@ export class AdminController {
   @Post('queue/jobs/:id/retry')
   async retryJob(@Param('id') id: string) {
     return this.adminService.retryJob(id);
+  }
+
+  // Style Policies
+  @Get('style-policies')
+  @ApiOperation({ summary: 'List all style policies' })
+  @ApiResponse({ status: 200, type: [StylePolicySummaryDto] })
+  async getStylePolicies() {
+    return this.adminService.getStylePolicies();
+  }
+
+  @Get('style-policies/:language')
+  @ApiOperation({ summary: 'Get style policy for a language' })
+  async getStylePolicy(@Param('language') language: string) {
+    return this.adminService.getStylePolicy(language);
+  }
+
+  @Put('style-policies/:language')
+  @ApiOperation({ summary: 'Create or update style policy for a language' })
+  async upsertStylePolicy(
+    @Param('language') language: string,
+    @Body() dto: UpsertStylePolicyDto,
+  ) {
+    return this.adminService.upsertStylePolicy(language, dto);
+  }
+
+  @Delete('style-policies/:language')
+  @ApiOperation({ summary: 'Delete style policy for a language' })
+  async deleteStylePolicy(@Param('language') language: string) {
+    return this.adminService.deleteStylePolicy(language);
   }
 }

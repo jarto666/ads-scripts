@@ -7,9 +7,10 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreditsService } from '../credits/credits.service';
 import { EmailService } from '../auth/email.service';
+import { StyleFilterService } from '../generation/style-filter.service';
 import { SCRIPT_GENERATION_QUEUE } from '../queue/constants';
 import { ScriptGenerationJobData } from '../queue/script-generation.processor';
-import { GrantCreditsDto } from './dto';
+import { GrantCreditsDto, UpsertStylePolicyDto } from './dto';
 
 @Injectable()
 export class AdminService {
@@ -18,6 +19,7 @@ export class AdminService {
     private configService: ConfigService,
     private creditsService: CreditsService,
     private emailService: EmailService,
+    private styleFilter: StyleFilterService,
     @InjectQueue(SCRIPT_GENERATION_QUEUE) private scriptQueue: Queue<ScriptGenerationJobData>,
   ) {}
 
@@ -408,6 +410,93 @@ export class AdminService {
       throw new NotFoundException('Job not found');
     }
     await job.retry();
+    return { success: true };
+  }
+
+  // ============ Style Policies ============
+
+  async getStylePolicies() {
+    const policies = await this.prisma.stylePolicy.findMany({
+      orderBy: { language: 'asc' },
+    });
+
+    return policies.map((p) => ({
+      language: p.language,
+      status: p.status,
+      bannedPhrasesCount: p.bannedPhrases.length + p.bannedRegex.length + p.softAvoid.length + p.harshWords.length,
+      clichePatternsCount: p.clicheHookOpeners.length + p.clicheLlmSmell.length + p.clicheGenericFiller.length + p.clicheStructurePatterns.length,
+      scoringWordsCount: p.hookPowerWords.length + p.benefitWords.length + p.visualActionWords.length + p.ctaActionWords.length + p.ctaUrgencyWords.length + p.conversationalMarkers.length + p.emotionalPatterns.length,
+      groundednessPatternsCount: p.groundednessAbsolutePatterns.length + p.groundednessScalePatterns.length + p.groundednessPromoPatterns.length + p.groundednessTimelinePatterns.length + p.groundednessSocialProofPatterns.length,
+      updatedAt: p.updatedAt,
+    }));
+  }
+
+  async getStylePolicy(language: string) {
+    const policy = await this.prisma.stylePolicy.findUnique({
+      where: { language },
+    });
+
+    if (!policy) {
+      throw new NotFoundException(`Style policy for language "${language}" not found`);
+    }
+
+    return policy;
+  }
+
+  async upsertStylePolicy(language: string, dto: UpsertStylePolicyDto) {
+    // Build data object from only the fields provided
+    const data: Record<string, unknown> = {};
+
+    if (dto.status !== undefined) data.status = dto.status;
+    if (dto.wordLimits !== undefined) data.wordLimits = dto.wordLimits;
+    if (dto.bannedPhrases !== undefined) data.bannedPhrases = dto.bannedPhrases;
+    if (dto.bannedRegex !== undefined) data.bannedRegex = dto.bannedRegex;
+    if (dto.softAvoid !== undefined) data.softAvoid = dto.softAvoid;
+    if (dto.harshWords !== undefined) data.harshWords = dto.harshWords;
+    if (dto.clicheHookOpeners !== undefined) data.clicheHookOpeners = dto.clicheHookOpeners;
+    if (dto.clicheLlmSmell !== undefined) data.clicheLlmSmell = dto.clicheLlmSmell;
+    if (dto.clicheGenericFiller !== undefined) data.clicheGenericFiller = dto.clicheGenericFiller;
+    if (dto.clicheStructurePatterns !== undefined) data.clicheStructurePatterns = dto.clicheStructurePatterns;
+    if (dto.hookPowerWords !== undefined) data.hookPowerWords = dto.hookPowerWords;
+    if (dto.benefitWords !== undefined) data.benefitWords = dto.benefitWords;
+    if (dto.visualActionWords !== undefined) data.visualActionWords = dto.visualActionWords;
+    if (dto.ctaActionWords !== undefined) data.ctaActionWords = dto.ctaActionWords;
+    if (dto.ctaUrgencyWords !== undefined) data.ctaUrgencyWords = dto.ctaUrgencyWords;
+    if (dto.conversationalMarkers !== undefined) data.conversationalMarkers = dto.conversationalMarkers;
+    if (dto.emotionalPatterns !== undefined) data.emotionalPatterns = dto.emotionalPatterns;
+    if (dto.groundednessAbsolutePatterns !== undefined) data.groundednessAbsolutePatterns = dto.groundednessAbsolutePatterns;
+    if (dto.groundednessScalePatterns !== undefined) data.groundednessScalePatterns = dto.groundednessScalePatterns;
+    if (dto.groundednessPromoPatterns !== undefined) data.groundednessPromoPatterns = dto.groundednessPromoPatterns;
+    if (dto.groundednessTimelinePatterns !== undefined) data.groundednessTimelinePatterns = dto.groundednessTimelinePatterns;
+    if (dto.groundednessSocialProofPatterns !== undefined) data.groundednessSocialProofPatterns = dto.groundednessSocialProofPatterns;
+
+    const policy = await this.prisma.stylePolicy.upsert({
+      where: { language },
+      create: { language, ...data } as any,
+      update: data as any,
+    });
+
+    // Clear cache so next generation uses new data
+    this.styleFilter.clearCache();
+
+    return policy;
+  }
+
+  async deleteStylePolicy(language: string) {
+    const policy = await this.prisma.stylePolicy.findUnique({
+      where: { language },
+    });
+
+    if (!policy) {
+      throw new NotFoundException(`Style policy for language "${language}" not found`);
+    }
+
+    await this.prisma.stylePolicy.delete({
+      where: { language },
+    });
+
+    this.styleFilter.clearCache();
+
     return { success: true };
   }
 }

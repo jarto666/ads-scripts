@@ -54,22 +54,19 @@ export class StyleFilterService {
   /**
    * Get StylePolicy for a language (with caching)
    */
-  async getPolicy(language: string, scope = 'global'): Promise<StylePolicy | null> {
-    const cacheKey = `${language}:${scope}`;
-    const cached = this.policyCache.get(cacheKey);
+  async getPolicy(language: string): Promise<StylePolicy | null> {
+    const cached = this.policyCache.get(language);
 
     if (cached && Date.now() - cached.cachedAt < this.CACHE_TTL_MS) {
       return cached.policy;
     }
 
     const policy = await this.prisma.stylePolicy.findUnique({
-      where: {
-        language_scope: { language, scope },
-      },
+      where: { language },
     });
 
     if (policy) {
-      this.policyCache.set(cacheKey, { policy, cachedAt: Date.now() });
+      this.policyCache.set(language, { policy, cachedAt: Date.now() });
     }
 
     return policy;
@@ -79,20 +76,17 @@ export class StyleFilterService {
    * Filter a script against StylePolicy rules
    * @param script - The script content to filter
    * @param language - Language for policy lookup
-   * @param scope - Policy scope (default: 'global')
    * @param context - Optional context with allowed promos, etc.
    */
   async filterScript(
     script: ScriptContent,
     language: string,
-    scope = 'global',
     context?: FilterContext,
   ): Promise<FilterResult> {
-    const policy = await this.getPolicy(language, scope);
+    const policy = await this.getPolicy(language);
 
     if (!policy) {
-      // No policy = no filtering (pass everything)
-      this.logger.warn(`No StylePolicy found for ${language}:${scope}, skipping filter`);
+      this.logger.warn(`No StylePolicy found for ${language}, skipping filter`);
       return { passed: true, violations: [], warnings: [] };
     }
 
@@ -214,16 +208,23 @@ export class StyleFilterService {
    */
   private countWord(text: string, word: string): number {
     switch (word) {
+      case '!':
       case 'exclamations':
         return (text.match(/!/g) || []).length;
+      case '?':
+        return (text.match(/\?/g) || []).length;
       case 'ellipsis':
         return (text.match(/\.{3}/g) || []).length;
       case 'caps_words':
         return (text.match(/\b[A-Z]{2,}\b/g) || []).length;
       default:
         // Regular word count (case insensitive, word boundary)
-        const regex = new RegExp(`\\b${word}\\b`, 'gi');
-        return (text.match(regex) || []).length;
+        try {
+          const regex = new RegExp(`\\b${word}\\b`, 'gi');
+          return (text.match(regex) || []).length;
+        } catch {
+          return 0;
+        }
     }
   }
 
@@ -260,10 +261,9 @@ export class StyleFilterService {
   async filterScripts(
     scripts: ScriptContent[],
     language: string,
-    scope = 'global',
     context?: FilterContext,
   ): Promise<FilterResult[]> {
-    const policy = await this.getPolicy(language, scope);
+    const policy = await this.getPolicy(language);
 
     if (!policy) {
       return scripts.map(() => ({ passed: true, violations: [], warnings: [] }));

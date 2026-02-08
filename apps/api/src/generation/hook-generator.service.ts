@@ -80,7 +80,7 @@ export class HookGeneratorService {
       `Generating ${hooksPerAngle} hooks per angle for ${settings.angles.length} angles`,
     );
 
-    // Get banned phrases from StylePolicy for prompt
+    // Get policy for prompt banned phrases and hook scoring
     const policy = await this.styleFilter.getPolicy(project.language || 'en');
     const bannedPhrases = policy?.bannedPhrases || [];
 
@@ -165,8 +165,8 @@ export class HookGeneratorService {
           project.language || 'en',
         );
 
-        // Score hook strength
-        const score = this.rerankService.scoreHookStrength(hook);
+        // Score hook strength (pass policy for DB-driven word lists)
+        const score = this.rerankService.scoreHookStrength(hook, policy);
 
         const scoredHook: ScoredHook = {
           hook: hook.trim(),

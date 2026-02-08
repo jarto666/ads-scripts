@@ -102,6 +102,12 @@ import {
   getCreditsControllerGetBalancesQueryKey,
 } from "@/api/generated/api";
 import type { PersonaDto, BatchDto, ScriptDto, ProjectFactsDto } from "@/api/generated/models";
+
+/** BatchDto extended with SSE progress fields not in the API schema */
+type BatchWithProgress = BatchDto & {
+  progress?: number;
+  generatingCount?: number;
+};
 import {
   Collapsible,
   CollapsibleContent,
@@ -1089,7 +1095,7 @@ export default function ProjectDetailPage({
   // Scripts tab state
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateCooldown, setGenerateCooldown] = useState(false);
-  const [batchesList, setBatchesList] = useState<BatchDto[]>([]);
+  const [batchesList, setBatchesList] = useState<BatchWithProgress[]>([]);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [scriptsList, setScriptsList] = useState<ScriptDto[]>([]);
   const [expandedScript, setExpandedScript] = useState<string | null>(null);
@@ -1331,13 +1337,13 @@ export default function ProjectDetailPage({
   const fetchBatches = async () => {
     try {
       const result = await batchesControllerFindAllByProject(id);
-      const batchList = result.data.map((batch: BatchDto) => ({
+      const batchList: BatchWithProgress[] = result.data.map((batch) => ({
         ...batch,
         progress: batch.status === 'completed' || batch.status === 'failed'
           ? 100
           : (batch.completedCount && batch.requestedCount
             ? Math.min(99, Math.round((batch.completedCount / batch.requestedCount) * 100))
-            : batch.progress ?? 0),
+            : 0),
       }));
       setBatchesList(batchList);
       // Auto-select the latest batch if none selected
@@ -1801,7 +1807,7 @@ export default function ProjectDetailPage({
               >
                 {batchesList.reduce(
                   (sum, batch) =>
-                    sum + (batch._count?.scripts || batch.scriptsCount || 0),
+                    sum + (batch._count?.scripts || 0),
                   0,
                 )}
               </Badge>

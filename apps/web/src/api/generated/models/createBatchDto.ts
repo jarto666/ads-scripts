@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 import type { CreateBatchDtoPlatform } from './createBatchDtoPlatform';
-import type { CreateBatchDtoQuality } from './createBatchDtoQuality';
 
 export interface CreateBatchDto {
   /**
@@ -26,5 +25,4 @@ export interface CreateBatchDto {
   durations: number[];
   /** Empty or omitted = all personas */
   personaIds?: string[];
-  quality?: CreateBatchDtoQuality;
 }

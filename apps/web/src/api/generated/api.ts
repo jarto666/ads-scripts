@@ -65,6 +65,7 @@ import type {
   RegenerateDto,
   RequestMagicLinkDto,
   ScriptDto,
+  StylePolicySummaryDto,
   SubscriptionInfoDto,
   UpdateDraftDto,
   UpdatePersonaDto,
@@ -72,6 +73,7 @@ import type {
   UpdateProjectDto,
   UpdateUserPlanDto,
   UpsertProjectFactsDto,
+  UpsertStylePolicyDto,
   UserDto
 } from './models';
 
@@ -4256,6 +4258,394 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
         TContext
       > => {
       return useMutation(getAdminControllerRetryJobMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary List all style policies
+ */
+export type adminControllerGetStylePoliciesResponse200 = {
+  data: StylePolicySummaryDto[]
+  status: 200
+}
+    
+export type adminControllerGetStylePoliciesResponseSuccess = (adminControllerGetStylePoliciesResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerGetStylePoliciesResponse = (adminControllerGetStylePoliciesResponseSuccess)
+
+export const getAdminControllerGetStylePoliciesUrl = () => {
+
+
+  
+
+  return `/admin/style-policies`
+}
+
+export const adminControllerGetStylePolicies = async ( options?: RequestInit): Promise<adminControllerGetStylePoliciesResponse> => {
+  
+  return customInstance<adminControllerGetStylePoliciesResponse>(getAdminControllerGetStylePoliciesUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getAdminControllerGetStylePoliciesQueryKey = () => {
+    return [
+    `/admin/style-policies`
+    ] as const;
+    }
+
+    
+export const getAdminControllerGetStylePoliciesQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetStylePoliciesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>> = ({ signal }) => adminControllerGetStylePolicies({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminControllerGetStylePoliciesQueryResult = NonNullable<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>>
+export type AdminControllerGetStylePoliciesQueryError = unknown
+
+
+export function useAdminControllerGetStylePolicies<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetStylePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetStylePolicies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetStylePolicies<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetStylePolicies>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetStylePolicies>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetStylePolicies<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List all style policies
+ */
+
+export function useAdminControllerGetStylePolicies<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicies>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminControllerGetStylePoliciesQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Get style policy for a language
+ */
+export type adminControllerGetStylePolicyResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type adminControllerGetStylePolicyResponseSuccess = (adminControllerGetStylePolicyResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerGetStylePolicyResponse = (adminControllerGetStylePolicyResponseSuccess)
+
+export const getAdminControllerGetStylePolicyUrl = (language: string,) => {
+
+
+  
+
+  return `/admin/style-policies/${language}`
+}
+
+export const adminControllerGetStylePolicy = async (language: string, options?: RequestInit): Promise<adminControllerGetStylePolicyResponse> => {
+  
+  return customInstance<adminControllerGetStylePolicyResponse>(getAdminControllerGetStylePolicyUrl(language),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+
+
+export const getAdminControllerGetStylePolicyQueryKey = (language: string,) => {
+    return [
+    `/admin/style-policies/${language}`
+    ] as const;
+    }
+
+    
+export const getAdminControllerGetStylePolicyQueryOptions = <TData = Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError = unknown>(language: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAdminControllerGetStylePolicyQueryKey(language);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>> = ({ signal }) => adminControllerGetStylePolicy(language, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(language), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AdminControllerGetStylePolicyQueryResult = NonNullable<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>>
+export type AdminControllerGetStylePolicyQueryError = unknown
+
+
+export function useAdminControllerGetStylePolicy<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError = unknown>(
+ language: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetStylePolicy>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetStylePolicy>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetStylePolicy<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError = unknown>(
+ language: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof adminControllerGetStylePolicy>>,
+          TError,
+          Awaited<ReturnType<typeof adminControllerGetStylePolicy>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAdminControllerGetStylePolicy<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError = unknown>(
+ language: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get style policy for a language
+ */
+
+export function useAdminControllerGetStylePolicy<TData = Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError = unknown>(
+ language: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof adminControllerGetStylePolicy>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAdminControllerGetStylePolicyQueryOptions(language,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+/**
+ * @summary Create or update style policy for a language
+ */
+export type adminControllerUpsertStylePolicyResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type adminControllerUpsertStylePolicyResponseSuccess = (adminControllerUpsertStylePolicyResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerUpsertStylePolicyResponse = (adminControllerUpsertStylePolicyResponseSuccess)
+
+export const getAdminControllerUpsertStylePolicyUrl = (language: string,) => {
+
+
+  
+
+  return `/admin/style-policies/${language}`
+}
+
+export const adminControllerUpsertStylePolicy = async (language: string,
+    upsertStylePolicyDto: UpsertStylePolicyDto, options?: RequestInit): Promise<adminControllerUpsertStylePolicyResponse> => {
+  
+  return customInstance<adminControllerUpsertStylePolicyResponse>(getAdminControllerUpsertStylePolicyUrl(language),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      upsertStylePolicyDto,)
+  }
+);}
+
+
+
+
+export const getAdminControllerUpsertStylePolicyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>, TError,{language: string;data: UpsertStylePolicyDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>, TError,{language: string;data: UpsertStylePolicyDto}, TContext> => {
+
+const mutationKey = ['adminControllerUpsertStylePolicy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>, {language: string;data: UpsertStylePolicyDto}> = (props) => {
+          const {language,data} = props ?? {};
+
+          return  adminControllerUpsertStylePolicy(language,data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminControllerUpsertStylePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>>
+    export type AdminControllerUpsertStylePolicyMutationBody = UpsertStylePolicyDto
+    export type AdminControllerUpsertStylePolicyMutationError = unknown
+
+    /**
+ * @summary Create or update style policy for a language
+ */
+export const useAdminControllerUpsertStylePolicy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>, TError,{language: string;data: UpsertStylePolicyDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminControllerUpsertStylePolicy>>,
+        TError,
+        {language: string;data: UpsertStylePolicyDto},
+        TContext
+      > => {
+      return useMutation(getAdminControllerUpsertStylePolicyMutationOptions(options), queryClient);
+    }
+    
+/**
+ * @summary Delete style policy for a language
+ */
+export type adminControllerDeleteStylePolicyResponse200 = {
+  data: void
+  status: 200
+}
+    
+export type adminControllerDeleteStylePolicyResponseSuccess = (adminControllerDeleteStylePolicyResponse200) & {
+  headers: Headers;
+};
+;
+
+export type adminControllerDeleteStylePolicyResponse = (adminControllerDeleteStylePolicyResponseSuccess)
+
+export const getAdminControllerDeleteStylePolicyUrl = (language: string,) => {
+
+
+  
+
+  return `/admin/style-policies/${language}`
+}
+
+export const adminControllerDeleteStylePolicy = async (language: string, options?: RequestInit): Promise<adminControllerDeleteStylePolicyResponse> => {
+  
+  return customInstance<adminControllerDeleteStylePolicyResponse>(getAdminControllerDeleteStylePolicyUrl(language),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getAdminControllerDeleteStylePolicyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>, TError,{language: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>, TError,{language: string}, TContext> => {
+
+const mutationKey = ['adminControllerDeleteStylePolicy'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>, {language: string}> = (props) => {
+          const {language} = props ?? {};
+
+          return  adminControllerDeleteStylePolicy(language,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminControllerDeleteStylePolicyMutationResult = NonNullable<Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>>
+    
+    export type AdminControllerDeleteStylePolicyMutationError = unknown
+
+    /**
+ * @summary Delete style policy for a language
+ */
+export const useAdminControllerDeleteStylePolicy = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>, TError,{language: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof adminControllerDeleteStylePolicy>>,
+        TError,
+        {language: string},
+        TContext
+      > => {
+      return useMutation(getAdminControllerDeleteStylePolicyMutationOptions(options), queryClient);
     }
     
 /**

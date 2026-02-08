@@ -5,7 +5,6 @@
  * API for UGC Script Factory
  * OpenAPI spec version: 1.0
  */
-import type { BatchDtoQuality } from './batchDtoQuality';
 import type { BatchDtoStatus } from './batchDtoStatus';
 import type { BatchScriptsCountDto } from './batchScriptsCountDto';
 
@@ -17,14 +16,11 @@ export interface BatchDto {
   angles: string[];
   durations: number[];
   personaIds: string[];
-  quality: BatchDtoQuality;
   pdfUrl?: string;
   csvUrl?: string;
   errorMessage?: string;
   createdAt: string;
   updatedAt: string;
-  scriptsCount?: number;
   completedCount?: number;
-  progress?: number;
   _count?: BatchScriptsCountDto;
 }

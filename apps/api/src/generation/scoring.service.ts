@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { CLICHE_PATTERNS } from './cliche-patterns';
+import { StylePolicy } from '@prisma/client';
+import { StyleFilterService } from './style-filter.service';
 
 interface ScriptOutput {
   angle: string;
@@ -22,107 +23,22 @@ interface ScoreResult {
   warnings: string[];
 }
 
-// Power words that create urgency, curiosity, or emotional response
-const HOOK_POWER_WORDS = [
-  // Stop-scroll patterns
-  'stop', 'wait', 'hold on', 'pause', 'listen',
-  // Conditional hooks
-  'if you', "if you're", 'when you', 'ever wonder',
-  // Contrast/objection
-  'but', 'however', 'actually', 'truth is', 'reality is',
-  // Urgency
-  "don't", 'never', 'avoid', 'mistake', 'wrong',
-  // Curiosity
-  'secret', 'hidden', 'nobody tells', 'what if', 'imagine',
-  // Social proof
-  'everyone', 'people are', 'went viral', 'obsessed',
-  // Direct challenge
-  'bet you', 'prove me wrong', 'change my mind',
-  // Story hooks
-  'story time', 'storytime', 'true story', 'confession', 'finally',
-  // Results
-  'works', 'changed', 'discovered', 'found', 'realized',
-  // TikTok-native patterns
-  'pov', 'pov:', 'me when', 'that moment when', 'when your',
-  // Emotional hooks
-  'scared', 'stressed', 'hate', 'tired of', 'sick of', 'struggling',
-  // TikTok slang/emphasis
-  'crazy', 'literally', 'lowkey', 'highkey', 'ngl', 'fr',
-  // Relatable hooks
-  'anyone else', 'tell me why', 'is it just me', 'not me',
-];
-
-// Words indicating benefits and transformation
-const BENEFIT_WORDS = [
-  // Achievement
-  'get', 'achieve', 'unlock', 'gain', 'earn', 'win',
-  // Transformation
-  'transform', 'change', 'become', 'turn into', 'upgrade',
-  // Ease
-  'easy', 'simple', 'quick', 'fast', 'instant', 'effortless',
-  // Relief
-  'finally', 'no more', 'goodbye', 'forget', 'stop struggling',
-  // Value
-  'save', 'free', 'bonus', 'extra', 'included',
-  // Help
-  'help', 'solve', 'fix', 'cure', 'heal', 'improve',
-  // Results
-  'results', 'outcome', 'difference', 'impact', 'effect',
-  // Emotion
-  'love', 'enjoy', 'amazing', 'incredible', 'perfect',
-  // Time
-  'minutes', 'seconds', 'hours', 'days', 'weeks', 'overnight',
-];
-
-// Concrete visual/action words for storyboard
-const VISUAL_ACTION_WORDS = [
-  // Camera actions
-  'show', 'reveal', 'display', 'present', 'demonstrate',
-  // Physical actions
-  'hold', 'grab', 'pick up', 'put down', 'place', 'set',
-  'open', 'close', 'pour', 'apply', 'use', 'try',
-  // Camera angles/moves
-  'close-up', 'closeup', 'close up', 'wide shot', 'medium shot',
-  'pan', 'zoom', 'tilt', 'track', 'follow',
-  // Body parts (for UGC authenticity)
-  'face', 'hands', 'eyes', 'smile', 'reaction', 'expression',
-  // Product focus
-  'product', 'package', 'box', 'bottle', 'label', 'texture',
-  // Pointing/directing
-  'point', 'gesture', 'look at', 'focus on', 'highlight',
-  // Transitions
-  'cut to', 'transition', 'switch', 'move to',
-];
-
-// CTA action verbs
-const CTA_ACTION_WORDS = [
-  'click', 'tap', 'get', 'grab', 'shop', 'buy', 'order',
-  'try', 'start', 'join', 'sign up', 'subscribe', 'follow',
-  'check out', 'discover', 'learn', 'see', 'find out',
-  'claim', 'unlock', 'access', 'download', 'save',
-];
-
-// Urgency words for CTAs
-const CTA_URGENCY_WORDS = [
-  'now', 'today', 'limited', 'exclusive', 'only', 'last chance',
-  'hurry', 'fast', 'quick', 'before', 'while', 'ending',
-  "don't miss", "don't wait", 'act now', 'right now',
-];
-
-
 @Injectable()
 export class ScoringService {
-  scoreScript(script: ScriptOutput, forbiddenClaims: string[]): ScoreResult {
+  constructor(private styleFilter: StyleFilterService) {}
+
+  async scoreScript(script: ScriptOutput, forbiddenClaims: string[], language = 'en'): Promise<ScoreResult> {
+    const policy = await this.styleFilter.getPolicy(language);
     const warnings: string[] = [];
 
     // Hook Strength (0-20)
-    const hookScore = this.scoreHookStrength(script.hook);
+    const hookScore = this.scoreHookStrength(script.hook, policy);
 
     // Clarity & Structure (0-20)
-    const clarityScore = this.scoreClarity(script);
+    const clarityScore = this.scoreClarity(script, policy);
 
     // Visuality (0-20)
-    const visualityScore = this.scoreVisuality(script.storyboard);
+    const visualityScore = this.scoreVisuality(script.storyboard, policy);
 
     // Compliance (0-15)
     const { complianceScore, complianceWarnings } = this.scoreCompliance(
@@ -135,10 +51,10 @@ export class ScoringService {
     const pacingScore = this.scorePacing(script);
 
     // CTA Quality (0-10)
-    const ctaScore = this.scoreCTAQuality(script.ctaVariants);
+    const ctaScore = this.scoreCTAQuality(script.ctaVariants, policy);
 
     // Authenticity (0-5)
-    const authenticityScore = this.scoreAuthenticity(script);
+    const authenticityScore = this.scoreAuthenticity(script, policy);
 
     // Calculate total
     const totalScore =
@@ -180,15 +96,16 @@ export class ScoringService {
     };
   }
 
-  private scoreHookStrength(hook: string): number {
+  private scoreHookStrength(hook: string, policy?: StylePolicy | null): number {
     if (!hook) return 0;
 
     let score = 0;
     const hookLower = hook.toLowerCase();
 
     // Power words (0-6)
+    const hookPowerWords = policy?.hookPowerWords ?? [];
     let powerWordCount = 0;
-    for (const word of HOOK_POWER_WORDS) {
+    for (const word of hookPowerWords) {
       if (hookLower.includes(word)) {
         powerWordCount++;
       }
@@ -226,7 +143,7 @@ export class ScoringService {
     return Math.min(20, score);
   }
 
-  private scoreClarity(script: ScriptOutput): number {
+  private scoreClarity(script: ScriptOutput, policy?: StylePolicy | null): number {
     let score = 0;
 
     // Check first 2 storyboard steps for benefit language (0-10)
@@ -237,8 +154,9 @@ export class ScoringService {
         .join(' ')
         .toLowerCase() || '';
 
+    const benefitWords = policy?.benefitWords ?? [];
     let benefitCount = 0;
-    for (const keyword of BENEFIT_WORDS) {
+    for (const keyword of benefitWords) {
       if (earlyContent.includes(keyword)) {
         benefitCount++;
       }
@@ -268,16 +186,17 @@ export class ScoringService {
     return Math.min(20, score);
   }
 
-  private scoreVisuality(storyboard: ScriptOutput['storyboard']): number {
+  private scoreVisuality(storyboard: ScriptOutput['storyboard'], policy?: StylePolicy | null): number {
     if (!storyboard || storyboard.length === 0) return 0;
 
     let score = 0;
 
     // Concrete action words in shots (0-10)
+    const visualActionWords = policy?.visualActionWords ?? [];
     let concreteCount = 0;
     for (const step of storyboard) {
       const shotLower = step.shot.toLowerCase();
-      for (const keyword of VISUAL_ACTION_WORDS) {
+      for (const keyword of visualActionWords) {
         if (shotLower.includes(keyword)) {
           concreteCount++;
           break;
@@ -383,7 +302,7 @@ export class ScoringService {
     return Math.min(10, score);
   }
 
-  private scoreCTAQuality(ctaVariants: string[]): number {
+  private scoreCTAQuality(ctaVariants: string[], policy?: StylePolicy | null): number {
     if (!ctaVariants || ctaVariants.length === 0) return 0;
 
     let score = 0;
@@ -398,10 +317,11 @@ export class ScoringService {
     }
 
     // CTAs contain action words (0-4)
+    const ctaActionWords = policy?.ctaActionWords ?? [];
     let actionCount = 0;
     for (const cta of ctaVariants) {
       const ctaLower = cta.toLowerCase();
-      for (const word of CTA_ACTION_WORDS) {
+      for (const word of ctaActionWords) {
         if (ctaLower.includes(word)) {
           actionCount++;
           break;
@@ -411,10 +331,11 @@ export class ScoringService {
     score += Math.min(4, Math.round((actionCount / ctaVariants.length) * 4));
 
     // CTAs contain urgency (0-3)
+    const ctaUrgencyWords = policy?.ctaUrgencyWords ?? [];
     let urgencyCount = 0;
     for (const cta of ctaVariants) {
       const ctaLower = cta.toLowerCase();
-      for (const word of CTA_URGENCY_WORDS) {
+      for (const word of ctaUrgencyWords) {
         if (ctaLower.includes(word)) {
           urgencyCount++;
           break;
@@ -428,7 +349,7 @@ export class ScoringService {
     return Math.min(10, score);
   }
 
-  private scoreAuthenticity(script: ScriptOutput): number {
+  private scoreAuthenticity(script: ScriptOutput, policy?: StylePolicy | null): number {
     // Combine all text
     const allText = [
       script.hook,
@@ -440,21 +361,18 @@ export class ScoringService {
 
     let score = 5; // Start with full points
 
-    // Deduct for corporate/LLM-smell phrases
-    for (const phrase of CLICHE_PATTERNS.llmSmell) {
+    // Deduct for corporate/LLM-smell phrases (from DB)
+    const llmSmell = policy?.clicheLlmSmell ?? [];
+    for (const phrase of llmSmell) {
       if (allText.includes(phrase)) {
         score -= 1;
       }
     }
 
-    // Bonus for conversational markers (cap at 5)
-    const conversationalMarkers = [
-      'honestly', 'literally', 'actually', 'okay so', 'like',
-      'you guys', 'y\'all', 'real talk', 'no joke', 'trust me',
-      'i mean', 'right?', 'you know',
-    ];
+    // Bonus for conversational markers (from DB)
+    const markers = policy?.conversationalMarkers ?? [];
     let conversationalCount = 0;
-    for (const marker of conversationalMarkers) {
+    for (const marker of markers) {
       if (allText.includes(marker)) {
         conversationalCount++;
       }

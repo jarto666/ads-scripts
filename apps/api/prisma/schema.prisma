@@ -237,31 +237,39 @@ model ProjectDraft {
 // Language-aware style rules for script quality filtering
 model StylePolicy {
   id            String   @id @default(cuid())
-  language      String   // "en", "es", "ru", etc.
-  scope         String   @default("global") // "global", "platform:tiktok", "region:uk"
+  language      String   @unique
   status        String   @default("beta") // "stable", "beta"
+  schemaVersion Int      @default(2)
 
-  // Word/phrase usage limits (JSON: { "just": { max: 1, enforce: true }, ... })
+  // --- Style filter ---
   wordLimits    Json     @default("{}")
-
-  // Exact match banned phrases
   bannedPhrases String[] @default([])
-
-  // Regex patterns for structural clichés
   bannedRegex   String[] @default([])
-
-  // Soft warnings (not hard blocks)
   softAvoid     String[] @default([])
-
-  // Harsh tone words to block
   harshWords    String[] @default([])
 
-  // Schema version for migrations
-  schemaVersion Int      @default(1)
+  // --- Cliché detection ---
+  clicheHookOpeners       String[] @default([])
+  clicheLlmSmell          String[] @default([])
+  clicheGenericFiller     String[] @default([])
+  clicheStructurePatterns String[] @default([])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // --- Scoring word lists ---
+  hookPowerWords        String[] @default([])
+  benefitWords          String[] @default([])
+  visualActionWords     String[] @default([])
+  ctaActionWords        String[] @default([])
+  ctaUrgencyWords       String[] @default([])
+  conversationalMarkers String[] @default([])
+  emotionalPatterns     String[] @default([])
 
-  @@unique([language, scope])
-  @@index([language])
+  // --- Groundedness patterns (regex strings per violation type) ---
+  groundednessAbsolutePatterns    String[] @default([])
+  groundednessScalePatterns       String[] @default([])
+  groundednessPromoPatterns       String[] @default([])
+  groundednessTimelinePatterns    String[] @default([])
+  groundednessSocialProofPatterns String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

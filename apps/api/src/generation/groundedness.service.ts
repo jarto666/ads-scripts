@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProjectFacts } from '@prisma/client';
+import { StyleFilterService } from './style-filter.service';
 
 /**
  * Types of groundedness violations
@@ -45,65 +46,25 @@ interface ScriptContent {
 }
 
 /**
- * Patterns for detecting violations
+ * Generic suggestion templates per violation type.
+ * Stored in code (not DB) since these are UX strings, not patterns.
  */
-const ABSOLUTE_CLAIMS_PATTERNS = [
-  { pattern: /\bonly\b/gi, suggestion: 'Remove "only" or replace with "a great"' },
-  { pattern: /\bbest\b/gi, suggestion: 'Remove "best" or be specific about why' },
-  { pattern: /\bultimate\b/gi, suggestion: 'Remove "ultimate" - too hyperbolic' },
-  { pattern: /\bguaranteed?\b/gi, suggestion: 'Remove guarantee claims unless legally verified' },
-  { pattern: /\b#1\b|number one/gi, suggestion: 'Remove "#1" claim unless verifiable' },
-  { pattern: /\bperfect\b/gi, suggestion: 'Remove "perfect" - too absolute' },
-  { pattern: /\bunmatched\b/gi, suggestion: 'Remove "unmatched" - unverifiable claim' },
-  { pattern: /\bunbeatable\b/gi, suggestion: 'Remove "unbeatable" - unverifiable claim' },
-];
-
-const SCALE_CLAIMS_PATTERNS = [
-  { pattern: /\bthousands\b/gi, suggestion: 'Replace with specific number from allowedProof, or remove' },
-  { pattern: /\bmillions\b/gi, suggestion: 'Replace with specific number from allowedProof, or remove' },
-  { pattern: /\beveryone\b/gi, suggestion: 'Replace with specific audience segment' },
-  { pattern: /\beverybody\b/gi, suggestion: 'Replace with specific audience segment' },
-  { pattern: /\bcountless\b/gi, suggestion: 'Replace with specific number or remove' },
-  { pattern: /\bhundreds of thousands\b/gi, suggestion: 'Replace with specific number from allowedProof' },
-];
-
-const PROMO_PATTERNS = [
-  { pattern: /\bfree trial\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bno credit card\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\d+%\s*off\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bpromo code\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bdiscount\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bfirst \d+ free\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\blimited time\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bspecial offer\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bexclusive deal\b/gi, suggestion: 'Remove unless in promos list' },
-  { pattern: /\bmoney[- ]back guarantee\b/gi, suggestion: 'Remove unless in promos list' },
-];
-
-const TIMELINE_PATTERNS = [
-  { pattern: /\bin (?:just )?\d+ seconds?\b/gi, suggestion: 'Replace with realistic timeframe or remove' },
-  { pattern: /\binstantly\b/gi, suggestion: 'Replace with "quickly" or specific timeframe' },
-  { pattern: /\bovernight\b/gi, suggestion: 'Be realistic about timeline' },
-  { pattern: /\bimmediately\b/gi, suggestion: 'Replace with realistic timeframe' },
-  { pattern: /\bin minutes\b/gi, suggestion: 'Specify actual time if verified' },
-];
-
-const SOCIAL_PROOF_PATTERNS = [
-  { pattern: /\b5[- ]star\b/gi, suggestion: 'Remove unless in allowedProof' },
-  { pattern: /\b4\.[5-9][- ]star\b/gi, suggestion: 'Remove unless in allowedProof' },
-  { pattern: /\breviews?\b/gi, suggestion: 'Only mention if specific reviews in allowedProof' },
-  { pattern: /\btestimonials?\b/gi, suggestion: 'Only mention if specific testimonials in allowedProof' },
-  { pattern: /\b\d+[kKmM]?\+?\s*(?:users?|customers?|people)\b/gi, suggestion: 'Only use if in allowedProof' },
-  { pattern: /\btrusted by\b/gi, suggestion: 'Remove unless specific proof in allowedProof' },
-  { pattern: /\brated\s+#?\d\b/gi, suggestion: 'Remove unless in allowedProof' },
-  { pattern: /\baward[- ]winning\b/gi, suggestion: 'Remove unless specific award in allowedProof' },
-];
+const VIOLATION_SUGGESTIONS: Record<string, string> = {
+  absolute: 'Remove absolute claim or qualify with specifics',
+  scale: 'Replace with specific number from allowedProof',
+  promo: 'Remove unless listed in allowed promos',
+  timeline: 'Replace with realistic timeframe',
+  proof: 'Remove unless backed by allowedProof',
+};
 
 @Injectable()
 export class GroundednessService {
   private readonly logger = new Logger(GroundednessService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private styleFilter: StyleFilterService,
+  ) {}
 
   /**
    * Validate a script against ProjectFacts for groundedness
@@ -111,94 +72,57 @@ export class GroundednessService {
   async validateScript(
     script: ScriptContent,
     projectId: string,
+    language = 'en',
   ): Promise<GroundednessResult> {
     // Get project facts
     const facts = await this.prisma.projectFacts.findUnique({
       where: { projectId },
     });
 
-    // If no facts exist, we can only check for absolute claims
-    return this.checkGroundedness(script, facts);
+    return this.checkGroundedness(script, facts, language);
   }
 
   /**
    * Validate script with pre-loaded facts (for batch processing)
    */
-  checkGroundedness(
+  async checkGroundedness(
     script: ScriptContent,
     facts: ProjectFacts | null,
-  ): GroundednessResult {
+    language = 'en',
+  ): Promise<GroundednessResult> {
     const violations: GroundednessViolation[] = [];
     const allText = this.extractText(script);
 
+    // Load patterns from DB
+    const policy = await this.styleFilter.getPolicy(language);
+
     // 1. Check absolute claims (always flagged)
-    for (const { pattern, suggestion } of ABSOLUTE_CLAIMS_PATTERNS) {
-      const matches = allText.match(pattern);
-      if (matches) {
-        violations.push({
-          type: 'absolute',
-          text: matches[0],
-          suggestion,
-        });
-      }
-    }
+    this.checkPatterns(
+      allText, policy?.groundednessAbsolutePatterns ?? [], 'absolute', violations,
+    );
 
     // 2. Check scale claims (always flagged unless in allowedProof)
-    for (const { pattern, suggestion } of SCALE_CLAIMS_PATTERNS) {
-      const matches = allText.match(pattern);
-      if (matches) {
-        const matchText = matches[0];
-        if (!this.isInAllowedProof(matchText, facts?.allowedProof || [])) {
-          violations.push({
-            type: 'scale',
-            text: matchText,
-            suggestion,
-          });
-        }
-      }
-    }
+    this.checkPatterns(
+      allText, policy?.groundednessScalePatterns ?? [], 'scale', violations,
+      { allowedProof: facts?.allowedProof || [] },
+    );
 
     // 3. Check promo claims (flagged unless in promos list)
-    for (const { pattern, suggestion } of PROMO_PATTERNS) {
-      const matches = allText.match(pattern);
-      if (matches) {
-        const matchText = matches[0];
-        if (!this.isInPromosList(matchText, facts?.promos || [])) {
-          violations.push({
-            type: 'promo',
-            text: matchText,
-            suggestion,
-          });
-        }
-      }
-    }
+    this.checkPatterns(
+      allText, policy?.groundednessPromoPatterns ?? [], 'promo', violations,
+      { promos: facts?.promos || [] },
+    );
 
     // 4. Check timeline claims (always flagged - unrealistic promises)
-    for (const { pattern, suggestion } of TIMELINE_PATTERNS) {
-      const matches = allText.match(pattern);
-      if (matches) {
-        violations.push({
-          type: 'timeline',
-          text: matches[0],
-          suggestion,
-        });
-      }
-    }
+    this.checkPatterns(
+      allText, policy?.groundednessTimelinePatterns ?? [], 'timeline', violations,
+    );
 
     // 5. Check social proof claims (flagged unless in allowedProof)
-    for (const { pattern, suggestion } of SOCIAL_PROOF_PATTERNS) {
-      const matches = allText.match(pattern);
-      if (matches) {
-        const matchText = matches[0];
-        if (!this.isInAllowedProof(matchText, facts?.allowedProof || [])) {
-          violations.push({
-            type: 'proof',
-            text: matchText,
-            suggestion,
-          });
-        }
-      }
-    }
+    this.checkPatterns(
+      allText, policy?.groundednessSocialProofPatterns ?? [], 'proof', violations,
+      { allowedProof: facts?.allowedProof || [] },
+    );
 
     // 6. Check harsh labels (if harshLabelsBan is set)
     if (facts?.harshLabelsBan?.length) {
@@ -215,7 +139,6 @@ export class GroundednessService {
     }
 
     // Calculate score (100 - penalty per violation)
-    // Each violation reduces score by 15 points
     const penaltyPerViolation = 15;
     const score = Math.max(0, 100 - violations.length * penaltyPerViolation);
 
@@ -224,6 +147,44 @@ export class GroundednessService {
       score,
       violations,
     };
+  }
+
+  /**
+   * Check regex pattern strings against text for violations.
+   * Optionally skip matches that are covered by allowedProof or promos.
+   */
+  private checkPatterns(
+    text: string,
+    patterns: string[],
+    type: ViolationType,
+    violations: GroundednessViolation[],
+    context?: { allowedProof?: string[]; promos?: string[] },
+  ): void {
+    for (const patStr of patterns) {
+      try {
+        const regex = new RegExp(patStr, 'gi');
+        const matches = text.match(regex);
+        if (matches) {
+          const matchText = matches[0];
+
+          // Skip if covered by allowed proof or promos
+          if (context?.allowedProof && this.isInAllowedProof(matchText, context.allowedProof)) {
+            continue;
+          }
+          if (context?.promos && this.isInPromosList(matchText, context.promos)) {
+            continue;
+          }
+
+          violations.push({
+            type,
+            text: matchText,
+            suggestion: VIOLATION_SUGGESTIONS[type] || 'Review this claim',
+          });
+        }
+      } catch {
+        this.logger.warn(`Invalid groundedness regex: ${patStr}`);
+      }
+    }
   }
 
   /**
@@ -272,13 +233,14 @@ export class GroundednessService {
   async validateScripts(
     scripts: ScriptContent[],
     projectId: string,
+    language = 'en',
   ): Promise<GroundednessResult[]> {
     // Load facts once for all scripts
     const facts = await this.prisma.projectFacts.findUnique({
       where: { projectId },
     });
 
-    return scripts.map(script => this.checkGroundedness(script, facts));
+    return Promise.all(scripts.map(script => this.checkGroundedness(script, facts, language)));
   }
 
   /**

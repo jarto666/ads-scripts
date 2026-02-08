@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Persona } from '@prisma/client';
-import { CLICHE_PATTERNS, CLICHE_PENALTIES } from './cliche-patterns';
+import { Persona, StylePolicy } from '@prisma/client';
+import { CLICHE_PENALTIES } from './cliche-patterns';
+import { StyleFilterService } from './style-filter.service';
 
 /**
  * Rerank scoring weights (must sum to 1.0)
@@ -60,6 +61,7 @@ interface ScriptContent {
 interface ProductContext {
   productDescription: string;
   productName?: string;
+  language?: string;
   /** ProjectFacts for grounded specificity scoring */
   facts?: {
     features: string[];
@@ -70,25 +72,13 @@ interface ProductContext {
   } | null;
 }
 
-
 /**
- * Power words that make hooks stronger
+ * Fallback power words (used when no policy is loaded)
  */
-const HOOK_POWER_WORDS = [
-  'stop',
-  'wait',
-  'secret',
-  'finally',
-  'never',
-  'always',
-  'everyone',
-  'nobody',
-  'mistake',
-  'wrong',
-  'actually',
-  'truth',
-  'real',
-  'honest',
+const FALLBACK_HOOK_POWER_WORDS = [
+  'stop', 'wait', 'secret', 'finally', 'never', 'always',
+  'everyone', 'nobody', 'mistake', 'wrong', 'actually',
+  'truth', 'real', 'honest',
 ];
 
 
@@ -96,18 +86,24 @@ const HOOK_POWER_WORDS = [
 export class RerankService {
   private readonly logger = new Logger(RerankService.name);
 
+  constructor(private styleFilter: StyleFilterService) {}
+
   /**
    * Rerank scripts by quality scores and return sorted list
    * Applies diversity penalties to avoid repetitive hook patterns
    */
-  rerankScripts<T extends ScriptContent>(
+  async rerankScripts<T extends ScriptContent>(
     scripts: T[],
     productContext: ProductContext,
     personas: Persona[],
-  ): RankedScript<T>[] {
+  ): Promise<RankedScript<T>[]> {
+    // Load policy once for all scoring
+    const language = productContext.language || 'en';
+    const policy = await this.styleFilter.getPolicy(language);
+
     // First pass: score all scripts individually
     const ranked = scripts.map((script) => {
-      const scores = this.scoreScript(script, productContext, personas);
+      const scores = this.scoreScript(script, productContext, personas, policy);
       return { script, scores };
     });
 
@@ -209,11 +205,12 @@ export class RerankService {
     script: ScriptContent,
     productContext: ProductContext,
     personas: Persona[],
+    policy?: StylePolicy | null,
   ): RerankScores {
     const specificity = this.scoreSpecificity(script, productContext);
-    const novelty = this.scoreNovelty(script);
+    const novelty = this.scoreNovelty(script, policy);
     const audienceFit = this.scoreAudienceFit(script, personas);
-    const hookStrength = this.scoreHookStrength(script.hook);
+    const hookStrength = this.scoreHookStrength(script.hook, policy);
 
     const final = Math.round(
       specificity * WEIGHTS.specificity +
@@ -234,14 +231,15 @@ export class RerankService {
   /**
    * Score hook strength (also used for hook selection)
    */
-  scoreHookStrength(hook: string): number {
+  scoreHookStrength(hook: string, policy?: StylePolicy | null): number {
     if (!hook) return 0;
 
     let score = 0;
     const hookLower = hook.toLowerCase();
 
-    // 0. Penalize cliché hook starters
-    for (const cliche of CLICHE_PATTERNS.hookOpeners) {
+    // 0. Penalize cliché hook starters (from DB)
+    const hookOpeners = policy?.clicheHookOpeners ?? [];
+    for (const cliche of hookOpeners) {
       if (hookLower.startsWith(cliche) || hookLower.includes(cliche)) {
         score += CLICHE_PENALTIES.hookOpener;
         break; // Only penalize once
@@ -272,8 +270,11 @@ export class RerankService {
     }
 
     // 5. Power words present (0-20)
+    const powerWords = policy?.hookPowerWords?.length
+      ? policy.hookPowerWords
+      : FALLBACK_HOOK_POWER_WORDS;
     let powerWordCount = 0;
-    for (const word of HOOK_POWER_WORDS) {
+    for (const word of powerWords) {
       if (hookLower.includes(word)) {
         powerWordCount++;
       }
@@ -281,14 +282,21 @@ export class RerankService {
     score += Math.min(20, powerWordCount * 7);
 
     // 6. Emotional/curiosity trigger (0-15)
-    const emotionalPatterns = [
-      /\b(tired|sick|frustrated|hate|love|obsessed|scared|stressed)\b/i,
-      /\b(secret|hidden|truth|real|honest)\b/i,
-      /\b(stop|wait|don't|never|always)\b/i,
-    ];
-    for (const pattern of emotionalPatterns) {
-      if (pattern.test(hook)) {
-        score += 5;
+    const emotionalStrs = policy?.emotionalPatterns?.length
+      ? policy.emotionalPatterns
+      : [
+          '\\b(tired|sick|frustrated|hate|love|obsessed|scared|stressed)\\b',
+          '\\b(secret|hidden|truth|real|honest)\\b',
+          '\\b(stop|wait|don\'t|never|always)\\b',
+        ];
+    for (const patStr of emotionalStrs) {
+      try {
+        const pattern = new RegExp(patStr, 'i');
+        if (pattern.test(hook)) {
+          score += 5;
+        }
+      } catch {
+        // skip invalid regex
       }
     }
 
@@ -480,41 +488,56 @@ export class RerankService {
   /**
    * Novelty: How non-generic and fresh the script sounds
    */
-  private scoreNovelty(script: ScriptContent): number {
+  private scoreNovelty(script: ScriptContent, policy?: StylePolicy | null): number {
     const text = this.extractText(script);
     const textLower = text.toLowerCase();
     let score = 100;
 
-    // Deduct for generic filler phrases
-    for (const phrase of CLICHE_PATTERNS.genericFiller) {
+    // Deduct for generic filler phrases (from DB)
+    const genericFiller = policy?.clicheGenericFiller ?? [];
+    for (const phrase of genericFiller) {
       if (textLower.includes(phrase)) {
         score += CLICHE_PENALTIES.genericFiller;
       }
     }
 
-    // Deduct for LLM-smell phrases
-    for (const phrase of CLICHE_PATTERNS.llmSmell) {
+    // Deduct for LLM-smell phrases (from DB)
+    const llmSmell = policy?.clicheLlmSmell ?? [];
+    for (const phrase of llmSmell) {
       if (textLower.includes(phrase)) {
         score += CLICHE_PENALTIES.llmSmell;
       }
     }
 
-    // Deduct for structural patterns
-    for (const { pattern } of CLICHE_PATTERNS.structures) {
-      if (pattern.test(text)) {
-        score += CLICHE_PENALTIES.structure;
+    // Deduct for structural patterns (from DB — regex strings)
+    const structurePatterns = policy?.clicheStructurePatterns ?? [];
+    for (const patStr of structurePatterns) {
+      try {
+        const pattern = new RegExp(patStr, 'gi');
+        if (pattern.test(text)) {
+          score += CLICHE_PENALTIES.structure;
+        }
+      } catch {
+        // skip invalid regex
       }
     }
 
-    // Deduct for excessive word usage
-    for (const item of CLICHE_PATTERNS.excessive) {
-      const regex =
-        'word' in item
-          ? new RegExp(`\\b${item.word}\\b`, 'gi')
-          : item.pattern;
+    // Deduct for excessive word usage (from wordLimits with scorePenalty)
+    const wordLimits = (policy?.wordLimits ?? {}) as Record<string, { max?: number; scorePenalty?: number }>;
+    for (const [word, config] of Object.entries(wordLimits)) {
+      if (!config.scorePenalty) continue;
+      let regex: RegExp;
+      if (word === '!') {
+        regex = /!/g;
+      } else if (word === '?') {
+        regex = /\?/g;
+      } else {
+        regex = new RegExp(`\\b${word}\\b`, 'gi');
+      }
       const count = (text.match(regex) || []).length;
-      if (count > item.max) {
-        score += (count - item.max) * item.penaltyPerExtra;
+      const max = config.max ?? 0;
+      if (count > max) {
+        score += (count - max) * config.scorePenalty;
       }
     }
 
